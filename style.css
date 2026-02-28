@@ -102,3 +102,21 @@ body { display: flex; justify-content: center; background-color: #525659; margin
 .modal-body label { display: block; font-weight: bold; margin-top: 12px; margin-bottom: 4px; color: #444; font-size: 12px; }
 .modal-body select, .modal-body input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: var(--font-main); box-sizing: border-box; }
 .modal-body input:focus, .modal-body select:focus { outline: 2px solid var(--dgfip-medium); }
+
+/* --- BOUTON EFFACER RAPIDE (Croix rouge) --- */
+.delete-btn {
+    color: #d9534f;
+    cursor: pointer;
+    margin-left: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    display: none; /* Caché par défaut */
+    transition: transform 0.1s;
+}
+.clickable-row:hover .delete-btn {
+    display: inline-block; /* Rend la croix visible au survol de la ligne */
+}
+.delete-btn:hover {
+    color: #c9302c;
+    transform: scale(1.3);
+}

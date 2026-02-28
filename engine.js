@@ -145,6 +145,19 @@ function ouvrirModal(panelIds, titre) {
     document.getElementById('magic-modal').showModal();
 }
 
+// Remet les valeurs à zéro quand on clique sur la petite croix
+window.effacerValeurs = function(event, inputIds) {
+    event.stopPropagation(); // Empêche l'ouverture de la fenêtre modale
+    inputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (el.tagName === 'SELECT') el.value = 'none'; // Pour le menu RIST Variable
+            else el.value = 0; // Pour tous les autres nombres
+        }
+    });
+    calculerPaie();
+};
+
 function calculerPaie() {
     const profilAgent = getProfilDepuisInterface();
     let totalAPayer = 0;
@@ -222,7 +235,7 @@ function calculerPaie() {
     const tbody = document.getElementById('lignes-paie');
     tbody.innerHTML = ''; 
 
-    function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo) {
+    function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo, inputsAReset = null) {
         if (aPayer) totalAPayer += aPayer;
         if (aDeduire) totalADeduire += aDeduire;
 
@@ -231,7 +244,6 @@ function calculerPaie() {
 
         const tr = document.createElement('tr');
         
-        // --- LOGIQUE DE CIBLAGE INTELLIGENT ---
         let estCliquable = false;
         let cibles = null;
         let titreModal = "";
@@ -259,12 +271,18 @@ function calculerPaie() {
             tr.title = "Cliquez pour modifier";
             tr.onclick = () => ouvrirModal(cibles, titreModal);
         }
-        // ---------------------------------------
+
+        // --- LA CROIX MAGIQUE POUR EFFACER ---
+        let croixEffacer = "";
+        if (inputsAReset) {
+            const idsStr = JSON.stringify(inputsAReset).replace(/"/g, "'");
+            croixEffacer = `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${idsStr})">✖</span>`;
+        }
 
         tr.innerHTML = `
             <td class="col-code">${code}</td>
             <td class="col-libelle label${extraClass}">
-                <span>${libelle}</span> ${euroSymbole}
+                <span>${libelle}</span>${croixEffacer} ${euroSymbole}
             </td>
             <td class="col-amount">${formaterMontant(aPayer)}</td>
             <td class="col-amount">${formaterMontant(aDeduire)}</td>
@@ -283,8 +301,8 @@ function calculerPaie() {
     ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
     ajouterLigne("102000", "INDEMNITE DE RESIDENCE", indemniteResidence, null, null);
     
-    if (nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", nuit, null, null);
-    ajouterLigne("200041", "FORF. MOBILITES DURABLES", profilAgent.primes.forfait_mobilites, null, null);
+    if (nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", nuit, null, null, ['input-nuit-n', 'input-nuit-s2']);
+    ajouterLigne("200041", "FORF. MOBILITES DURABLES", profilAgent.primes.forfait_mobilites, null, null, profilAgent.primes.forfait_mobilites > 0 ? ['input-fmd'] : null);
     
     ajouterLigne("201958", "RIST PART FONCTIONS", profilAgent.primes.rist_fonctions, null, null);
     if (joursAbs > 0) ajouterLigne("201958", "RIST PART FONCTIONS (ABS)", -absRistFct, null, null);
@@ -308,10 +326,10 @@ function calculerPaie() {
 
     ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
     
-    if (profilAgent.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", profilAgent.evenements.prime_performance, null, null);
-    if (profilAgent.evenements.rist_orga > 0) ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL", profilAgent.evenements.rist_orga, null, null);
-    if (profilAgent.evenements.fidelisation > 0) ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", profilAgent.evenements.fidelisation, null, null);
-    if (profilAgent.evenements.geographique > 0) ajouterLigne("203002", "PRIME ATTRACTIVITE GEOGRAPHIQUE", profilAgent.evenements.geographique, null, null);
+    if (profilAgent.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", profilAgent.evenements.prime_performance, null, null, ['input-perf']);
+    if (profilAgent.evenements.rist_orga > 0) ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL", profilAgent.evenements.rist_orga, null, null, ['input-rist-orga', 'input-opt-var-type', 'input-opt-var-coeff']);
+    if (profilAgent.evenements.fidelisation > 0) ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", profilAgent.evenements.fidelisation, null, null, ['input-fidelisation']);
+    if (profilAgent.evenements.geographique > 0) ajouterLigne("203002", "PRIME ATTRACTIVITE GEOGRAPHIQUE", profilAgent.evenements.geographique, null, null, ['input-geographique']);
 
     ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, csgNonDeductible, null);
     ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, csgDeductible, null);
@@ -330,7 +348,7 @@ function calculerPaie() {
     ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
 
     if (joursAbs > 0) {
-        ajouterLigne("604958", "PREC. CARENCE REM. PR.", null, absenceTraitement, null);
+        ajouterLigne("604958", "PREC. CARENCE REM. PR.", null, absenceTraitement, null, ['input-absence']);
         ajouterLigne("604959", "PREC. CARENCE IND. RESID.", null, absenceResidence, null);
     }
 
