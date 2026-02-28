@@ -324,7 +324,6 @@ function calculerPaie() {
     document.getElementById('ui-charges-patronales').textContent = formaterMontant(totalPatronal);
     document.getElementById('ui-cout-employeur').textContent = formaterMontant(coutTotalEmployeur);
     document.getElementById('ui-net-a-payer').textContent = formaterMontant(netFinal) + " €";
-    document.getElementById('ui-base-ss').textContent = formaterMontant(baseSS);
     document.getElementById('ui-net-imposable').textContent = formaterMontant(netImposable);
 }
 

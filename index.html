@@ -165,28 +165,29 @@
             <tbody id="lignes-paie">
                 </tbody>
             
-            <tfoot class="pay-table-foot">
-                <tr><td colspan="5" style="height: 4px; padding: 0;"></td></tr>
+      <tfoot class="pay-table-foot">
+                <tr><td colspan="5" style="height: 15px; padding: 0;"></td></tr>
 
                 <tr>
-                    <td colspan="2" rowspan="2" class="no-bg" style="padding: 0 5px 0 0; vertical-align: top;">
-                        <div style="display: flex; justify-content: flex-end; align-items: flex-start;">
+                    <td colspan="2" rowspan="2" class="no-bg" style="padding: 5px 15px 0 0; vertical-align: top;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                             
-                            <div style="display: flex; flex-direction: column; width: 120px; margin-right: 15px;">
-                                <div style="border: 1px solid var(--dgfip-dark); border-bottom: none; background: white; padding: 2px 5px; font-family: var(--font-numbers); font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; box-sizing: border-box; height: 18px;">
-                                    <span>€</span><span id="ui-cout-employeur">0,00</span>
-                                </div>
-                                <div style="background-color: var(--dgfip-medium); color: white; font-size: 8px; text-align: center; padding: 2px 0; border: 1px solid var(--dgfip-dark); border-top: none; box-sizing: border-box; height: 19px;">
-                                    COÛT TOTAL<br>EMPLOYEUR
-                                </div>
+                            <div class="summary-box" style="width: 140px; margin-right: 15px;">
+                                <div class="summary-title">MONTANT IMPOSABLE DU MOIS</div>
+                                <div class="summary-value" style="padding: 4px;">€ <span style="float:right" id="ui-net-imposable">0,00</span></div>
                             </div>
 
-                            <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                                <div style="background-color: var(--dgfip-dark); color: white; font-size: 10px; font-weight: bold; padding: 2px 15px; height: 18px; box-sizing: border-box; display: flex; align-items: center;">
-                                    TOTAUX DU MOIS
+                            <div style="display: flex; align-items: flex-start;">
+                                <div style="display: flex; flex-direction: column; width: 120px; margin-right: 15px;">
+                                    <div style="border: 1px solid var(--dgfip-dark); border-bottom: none; background: white; padding: 3px 5px; font-family: var(--font-numbers); font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; box-sizing: border-box; height: 20px;">
+                                        <span>€</span><span id="ui-cout-employeur">0,00</span>
+                                    </div>
+                                    <div style="background-color: var(--dgfip-medium); color: white; font-size: 8px; text-align: center; padding: 3px 0; border: 1px solid var(--dgfip-dark); border-top: none; box-sizing: border-box; height: 20px;">
+                                        COÛT TOTAL<br>EMPLOYEUR
+                                    </div>
                                 </div>
-                                <div style="color: var(--dgfip-medium); font-size: 18px; font-weight: bold; margin-top: 5px; line-height: 1;">
-                                    NET À PAYER
+                                <div style="background-color: var(--dgfip-dark); color: white; font-size: 10px; font-weight: bold; padding: 2px 15px; height: 20px; box-sizing: border-box; display: flex; align-items: center;">
+                                    TOTAUX DU MOIS
                                 </div>
                             </div>
 
@@ -205,12 +206,17 @@
                 </tr>
 
                 <tr>
-                    <td colspan="2" class="no-bg" style="padding: 5px 5px 0 0; text-align: right; vertical-align: top;">
-                        <div style="background: white; border: 2px solid var(--dgfip-dark); display: inline-block; padding: 4px 15px; font-family: var(--font-numbers); font-size: 20px; font-weight: bold; min-width: 130px;">
-                            <span id="ui-net-a-payer">0,00 €</span>
+                    <td colspan="2" class="no-bg" style="padding: 15px 5px 0 0; vertical-align: top;">
+                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                            <div style="color: var(--dgfip-medium); font-size: 16px; font-weight: bold; white-space: nowrap;">
+                                NET À PAYER
+                            </div>
+                            <div style="background: white; border: 2px solid var(--dgfip-dark); display: inline-block; padding: 5px 10px; font-family: var(--font-numbers); font-size: 18px; font-weight: bold; min-width: 120px; text-align: right;">
+                                <span id="ui-net-a-payer">0,00 €</span>
+                            </div>
                         </div>
                     </td>
-                    <td class="no-bg" style="padding: 5px 0 0 0; vertical-align: top;">
+                    <td class="no-bg" style="padding: 15px 0 0 0; vertical-align: top;">
                         <div style="background-color: var(--dgfip-dark); color: white; text-align: center; font-size: 9px; font-weight: bold; padding: 6px 2px;">
                             TOTAL CHARGES<br>PATRONALES
                         </div>
@@ -219,26 +225,7 @@
             </tfoot>
         </table>
 
-        <div class="footer-bottom">
-            <div class="summary-grid">
-                <div class="summary-box">
-                    <div class="summary-title">BASE SS DE L'ANNÉE</div>
-                    <div class="summary-value">€ <span style="float:right"></span></div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-title">BASE SS DU MOIS</div>
-                    <div class="summary-value">€ <span style="float:right" id="ui-base-ss">0,00</span></div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-title">MONTANT IMPOSABLE DE L'ANNÉE</div>
-                    <div class="summary-value">€ <span style="float:right"></span></div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-title">MONTANT IMPOSABLE DU MOIS</div>
-                    <div class="summary-value">€ <span style="float:right" id="ui-net-imposable">0,00</span></div>
-                </div>
-            </div>
-        </div>
+        
 
     </div>
 

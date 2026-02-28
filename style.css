@@ -30,7 +30,8 @@ body { background-color: #2b2b2b; display: flex; justify-content: center; align-
 .info-table td { background-color: var(--dgfip-light); color: black; font-weight: bold; text-align: center; padding: 3px; border: 1px solid white; font-family: var(--font-numbers); font-size: 11px; }
 
 /* TABLEAU PRINCIPAL */
-.pay-table { width: 100%; table-layout: fixed; border-collapse: collapse; border-top: 2px solid var(--dgfip-dark); border-bottom: 2px solid var(--dgfip-dark); flex-grow: 1; }
+.pay-table { width: 100%; table-layout: fixed; border-collapse: collapse; border-top: 2px solid var(--dgfip-dark); border-bottom: none; flex-grow: 1; }
+#lignes-paie { border-bottom: 2px solid var(--dgfip-dark); }
 .pay-table th { background-color: var(--dgfip-dark); color: white; padding: 4px; font-weight: normal; border: 1px solid white; text-align: center; }
 
 .col-code { width: 10%; text-align: right; padding-right: 8px !important; }
