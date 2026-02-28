@@ -1,0 +1,121 @@
+/* =========================================
+   VARIABLES ET RÉGLAGES GLOBAUX
+   ========================================= */
+:root {
+    --dgfip-dark: #3b5472;
+    --dgfip-medium: #8397af;
+    --dgfip-light: #e0e6ed;
+    --dgfip-border: #2c3e50;
+    --font-main: 'Arial', Helvetica, sans-serif;
+    --font-numbers: 'Lucida Console', 'Courier New', monospace;
+}
+
+body {
+    background-color: #2b2b2b;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 30px;
+    padding: 20px;
+    font-family: var(--font-main);
+    margin: 0;
+    overflow-x: auto;
+}
+
+/* =========================================
+   BARRE LATÉRALE (SIDEBAR)
+   ========================================= */
+.sidebar {
+    background-color: #f8f9fa;
+    width: 320px;
+    min-width: 320px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    font-size: 13px;
+    border-top: 5px solid var(--dgfip-dark);
+    position: sticky;
+    top: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+    color: black;
+}
+.sidebar h2, .sidebar h3 { color: var(--dgfip-dark); border-bottom: 2px solid var(--dgfip-light); padding-bottom: 5px; margin-top: 20px; font-size: 14px; }
+.sidebar label { display: block; font-weight: bold; margin-top: 10px; margin-bottom: 4px; color: #444; font-size: 11px; }
+.sidebar select, .sidebar input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: var(--font-main); }
+.sidebar input:focus, .sidebar select:focus { outline: 2px solid var(--dgfip-medium); }
+
+/* =========================================
+   LA FEUILLE A4 (LE BULLETIN)
+   ========================================= */
+.page-a4 {
+    background-color: white !important;
+    color: black !important;
+    width: 210mm;
+    min-width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    font-size: 9px;
+}
+
+/* --- EN-TÊTE --- */
+.header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+.header-logo { font-weight: bold; font-size: 14px; line-height: 1.3; }
+.header-title-box { background-color: var(--dgfip-dark); color: white; text-align: center; padding: 2px 0; width: 250px; }
+.header-title-main { font-size: 14px; font-weight: bold; letter-spacing: 4px; }
+.header-title-sub { font-size: 10px; background-color: var(--dgfip-medium); margin-top: 2px; padding: 2px; }
+.header-right { text-align: right; font-size: 10px; }
+
+/* --- BLOC INFOS AGENT --- */
+.info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; border: 2px solid var(--dgfip-dark); }
+.info-table th { background-color: var(--dgfip-dark); color: white; padding: 3px; border: 1px solid white; font-size: 8px; font-weight: normal; }
+.info-table td { background-color: var(--dgfip-light); color: black; font-weight: bold; text-align: center; padding: 4px; border: 1px solid white; font-family: var(--font-numbers); font-size: 11px; }
+
+/* --- TABLEAU DES LIGNES DE PAIE --- */
+.pay-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border-top: 2px solid var(--dgfip-dark);
+    border-bottom: 2px solid var(--dgfip-dark);
+    flex-grow: 1;
+}
+.pay-table th { background-color: var(--dgfip-dark); color: white; padding: 4px; font-weight: normal; border: 1px solid white; }
+.pay-table th.left { text-align: left; }
+.pay-table th.center { text-align: center; }
+
+.col-code { width: 8%; text-align: center; }
+.col-libelle { width: 44%; text-align: left; }
+.col-amount { width: 16%; text-align: right; padding-right: 5px !important; }
+
+.pay-table td { padding: 2px 4px; font-family: var(--font-numbers); font-size: 11px; font-weight: bold; border-right: 1px solid var(--dgfip-light); color: black !important; }
+.pay-table td.label { font-family: var(--font-main); font-weight: bold; font-size: 10px; }
+.pay-table tr:nth-child(even) td { background-color: var(--dgfip-light); }
+
+/* --- LE PIED DE TABLEAU (TOTAUX ALIGNÉS) --- */
+.pay-table-foot td { padding: 5px 4px; font-weight: bold; border: none; }
+.row-totaux td { background-color: var(--dgfip-light); border-left: 1px solid white; border-right: 1px solid white; font-family: var(--font-numbers); font-size: 12px; }
+.row-totaux .no-bg { background-color: transparent !important; border: none !important; }
+
+.flex-end-row { display: flex; justify-content: flex-end; align-items: stretch; gap: 5px; height: 100%; }
+.cout-employeur-box { background-color: var(--dgfip-medium); padding: 2px 4px; text-align: center; width: 120px; }
+.cout-employeur-box .cout-val { background-color: white; color: black; display: block; padding: 2px; font-weight: bold; font-family: var(--font-numbers); font-size: 12px; }
+.cout-employeur-box .cout-lbl { color: white; font-size: 7px; display: block; margin-top: 2px; }
+.totaux-mois-box { background-color: var(--dgfip-dark); color: white; display: flex; align-items: center; padding: 0 15px; font-size: 10px; }
+
+.row-net td { padding-top: 15px; vertical-align: top; }
+.net-pay-block { display: flex; align-items: center; justify-content: center; gap: 15px; }
+.net-pay-text { color: var(--dgfip-medium); font-size: 16px; font-weight: bold; font-family: var(--font-main); }
+.net-pay-amount { background: white; color: black; border: 2px solid var(--dgfip-dark); padding: 5px 20px; font-size: 18px; min-width: 120px; text-align: right; }
+.charges-patronales-block { background-color: var(--dgfip-dark); color: white; text-align: center; padding: 15px 5px; font-size: 9px; font-weight: bold; box-sizing: border-box; }
+
+/* --- LE PIED DE PAGE (BASE SS / IMPOSABLE) --- */
+.footer-bottom { margin-top: 15px; width: 300px; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.summary-box { border: 1px solid var(--dgfip-dark); text-align: center; }
+.summary-title { background-color: var(--dgfip-medium); color: white; font-size: 7px; padding: 2px; }
+.summary-value { background-color: var(--dgfip-light); color: black; padding: 4px; font-family: var(--font-numbers); font-weight: bold; }

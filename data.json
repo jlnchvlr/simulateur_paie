@@ -1,0 +1,67 @@
+{
+    "constantes": {
+        "valeur_point_mensuel": 4.92278,
+        "taux_retenue_pc": 0.1110,
+        "taux_csg_deductible": 0.068,
+        "taux_csg_non_deductible": 0.024,
+        "taux_crds": 0.005,
+        "assiette_csg_crds": 0.9825,
+        "taux_rafp": 0.05,
+        "plafond_rafp": 0.20,
+        "taux_retenue_isq": 0.246,
+        "transfert_primes_points": 32.42,
+        "participation_psc": 15.00
+    },
+    "taux_patronaux": {
+        "alloc_familiale": 0.0345,
+        "af_majoration": 0.0180,
+        "fnal": 0.0050,
+        "csa": 0.0030,
+        "maladie": 0.0970,
+        "pensions_civiles": 0.8228,
+        "ati": 0.0032,
+        "versement_mobilite": 0.0200
+    },
+    "grilles_icna": {
+        "ING. EN CHEF CONT.NAV.AE": {
+            "01": { "indice": 650 }, "02": { "indice": 690 }, "03": { "indice": 730 },
+            "04": { "indice": 773 }, "05": { "indice": 811 }, "06": { "indice": 835 },
+            "HEA1": { "indice": 895 }, "HEA2": { "indice": 930 }, "HEA3": { "indice": 977 }
+        },
+        "ING.DIV. CONT.NAV.AE": {
+            "01": { "indice": 416 }, "02": { "indice": 437 }, "03": { "indice": 462 },
+            "04": { "indice": 489 }, "05": { "indice": 521 }, "06": { "indice": 557 },
+            "07": { "indice": 585 }, "08": { "indice": 617 }, "09": { "indice": 650 },
+            "10": { "indice": 690 }, "11": { "indice": 730 }, "12": { "indice": 773 },
+            "13": { "indice": 811 }, "14": { "indice": 835 },
+            "HEA1": { "indice": 895 }, "HEA2": { "indice": 930 }, "HEA3": { "indice": 977 }
+        },
+        "ING. CONT.NAV.AE": {
+            "01": { "indice": 395 }, "02": { "indice": 415 }, "03": { "indice": 436 },
+            "04": { "indice": 461 }, "05": { "indice": 488 }, "06": { "indice": 523 },
+            "07": { "indice": 537 }, "08": { "indice": 557 }, "09": { "indice": 577 }
+        },
+        "ELEVE / STAGIAIRE ICNA": {
+            "Eleve 1A": { "indice": 326 }, "Eleve 2A": { "indice": 340 }, "Stagiaire": { "indice": 340 }
+        }
+    },
+    "zones_residence": {
+        "Zone 1": 0.03, "Zone 2": 0.01, "Zone 3": 0.00
+    },
+    "rist": {
+        "fonctions": {
+            "PC - Liste 1 à 4 (Niveau 9)": 1518.16,
+            "Chefs d'équipe CRNA / PC Listes 1 à 4 (Niveau 10)": 1591.62,
+            "Chefs de salle CRNA (Niveau 11)": 1701.81
+        },
+        "experience": {
+            "ICNA Divisionnaire/Normal (Niveau 4)": 454.72,
+            "ICNA en Chef (Niveau 5)": 559.69
+        },
+        "isq": {
+            "Valide (PC Liste 1)": { "licence": 1976.11, "complement": 2281.78 },
+            "Perdue / Suspendue": { "licence": 0.00, "complement": 0.00 }
+        },
+        "ind_csg": 115.18
+    }
+}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Paie ICNA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Paramètres Agent</h2>
+        
+        <label>Grade</label>
+        <select id="input-grade">
+            <option value="ING. EN CHEF CONT.NAV.AE">Ingénieur en Chef (ICNA C)</option>
+            <option value="ING.DIV. CONT.NAV.AE" selected>Ingénieur Divisionnaire (ICNA D)</option>
+            <option value="ING. CONT.NAV.AE">Ingénieur Normal (ICNA N)</option>
+            <option value="ELEVE / STAGIAIRE ICNA">Élève / Stagiaire</option>
+        </select>
+
+        <label>Échelon</label>
+        <input type="text" id="input-echelon" value="03" placeholder="Ex: 01, 09, HEA1...">
+
+        <label>Zone de Résidence</label>
+        <select id="input-zone">
+            <option value="Zone 1" selected>Zone 1 (3% - Paris/RP)</option>
+            <option value="Zone 2">Zone 2 (1% - Grandes Villes)</option>
+            <option value="Zone 3">Zone 3 (0% - Reste France)</option>
+        </select>
+
+        <h3>Qualifications & Primes</h3>
+        
+        <label>Fonction exercée</label>
+        <select id="input-fonction">
+            <option value="PC - Liste 1 à 4 (Niveau 9)">PC - Liste 1 à 4 (Niveau 9)</option>
+            <option value="Chefs d'équipe CRNA / PC Listes 1 à 4 (Niveau 10)" selected>Chefs d'équipe CRNA / PC Listes 1 à 4 (Niveau 10)</option>
+            <option value="Chefs de salle CRNA (Niveau 11)">Chefs de salle CRNA (Niveau 11)</option>
+        </select>
+
+        <label>Expérience</label>
+        <select id="input-experience">
+            <option value="ICNA Divisionnaire/Normal (Niveau 4)" selected>ICNA Divisionnaire/Normal (Niveau 4)</option>
+            <option value="ICNA en Chef (Niveau 5)">ICNA en Chef (Niveau 5)</option>
+        </select>
+
+        <label>Licence ISQ</label>
+        <select id="input-isq">
+            <option value="Valide (PC Liste 1)" selected>Valide (PC Liste 1)</option>
+            <option value="Perdue / Suspendue">Perdue / Suspendue</option>
+        </select>
+
+        <label>Forfait Mobilités Durables du mois (€)</label>
+        <input type="number" id="input-fmd" value="300.00" step="10">
+
+        <h3>Événements du mois</h3>
+        
+        <label>Indemnités Travail de Nuit / S2 (€)</label>
+        <input type="number" id="input-nuit" value="0.00" step="1">
+
+        <label>Jours d'absence (Carence / Grève)</label>
+        <input type="number" id="input-absence" value="0" min="0" max="30" step="1">
+
+        <h3>Primes Exceptionnelles</h3>
+        
+        <label>Prime Partage Performance (€)</label>
+        <input type="number" id="input-perf" value="0.00" step="10">
+
+        <label>RIST Orga Temps Travail (€)</label>
+        <input type="number" id="input-rist-orga" value="0.00" step="10">
+
+        <h3>Fiscalité</h3>
+        
+        <label>Taux de Prélèvement à la Source (%)</label>
+        <input type="number" id="input-pas" value="19.6" step="0.1">
+    </div>
+
+    <div class="page-a4">
+        
+        <div class="header-container">
+            <div class="header-logo">
+                DDFIP<br>DES<br>YVELINES
+            </div>
+            
+            <div class="header-title-box">
+                <div class="header-title-main">BULLETIN DE PAYE</div>
+                <div class="header-title-sub">
+                    MOIS DE <span style="background:white; color:black; padding:0 10px; font-weight:bold;">JANVIER 2026</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                TEMPS DE TRAVAIL: <strong>151,67 H</strong>
+            </div>
+        </div>
+
+        <table class="info-table">
+            <thead>
+                <tr>
+                    <th>GRADE</th>
+                    <th>ENFANTS<br>À CHARGE</th>
+                    <th>ÉCH</th>
+                    <th>INDICE OU<br>NB. D'HEURES</th>
+                    <th>TEMPS PARTIEL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="ui-grade">ING.DIV. CONT.NAV.AE</td>
+                    <td>00</td>
+                    <td id="ui-echelon">03</td>
+                    <td id="ui-indice">0462</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="pay-table">
+            <thead>
+                <tr>
+                    <th class="col-code">CODE</th>
+                    <th class="col-libelle center">ÉLÉMENTS</th>
+                    <th class="col-amount center">À PAYER</th>
+                    <th class="col-amount center">À DÉDUIRE</th>
+                    <th class="col-amount center">POUR INFORMATION</th>
+                </tr>
+            </thead>
+            <tbody id="lignes-paie">
+                </tbody>
+            
+            <tfoot class="pay-table-foot">
+                <tr class="row-totaux">
+                    <td colspan="2" class="no-bg" style="padding-right: 10px;">
+                        <div class="flex-end-row">
+                            <div class="cout-employeur-box">
+                                <span class="cout-val">€ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="ui-cout-employeur">0,00</span></span>
+                                <span class="cout-lbl">COÛT TOTAL EMPLOYEUR</span>
+                            </div>
+                            <div class="totaux-mois-box">TOTAUX DU MOIS</div>
+                        </div>
+                    </td>
+                    <td class="col-amount center" style="background-color: var(--dgfip-light);">€ <span id="ui-total-a-payer">0,00</span></td>
+                    <td class="col-amount center" style="background-color: var(--dgfip-light);">€ <span id="ui-total-a-deduire">0,00</span></td>
+                    <td class="col-amount center" style="background-color: var(--dgfip-light);">€ <span id="ui-charges-patronales">0,00</span></td>
+                </tr>
+                <tr class="row-net">
+                    <td colspan="2" class="no-bg">
+                        <div class="summary-grid">
+                            <div class="summary-box">
+                                <div class="summary-title">BASE SS DE L'ANNÉE</div>
+                                <div class="summary-value">€ <span style="float:right"></span></div>
+                            </div>
+                            <div class="summary-box">
+                                <div class="summary-title">BASE SS DU MOIS</div>
+                                <div class="summary-value">€ <span style="float:right" id="ui-base-ss">0,00</span></div>
+                            </div>
+                            <div class="summary-box">
+                                <div class="summary-title">MONTANT IMPOSABLE DE L'ANNÉE</div>
+                                <div class="summary-value">€ <span style="float:right"></span></div>
+                            </div>
+                            <div class="summary-box">
+                                <div class="summary-title">MONTANT IMPOSABLE DU MOIS</div>
+                                <div class="summary-value">€ <span style="float:right" id="ui-net-imposable">0,00</span></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td colspan="2" class="no-bg">
+                        <div class="net-pay-block">
+                            <span class="net-pay-text">NET À PAYER</span>
+                            <span class="net-pay-amount" id="ui-net-a-payer">0,00 €</span>
+                        </div>
+                    </td>
+                    <td class="no-bg">
+                        <div class="charges-patronales-block">
+                            TOTAL CHARGES<br>PATRONALES
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div style="text-align:center; font-size:8px; color:var(--dgfip-medium); margin-top: 15px; letter-spacing: 2px;">
+            DANS VOTRE INTÉRÊT, CONSERVEZ CE DOCUMENT SANS LIMITATION DE DURÉE
+        </div>
+
+    </div>
+
+    <script src="engine.js"></script>
+</body>
+</html>
