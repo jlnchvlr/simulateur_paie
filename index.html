@@ -29,6 +29,12 @@
             <option value="Zone 3">Zone 3 (0% - Reste France)</option>
         </select>
 
+        <label>Âge de l'agent</label>
+        <input type="number" id="input-age" value="30" step="1">
+
+        <label>Points N.B.I. (Auto 55 si >= 35 ans)</label>
+        <input type="number" id="input-nbi" value="0" step="1">
+
         <h3>Fonctions & Expérience</h3>
         
         <label>Fonction exercée (RIST)</label>
@@ -76,14 +82,14 @@
 
         <h3>Événements du mois</h3>
         
-        <label>Indemnités Travail de Nuit / S2 (€)</label>
-        <input type="number" id="input-nuit" value="0.00" step="1">
+        <label>Nombre de Nuits complètes (N)</label>
+        <input type="number" id="input-nuit-n" value="0" step="1">
+
+        <label>Nombre de Soirées (S2)</label>
+        <input type="number" id="input-nuit-s2" value="0" step="1">
 
         <label>Jours d'absence (Carence / Grève)</label>
         <input type="number" id="input-absence" value="0" min="0" max="30" step="1">
-        
-        <label>Forfait Mobilités Durables du mois (€)</label>
-        <input type="number" id="input-fmd" value="300.00" step="10">
 
         <h3>Primes Exceptionnelles (Variables)</h3>
         
@@ -103,8 +109,17 @@
         <label>Montant RIST Orga Temps Travail (€)</label>
         <input type="number" id="input-rist-orga" value="0.00" step="10">
 
+        <label>Forfait Mobilités Durables du mois (€)</label>
+        <input type="number" id="input-fmd" value="0.00" step="10">
+
         <label>Prime Partage Performance (€)</label>
         <input type="number" id="input-perf" value="0.00" step="10">
+
+        <label>Prime de fidélisation territoriale (€)</label>
+        <input type="number" id="input-fidelisation" value="0.00" step="10">
+
+        <label>Prime d'attractivité géographique (€)</label>
+        <input type="number" id="input-geographique" value="0.00" step="10">
 
         <h3>Fiscalité</h3>
         

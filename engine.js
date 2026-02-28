@@ -6,11 +6,18 @@ async function initialiserApplication() {
         if (!reponse.ok) throw new Error("Fichier introuvable.");
         baseDonnees = await reponse.json();
 
-        // Écouteurs pour le calcul général
         const inputs = document.querySelectorAll('.sidebar select, .sidebar input');
         inputs.forEach(input => input.addEventListener('input', calculerPaie));
 
-        // Écouteurs spécifiques pour le calculateur de part variable OTT
+        // Détection automatique de la NBI selon l'âge
+        document.getElementById('input-age').addEventListener('input', (e) => {
+            const age = parseInt(e.target.value) || 0;
+            const nbiInput = document.getElementById('input-nbi');
+            if (age >= 35) nbiInput.value = 55; // 55 pts pour un ICNA
+            else nbiInput.value = 0;
+            calculerPaie();
+        });
+
         document.getElementById('input-opt-var-type').addEventListener('input', calculerPartVariableOtt);
         document.getElementById('input-opt-var-coeff').addEventListener('input', calculerPartVariableOtt);
 
@@ -20,7 +27,6 @@ async function initialiserApplication() {
     }
 }
 
-// Fonction pour calculer automatiquement la part variable OTT
 function calculerPartVariableOtt() {
     const type = document.getElementById('input-opt-var-type').value;
     const coeff = parseFloat(document.getElementById('input-opt-var-coeff').value) || 0;
@@ -32,9 +38,7 @@ function calculerPartVariableOtt() {
     else if (type === 'opt1_plus') resultat = baseDonnees.rist.flexibilite_options_variables.opt1_plus * coeff;
     else if (type === 'opt2_2') resultat = baseDonnees.rist.flexibilite_options_variables.opt2_2 * Math.max(0, coeff - 1);
 
-    if (type !== 'none') {
-        document.getElementById('input-rist-orga').value = resultat.toFixed(2);
-    }
+    if (type !== 'none') document.getElementById('input-rist-orga').value = resultat.toFixed(2);
     
     calculerPaie();
 }
@@ -51,12 +55,17 @@ function getProfilDepuisInterface() {
         echelon: document.getElementById('input-echelon').value,
         zone: document.getElementById('input-zone').value,
         taux_pas: parseFloat(document.getElementById('input-pas').value) / 100 || 0,
+        age: parseInt(document.getElementById('input-age').value) || 0,
+        points_nbi: parseInt(document.getElementById('input-nbi').value) || 0,
         
         evenements: {
-            indemnites_nuit: parseFloat(document.getElementById('input-nuit').value) || 0,
+            nuits: parseInt(document.getElementById('input-nuit-n').value) || 0,
+            soirees: parseInt(document.getElementById('input-nuit-s2').value) || 0,
             jours_absence: parseInt(document.getElementById('input-absence').value) || 0,
             prime_performance: parseFloat(document.getElementById('input-perf').value) || 0,
-            rist_orga: parseFloat(document.getElementById('input-rist-orga').value) || 0
+            rist_orga: parseFloat(document.getElementById('input-rist-orga').value) || 0,
+            fidelisation: parseFloat(document.getElementById('input-fidelisation').value) || 0,
+            geographique: parseFloat(document.getElementById('input-geographique').value) || 0
         },
         
         primes: {
@@ -85,14 +94,24 @@ function calculerPaie() {
     let totalAPayer = 0;
     let totalADeduire = 0;
 
+    // A. TRAITEMENT ET NBI
     const indice = baseDonnees.grilles_icna[profilAgent.grade][profilAgent.echelon]?.indice || 0;
     const traitementBrut = arrondir(indice * baseDonnees.constantes.valeur_point_mensuel);
-    const indemniteResidence = Math.floor(traitementBrut * baseDonnees.zones_residence[profilAgent.zone] * 100) / 100;
+    const montantNbi = arrondir(profilAgent.points_nbi * baseDonnees.constantes.valeur_point_mensuel);
+    
+    // L'indemnité de résidence est calculée sur le Traitement + la NBI !
+    const indemniteResidence = Math.floor((traitementBrut + montantNbi) * baseDonnees.zones_residence[profilAgent.zone] * 100) / 100;
+    
     const psc = baseDonnees.constantes.participation_psc;
-    const nuit = profilAgent.evenements.indemnites_nuit;
+    
+    // Formule exacte pour les nuits
+    const nuit = arrondir((8.73 * profilAgent.evenements.nuits) + (0.97 * profilAgent.evenements.soirees));
+    
     const joursAbs = profilAgent.evenements.jours_absence;
     
+    // Déductions d'absences
     const absenceTraitement = arrondir((traitementBrut / 30) * joursAbs);
+    const absenceNbi = arrondir((montantNbi / 30) * joursAbs);
     const absenceResidence = arrondir((indemniteResidence / 30) * joursAbs);
     
     const absRistFct = arrondir((profilAgent.primes.rist_fonctions / 30) * joursAbs);
@@ -102,8 +121,13 @@ function calculerPaie() {
     const absRistMaj = arrondir((profilAgent.primes.rist_maj_isq / 30) * joursAbs);
     const absIndCsg = arrondir((profilAgent.primes.ind_compensatrice_csg / 30) * joursAbs);
 
+    // Les bases réelles (amputées des absences)
     const baseTraitementReel = traitementBrut - absenceTraitement;
+    const baseNbiReelle = montantNbi - absenceNbi;
     const baseResidenceReelle = indemniteResidence - absenceResidence;
+    
+    // Base totale soumise à la Pension Civile de l'État (Traitement + NBI)
+    const baseSoumisePC = baseTraitementReel + baseNbiReelle;
     
     const totalPrimesSoumises = baseResidenceReelle + nuit
                                 + (profilAgent.primes.rist_fonctions - absRistFct)
@@ -113,18 +137,24 @@ function calculerPaie() {
                                 + (profilAgent.primes.rist_maj_isq - absRistMaj)
                                 + (profilAgent.primes.ind_compensatrice_csg - absIndCsg)
                                 + profilAgent.evenements.prime_performance 
-                                + profilAgent.evenements.rist_orga;
+                                + profilAgent.evenements.rist_orga
+                                + profilAgent.evenements.fidelisation
+                                + profilAgent.evenements.geographique;
 
-    const retenuePC = arrondir(baseTraitementReel * baseDonnees.constantes.taux_retenue_pc);
-    const baseRafp = Math.min(totalPrimesSoumises, baseTraitementReel * baseDonnees.constantes.plafond_rafp);
+    // B. DÉDUCTIONS
+    // La retenue PC est calculée sur le traitement + la NBI
+    const retenuePC = arrondir(baseSoumisePC * baseDonnees.constantes.taux_retenue_pc);
+    
+    // Le plafond RAFP de 20% se calcule sur (Traitement Brut + NBI)
+    const baseRafp = Math.min(totalPrimesSoumises, baseSoumisePC * baseDonnees.constantes.plafond_rafp);
     const cotisationRafp = arrondir(baseRafp * baseDonnees.constantes.taux_rafp);
     
-    // La déduction 24,6% ISQ ne s'applique QUE sur la Licence de base, pas sur les compléments
     const ristIsqReel = profilAgent.primes.rist_lic_isq - absRistIsq;
     const retenueIsq = arrondir(ristIsqReel * baseDonnees.constantes.taux_retenue_isq);
     const transfertPrimes = baseDonnees.constantes.transfert_primes_points;
 
-    const elementsSoumisCsg = baseTraitementReel + totalPrimesSoumises + psc;
+    // CSG / CRDS
+    const elementsSoumisCsg = baseSoumisePC + totalPrimesSoumises + psc;
     const deductionsBaseCsg = transfertPrimes + retenueIsq;
     const baseCsgCrdsExacte = (elementsSoumisCsg - deductionsBaseCsg) * baseDonnees.constantes.assiette_csg_crds;
     
@@ -132,17 +162,19 @@ function calculerPaie() {
     const csgNonDeductible = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_csg_non_deductible);
     const crds = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_crds);
 
-    const patAllocFam = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.alloc_familiale);
-    const patAfMajor = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.af_majoration);
-    const patFnal = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.fnal);
-    const patCsa = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.csa);
-    const patMaladie = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.maladie);
-    const patPensions = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.pensions_civiles);
-    const patAti = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.ati);
-    const patMobilite = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.versement_mobilite);
+    // C. CHARGES PATRONALES (Toutes basées sur baseSoumisePC)
+    const patAllocFam = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.alloc_familiale);
+    const patAfMajor = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.af_majoration);
+    const patFnal = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.fnal);
+    const patCsa = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.csa);
+    const patMaladie = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.maladie);
+    const patPensions = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.pensions_civiles);
+    const patAti = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.ati);
+    const patMobilite = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.versement_mobilite);
     const patRafp = cotisationRafp; 
     const totalPatronal = patAllocFam + patAfMajor + patFnal + patCsa + patMaladie + patPensions + patAti + patMobilite + patRafp;
 
+    // INJECTION HTML
     document.getElementById('ui-grade').textContent = profilAgent.grade;
     document.getElementById('ui-echelon').textContent = profilAgent.echelon;
     document.getElementById('ui-indice').textContent = "0" + (indice || "000");
@@ -171,6 +203,13 @@ function calculerPaie() {
     }
 
     ajouterLigne("101000", "TRAITEMENT BRUT", traitementBrut, null, null);
+    
+    // Ligne NBI si existante
+    if (montantNbi > 0) {
+        ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", montantNbi, null, null);
+        if (joursAbs > 0) ajouterLigne("101070", "N.B.I. (ABS)", -absenceNbi, null, null);
+    }
+
     ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
     ajouterLigne("102000", "INDEMNITE DE RESIDENCE", indemniteResidence, null, null);
     
@@ -199,12 +238,10 @@ function calculerPaie() {
 
     ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
     
-    if (profilAgent.evenements.prime_performance > 0) {
-        ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", profilAgent.evenements.prime_performance, null, null);
-    }
-    if (profilAgent.evenements.rist_orga > 0) {
-        ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL", profilAgent.evenements.rist_orga, null, null);
-    }
+    if (profilAgent.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", profilAgent.evenements.prime_performance, null, null);
+    if (profilAgent.evenements.rist_orga > 0) ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL", profilAgent.evenements.rist_orga, null, null);
+    if (profilAgent.evenements.fidelisation > 0) ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", profilAgent.evenements.fidelisation, null, null);
+    if (profilAgent.evenements.geographique > 0) ajouterLigne("203002", "PRIME ATTRACTIVITE GEOGRAPHIQUE", profilAgent.evenements.geographique, null, null);
 
     ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, csgNonDeductible, null);
     ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, csgDeductible, null);
@@ -237,13 +274,13 @@ function calculerPaie() {
     const netSocial = arrondir(netAPayerAvantImpot - profilAgent.primes.forfait_mobilites - psc + retenueIsq);
     ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, netSocial);
 
+    // Le Forfait Mobilités Durables est déduit du net imposable (car non-imposable)
     const netImposable = netAPayerAvantImpot + csgNonDeductible + crds - profilAgent.primes.forfait_mobilites;
     const impotSource = arrondir(netImposable * profilAgent.taux_pas);
     
     ajouterLigne("558000", `IMPOT SUR LE REVENU PRELEVE A LA SOURCE`, null, impotSource, null);
     ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(profilAgent.taux_pas * 100)}%)`, null, null, null);
 
-    // Ligne ressort pour absorber le vide
     const trRessort = document.createElement('tr');
     trRessort.style.backgroundColor = "white"; 
     trRessort.innerHTML = `
