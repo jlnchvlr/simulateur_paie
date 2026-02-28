@@ -53,3 +53,28 @@ body { background-color: #2b2b2b; display: flex; justify-content: center; align-
 .summary-box { border: 1px solid var(--dgfip-dark); text-align: center; }
 .summary-title { background-color: var(--dgfip-medium); color: white; font-size: 7px; padding: 2px; }
 .summary-value { background-color: var(--dgfip-light); color: black; padding: 3px; font-family: var(--font-numbers); font-weight: bold; }
+
+/* --- CHAMPS ÉDITABLES DANS LE TABLEAU (INLINE EDITING) --- */
+.table-input {
+    background-color: transparent;
+    border: none;
+    color: black;
+    font-family: var(--font-numbers);
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+    cursor: pointer;
+    outline: none;
+    /* Cache la flèche du menu déroulant pour faire "vrai texte" */
+    appearance: none; 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-align-last: center; 
+}
+
+.table-input:hover, .table-input:focus {
+    background-color: white;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3) inset;
+    border-radius: 2px;
+}

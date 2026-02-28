@@ -10,17 +10,6 @@
 
     <div class="sidebar">
         <h2>Paramètres Agent</h2>
-        
-        <label>Grade</label>
-        <select id="input-grade">
-            <option value="ING. EN CHEF CONT.NAV.AE">Ingénieur en Chef (ICNA C)</option>
-            <option value="ING.DIV. CONT.NAV.AE" selected>Ingénieur Divisionnaire (ICNA D)</option>
-            <option value="ING. CONT.NAV.AE">Ingénieur Normal (ICNA N)</option>
-            <option value="ELEVE / STAGIAIRE ICNA">Élève / Stagiaire</option>
-        </select>
-
-        <label>Échelon</label>
-        <input type="text" id="input-echelon" value="03">
 
         <label>Zone de Résidence</label>
         <select id="input-zone">
@@ -129,18 +118,7 @@
 
     <div class="page-a4">
         
-        <div class="header-container">
-            <div style="width: 120px;"></div>
-            <div class="header-title-box">
-                <div class="header-title-main">BULLETIN DE PAYE</div>
-                <div class="header-title-sub">
-                    MOIS DE <span style="background:white; color:black; padding:0 10px; font-weight:bold;">JANVIER 2026</span>
-                </div>
-            </div>
-            <div class="header-right">
-                TEMPS DE TRAVAIL: <strong>151,67 H</strong>
-            </div>
-        </div>
+        <div style="height: 20px;"></div>
 
         <table class="info-table">
             <thead>
@@ -149,15 +127,26 @@
                     <th>ENFANTS<br>À CHARGE</th>
                     <th>ÉCH</th>
                     <th>INDICE OU<br>NB. D'HEURES</th>
+                    <th>TAUX HORAIRE<br>OU NBI</th>
                     <th>TEMPS PARTIEL</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td id="ui-grade">ING.DIV. CONT.NAV.AE</td>
+                    <td>
+                        <select id="input-grade" class="table-input" title="Cliquez pour changer de grade">
+                            <option value="ING. EN CHEF CONT.NAV.AE">ING. EN CHEF CONT.NAV.AE</option>
+                            <option value="ING.DIV. CONT.NAV.AE" selected>ING.DIV. CONT.NAV.AE</option>
+                            <option value="ING. CONT.NAV.AE">ING. CONT.NAV.AE</option>
+                            <option value="ELEVE / STAGIAIRE ICNA">ELEVE / STAGIAIRE ICNA</option>
+                        </select>
+                    </td>
                     <td>00</td>
-                    <td id="ui-echelon">03</td>
+                    <td>
+                        <select id="input-echelon" class="table-input" title="Choisissez votre échelon"></select>
+                    </td>
                     <td id="ui-indice">0462</td>
+                    <td id="ui-nbi-cell"></td>
                     <td></td>
                 </tr>
             </tbody>
@@ -179,17 +168,31 @@
             <tfoot class="pay-table-foot">
                 <tr><td colspan="5" style="height: 4px; padding: 0;"></td></tr>
 
-                <tr style="height: 18px;">
-                    <td colspan="2" class="no-bg" style="padding: 0 5px 0 0; vertical-align: top;">
-                        <div style="display: flex; justify-content: flex-end; align-items: flex-start; gap: 5px; height: 18px;">
-                            <div style="width: 120px; border: 1px solid var(--dgfip-dark); border-bottom: none; background: white; padding: 2px 5px; font-family: var(--font-numbers); font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; box-sizing: border-box;">
-                                <span>€</span><span id="ui-cout-employeur">0,00</span>
+                <tr>
+                    <td colspan="2" rowspan="2" class="no-bg" style="padding: 0 5px 0 0; vertical-align: top;">
+                        <div style="display: flex; justify-content: flex-end; align-items: flex-start;">
+                            
+                            <div style="display: flex; flex-direction: column; width: 120px; margin-right: 15px;">
+                                <div style="border: 1px solid var(--dgfip-dark); border-bottom: none; background: white; padding: 2px 5px; font-family: var(--font-numbers); font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; box-sizing: border-box; height: 18px;">
+                                    <span>€</span><span id="ui-cout-employeur">0,00</span>
+                                </div>
+                                <div style="background-color: var(--dgfip-medium); color: white; font-size: 8px; text-align: center; padding: 2px 0; border: 1px solid var(--dgfip-dark); border-top: none; box-sizing: border-box; height: 19px;">
+                                    COÛT TOTAL<br>EMPLOYEUR
+                                </div>
                             </div>
-                            <div style="background-color: var(--dgfip-dark); color: white; font-size: 10px; font-weight: bold; padding: 2px 15px; height: 100%; box-sizing: border-box; display: flex; align-items: center;">
-                                TOTAUX DU MOIS
+
+                            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                <div style="background-color: var(--dgfip-dark); color: white; font-size: 10px; font-weight: bold; padding: 2px 15px; height: 18px; box-sizing: border-box; display: flex; align-items: center;">
+                                    TOTAUX DU MOIS
+                                </div>
+                                <div style="color: var(--dgfip-medium); font-size: 18px; font-weight: bold; margin-top: 5px; line-height: 1;">
+                                    NET À PAYER
+                                </div>
                             </div>
+
                         </div>
                     </td>
+                    
                     <td class="col-amount u-border">
                         <div style="display:flex; justify-content:space-between; width:100%;"><span>€</span><span id="ui-total-a-payer">0,00</span></div>
                     </td>
@@ -202,16 +205,6 @@
                 </tr>
 
                 <tr>
-                    <td colspan="2" class="no-bg" style="padding: 0 5px 0 0; vertical-align: top;">
-                        <div style="display: flex; justify-content: flex-end; align-items: flex-start; gap: 20px;">
-                            <div style="width: 120px; background-color: var(--dgfip-medium); color: white; font-size: 8px; text-align: center; padding: 2px 0; border: 1px solid var(--dgfip-dark); border-top: none; box-sizing: border-box;">
-                                COÛT TOTAL<br>EMPLOYEUR
-                            </div>
-                            <div style="color: var(--dgfip-medium); font-size: 18px; font-weight: bold; margin-top: 5px;">
-                                NET À PAYER
-                            </div>
-                        </div>
-                    </td>
                     <td colspan="2" class="no-bg" style="padding: 5px 5px 0 0; text-align: right; vertical-align: top;">
                         <div style="background: white; border: 2px solid var(--dgfip-dark); display: inline-block; padding: 4px 15px; font-family: var(--font-numbers); font-size: 20px; font-weight: bold; min-width: 130px;">
                             <span id="ui-net-a-payer">0,00 €</span>
