@@ -79,3 +79,26 @@ body { background-color: #2b2b2b; display: flex; justify-content: center; align-
     box-shadow: 0 0 5px rgba(0,0,0,0.3) inset;
     border-radius: 2px;
 }
+/* --- OPTION 3 : ÉDITION MAGIQUE AU CLIC --- */
+body { display: flex; justify-content: center; background-color: #525659; margin: 20px 0; }
+
+.clickable-row { cursor: pointer; transition: background-color 0.15s; }
+.clickable-row:hover td { background-color: #e8f0fe !important; }
+.clickable-row:hover td:first-child { border-left: 3px solid var(--dgfip-dark); }
+
+.add-row td { cursor: pointer; text-align: center !important; color: var(--dgfip-medium) !important; font-family: var(--font-main) !important; font-size: 11px !important; padding: 4px !important; border: none !important; height: auto !important; line-height: normal !important; }
+.add-row:hover td { background-color: #f1f3f4 !important; color: var(--dgfip-dark) !important; font-weight: bold; }
+
+/* Fenêtre Modale (Pop-up) */
+.magic-modal { border: 2px solid var(--dgfip-dark); border-radius: 8px; padding: 0; width: 450px; max-width: 90vw; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.magic-modal::backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
+.modal-header { background: var(--dgfip-dark); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { margin: 0; font-size: 16px; font-family: var(--font-main); letter-spacing: 1px; }
+.close-btn { background: transparent; color: white; border: none; font-size: 20px; cursor: pointer; font-weight: bold; }
+.close-btn:hover { color: #ccc; }
+.modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; font-family: var(--font-main); }
+.setting-panel { display: none; } /* Caché par défaut */
+.setting-panel.active { display: block; } /* Affiché si ciblé */
+.modal-body label { display: block; font-weight: bold; margin-top: 12px; margin-bottom: 4px; color: #444; font-size: 12px; }
+.modal-body select, .modal-body input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: var(--font-main); box-sizing: border-box; }
+.modal-body input:focus, .modal-body select:focus { outline: 2px solid var(--dgfip-medium); }

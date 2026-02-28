@@ -12,7 +12,7 @@ async function initialiserApplication() {
             mettreAJourEchelons();
         });
 
-        const inputs = document.querySelectorAll('.sidebar select, .sidebar input, .table-input');
+        const inputs = document.querySelectorAll('.magic-modal select, .magic-modal input, .table-input');
         inputs.forEach(input => input.addEventListener('input', calculerPaie));
 
         document.getElementById('input-age').addEventListener('input', (e) => {
@@ -130,6 +130,16 @@ function arrondir(valeur) {
     return Math.round(valeur * 100) / 100;
 }
 
+function ouvrirModal(panelId, titre) {
+    document.getElementById('modal-title').textContent = titre;
+    // On cache tous les tiroirs
+    document.querySelectorAll('.setting-panel').forEach(p => p.classList.remove('active'));
+    // On affiche seulement celui demandé
+    document.getElementById(panelId).classList.add('active');
+    // On ouvre la pop-up
+    document.getElementById('magic-modal').showModal();
+}
+
 function calculerPaie() {
     const profilAgent = getProfilDepuisInterface();
     let totalAPayer = 0;
@@ -215,6 +225,15 @@ function calculerPaie() {
         let euroSymbole = (aPayer || aDeduire || pourInfo) ? `<span style="float: right; font-weight: normal; color: #555;">€</span>` : "";
 
         const tr = document.createElement('tr');
+        tr.className = 'clickable-row'; // Rendre la ligne interactive au survol
+        tr.title = "Cliquez pour modifier";
+
+        // L'intelligence : on lie les codes DGFIP aux bons menus !
+        if (code === "102000") tr.onclick = () => ouvrirModal('panel-residence', 'Zone de Résidence');
+        else if (code === "101000" || code === "101070") tr.onclick = () => ouvrirModal('panel-age', 'Âge & N.B.I.');
+        else if (code.startsWith("2019")) tr.onclick = () => ouvrirModal('panel-rist', 'Primes RIST & Qualifications');
+        else tr.onclick = () => ouvrirModal('panel-events', 'Événements & Primes exceptionnelles');
+
         tr.innerHTML = `
             <td class="col-code">${code}</td>
             <td class="col-libelle label${extraClass}">
@@ -303,6 +322,13 @@ function calculerPaie() {
     
     ajouterLigne("558000", `IMPOT SUR LE REVENU PRELEVE A LA SOURCE`, null, impotSource, null);
     ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(profilAgent.taux_pas * 100)}%)`, null, null, null);
+
+// BOUTON AJOUTER (Pour ce qui n'apparaît pas encore, ex: Nuits, Heures Sup)
+    const trAjout = document.createElement('tr');
+    trAjout.className = 'add-row';
+    trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Nuits, Absences, Mobilité...) </td>`;
+    trAjout.onclick = () => ouvrirModal('panel-events', 'Événements & Primes exceptionnelles');
+    tbody.appendChild(trAjout);
 
     const trRessort = document.createElement('tr');
     trRessort.style.backgroundColor = "white"; 
