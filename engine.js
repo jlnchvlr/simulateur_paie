@@ -116,7 +116,7 @@ function getProfilDepuisInterface() {
             rist_lic_isq: baseDonnees.rist.isq_licence[isqLicence] || 0,
             rist_cplt_lic_isq: baseDonnees.rist.isq_complement[isqComplement] || 0,
             rist_maj_isq: baseDonnees.rist.isq_majoration[isqMajoration] || 0,
-            ind_compensatrice_csg: baseDonnees.rist.ind_csg_default || 115.18
+            ind_compensatrice_csg: parseFloat(document.getElementById('input-ind-csg').value) || 0
         }
     };
 }
@@ -130,13 +130,18 @@ function arrondir(valeur) {
     return Math.round(valeur * 100) / 100;
 }
 
-function ouvrirModal(panelId, titre) {
+function ouvrirModal(panelIds, titre) {
     document.getElementById('modal-title').textContent = titre;
     // On cache tous les tiroirs
     document.querySelectorAll('.setting-panel').forEach(p => p.classList.remove('active'));
-    // On affiche seulement celui demandé
-    document.getElementById(panelId).classList.add('active');
-    // On ouvre la pop-up
+    
+    // Si on lui donne un tableau de plusieurs tiroirs, il les affiche tous
+    if (Array.isArray(panelIds)) {
+        panelIds.forEach(id => document.getElementById(id).classList.add('active'));
+    } else {
+        document.getElementById(panelIds).classList.add('active'); // Un seul tiroir
+    }
+    
     document.getElementById('magic-modal').showModal();
 }
 
@@ -225,14 +230,36 @@ function calculerPaie() {
         let euroSymbole = (aPayer || aDeduire || pourInfo) ? `<span style="float: right; font-weight: normal; color: #555;">€</span>` : "";
 
         const tr = document.createElement('tr');
-        tr.className = 'clickable-row'; // Rendre la ligne interactive au survol
-        tr.title = "Cliquez pour modifier";
+        
+        // --- LOGIQUE DE CIBLAGE INTELLIGENT ---
+        let estCliquable = false;
+        let cibles = null;
+        let titreModal = "";
 
-        // L'intelligence : on lie les codes DGFIP aux bons menus !
-        if (code === "102000") tr.onclick = () => ouvrirModal('panel-residence', 'Zone de Résidence');
-        else if (code === "101000" || code === "101070") tr.onclick = () => ouvrirModal('panel-age', 'Âge & N.B.I.');
-        else if (code.startsWith("2019")) tr.onclick = () => ouvrirModal('panel-rist', 'Primes RIST & Qualifications');
-        else tr.onclick = () => ouvrirModal('panel-events', 'Événements & Primes exceptionnelles');
+        if (code === "102000") {
+            estCliquable = true; cibles = 'panel-residence'; titreModal = 'Zone de Résidence';
+        } else if (code === "101000" || code === "101070") {
+            estCliquable = true; cibles = 'panel-age'; titreModal = 'Âge & N.B.I.';
+        } else if (code && code.startsWith("2019")) {
+            estCliquable = true; cibles = 'panel-rist'; titreModal = 'Primes RIST & Qualifications ISQ';
+        } else if (code === "200176") {
+            estCliquable = true; cibles = 'panel-nuits'; titreModal = 'Travail de Nuit & Soirées';
+        } else if (["200041", "202485", "202558", "203001", "203002"].includes(code)) {
+            estCliquable = true; cibles = 'panel-primes'; titreModal = 'Primes Exceptionnelles';
+        } else if (code === "604958" || code === "604959") {
+            estCliquable = true; cibles = 'panel-absences'; titreModal = 'Absences et Carence';
+        } else if (code === "558000" || libelle.includes("TAUX PERSONNALISE")) {
+            estCliquable = true; cibles = 'panel-impots'; titreModal = 'Prélèvement à la Source';
+        } else if (code === "202206") {
+            estCliquable = true; cibles = 'panel-csg'; titreModal = 'Indemnité Compensatrice CSG';
+        }
+
+        if (estCliquable) {
+            tr.className = 'clickable-row';
+            tr.title = "Cliquez pour modifier";
+            tr.onclick = () => ouvrirModal(cibles, titreModal);
+        }
+        // ---------------------------------------
 
         tr.innerHTML = `
             <td class="col-code">${code}</td>
@@ -327,7 +354,8 @@ function calculerPaie() {
     const trAjout = document.createElement('tr');
     trAjout.className = 'add-row';
     trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Nuits, Absences, Mobilité...) </td>`;
-    trAjout.onclick = () => ouvrirModal('panel-events', 'Événements & Primes exceptionnelles');
+    // Ouvre 3 tiroirs d'un coup pour offrir tous les choix !
+    trAjout.onclick = () => ouvrirModal(['panel-nuits', 'panel-absences', 'panel-primes'], 'Ajouter des Variables');
     tbody.appendChild(trAjout);
 
     const trRessort = document.createElement('tr');

@@ -70,16 +70,19 @@
                 </select>
             </div>
 
-            <div id="panel-events" class="setting-panel">
-                <h3 style="margin-top:0;">Heures & Absences</h3>
+            <div id="panel-nuits" class="setting-panel">
                 <label>Nombre de Nuits complètes (N)</label>
                 <input type="number" id="input-nuit-n" value="0" step="1">
                 <label>Nombre de Soirées (S2)</label>
                 <input type="number" id="input-nuit-s2" value="0" step="1">
+            </div>
+
+            <div id="panel-absences" class="setting-panel">
                 <label>Jours d'absence (Carence / Grève)</label>
                 <input type="number" id="input-absence" value="0" min="0" max="30" step="1">
-                
-                <h3 style="margin-bottom:0;">Primes Exceptionnelles</h3>
+            </div>
+
+            <div id="panel-primes" class="setting-panel">
                 <label>Calculateur de Part Variable OTT</label>
                 <select id="input-opt-var-type">
                     <option value="none" selected>-- Saisie manuelle --</option>
@@ -101,12 +104,18 @@
                 <input type="number" id="input-fidelisation" value="0.00" step="10">
                 <label>Prime d'attractivité géographique (€)</label>
                 <input type="number" id="input-geographique" value="0.00" step="10">
+            </div>
 
-                <h3 style="margin-bottom:0;">Impôts</h3>
+            <div id="panel-impots" class="setting-panel">
                 <label>Taux de Prélèvement à la Source (%)</label>
                 <input type="number" id="input-pas" value="19.6" step="0.1">
             </div>
-
+            
+            <div id="panel-csg" class="setting-panel">
+                <label>Indemnité Compensatrice CSG (€)</label>
+                <input type="number" id="input-ind-csg" value="115.18" step="0.01">
+                <p style="font-size: 10px; color: #666; font-style: italic; margin-top: 5px;">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
+            </div>
         </div>
     </dialog>
 
