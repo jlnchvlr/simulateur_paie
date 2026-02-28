@@ -6,8 +6,13 @@ async function initialiserApplication() {
         if (!reponse.ok) throw new Error("Fichier introuvable.");
         baseDonnees = await reponse.json();
 
+        // Écouteurs pour le calcul général
         const inputs = document.querySelectorAll('.sidebar select, .sidebar input');
         inputs.forEach(input => input.addEventListener('input', calculerPaie));
+
+        // Écouteurs spécifiques pour le calculateur de part variable OTT
+        document.getElementById('input-opt-var-type').addEventListener('input', calculerPartVariableOtt);
+        document.getElementById('input-opt-var-coeff').addEventListener('input', calculerPartVariableOtt);
 
         calculerPaie();
     } catch (erreur) {
@@ -15,10 +20,31 @@ async function initialiserApplication() {
     }
 }
 
+// Fonction pour calculer automatiquement la part variable OTT
+function calculerPartVariableOtt() {
+    const type = document.getElementById('input-opt-var-type').value;
+    const coeff = parseFloat(document.getElementById('input-opt-var-coeff').value) || 0;
+    let resultat = 0;
+
+    if (type === 'opt1_l1_6') resultat = baseDonnees.rist.flexibilite_options_variables.opt1_l1_6 * Math.max(0, coeff - 4);
+    else if (type === 'opt1_cdg') resultat = baseDonnees.rist.flexibilite_options_variables.opt1_cdg * Math.max(0, coeff - 4);
+    else if (type === 'opt1_l7_11') resultat = baseDonnees.rist.flexibilite_options_variables.opt1_l7_11 * Math.max(0, coeff - 4);
+    else if (type === 'opt1_plus') resultat = baseDonnees.rist.flexibilite_options_variables.opt1_plus * coeff;
+    else if (type === 'opt2_2') resultat = baseDonnees.rist.flexibilite_options_variables.opt2_2 * Math.max(0, coeff - 1);
+
+    if (type !== 'none') {
+        document.getElementById('input-rist-orga').value = resultat.toFixed(2);
+    }
+    
+    calculerPaie();
+}
+
 function getProfilDepuisInterface() {
     const fonctionChoisie = document.getElementById('input-fonction').value;
     const experienceChoisie = document.getElementById('input-experience').value;
-    const statutIsq = document.getElementById('input-isq').value;
+    const isqLicence = document.getElementById('input-isq-licence').value;
+    const isqComplement = document.getElementById('input-isq-complement').value;
+    const isqMajoration = document.getElementById('input-isq-majoration').value;
 
     return {
         grade: document.getElementById('input-grade').value,
@@ -37,9 +63,10 @@ function getProfilDepuisInterface() {
             forfait_mobilites: parseFloat(document.getElementById('input-fmd').value) || 0,
             rist_fonctions: baseDonnees.rist.fonctions[fonctionChoisie] || 0,
             rist_exper_prof: baseDonnees.rist.experience[experienceChoisie] || 0,
-            rist_lic_isq: baseDonnees.rist.isq[statutIsq].licence || 0,
-            rist_cplt_lic_isq: baseDonnees.rist.isq[statutIsq].complement || 0,
-            ind_compensatrice_csg: baseDonnees.rist.ind_csg
+            rist_lic_isq: baseDonnees.rist.isq_licence[isqLicence] || 0,
+            rist_cplt_lic_isq: baseDonnees.rist.isq_complement[isqComplement] || 0,
+            rist_maj_isq: baseDonnees.rist.isq_majoration[isqMajoration] || 0,
+            ind_compensatrice_csg: baseDonnees.rist.ind_csg_default || 115.18
         }
     };
 }
@@ -72,6 +99,7 @@ function calculerPaie() {
     const absRistExp = arrondir((profilAgent.primes.rist_exper_prof / 30) * joursAbs);
     const absRistIsq = arrondir((profilAgent.primes.rist_lic_isq / 30) * joursAbs);
     const absRistCplt = arrondir((profilAgent.primes.rist_cplt_lic_isq / 30) * joursAbs);
+    const absRistMaj = arrondir((profilAgent.primes.rist_maj_isq / 30) * joursAbs);
     const absIndCsg = arrondir((profilAgent.primes.ind_compensatrice_csg / 30) * joursAbs);
 
     const baseTraitementReel = traitementBrut - absenceTraitement;
@@ -82,6 +110,7 @@ function calculerPaie() {
                                 + (profilAgent.primes.rist_exper_prof - absRistExp)
                                 + (profilAgent.primes.rist_lic_isq - absRistIsq)
                                 + (profilAgent.primes.rist_cplt_lic_isq - absRistCplt)
+                                + (profilAgent.primes.rist_maj_isq - absRistMaj)
                                 + (profilAgent.primes.ind_compensatrice_csg - absIndCsg)
                                 + profilAgent.evenements.prime_performance 
                                 + profilAgent.evenements.rist_orga;
@@ -90,6 +119,7 @@ function calculerPaie() {
     const baseRafp = Math.min(totalPrimesSoumises, baseTraitementReel * baseDonnees.constantes.plafond_rafp);
     const cotisationRafp = arrondir(baseRafp * baseDonnees.constantes.taux_rafp);
     
+    // La déduction 24,6% ISQ ne s'applique QUE sur la Licence de base, pas sur les compléments
     const ristIsqReel = profilAgent.primes.rist_lic_isq - absRistIsq;
     const retenueIsq = arrondir(ristIsqReel * baseDonnees.constantes.taux_retenue_isq);
     const transfertPrimes = baseDonnees.constantes.transfert_primes_points;
@@ -120,7 +150,6 @@ function calculerPaie() {
     const tbody = document.getElementById('lignes-paie');
     tbody.innerHTML = ''; 
 
-    // Injection normale sans hacks bizarres
     function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo) {
         if (aPayer) totalAPayer += aPayer;
         if (aDeduire) totalADeduire += aDeduire;
@@ -159,6 +188,11 @@ function calculerPaie() {
 
     ajouterLigne("201961", "RIST CPLT PART LIC-ISQ", profilAgent.primes.rist_cplt_lic_isq, null, null);
     if (joursAbs > 0) ajouterLigne("201961", "RIST CPLT PART LIC-ISQ (ABS)", -absRistCplt, null, null);
+
+    if (profilAgent.primes.rist_maj_isq > 0) {
+        ajouterLigne("201962", "MAJORATION CPLT ISQ", profilAgent.primes.rist_maj_isq, null, null);
+        if (joursAbs > 0) ajouterLigne("201962", "MAJORATION CPLT ISQ (ABS)", -absRistMaj, null, null);
+    }
 
     ajouterLigne("202206", "IND. COMPENSATRICE CSG", profilAgent.primes.ind_compensatrice_csg, null, null);
     if (joursAbs > 0) ajouterLigne("202206", "IND. COMPENSATRICE CSG (ABS)", -absIndCsg, null, null);
@@ -209,11 +243,9 @@ function calculerPaie() {
     ajouterLigne("558000", `IMPOT SUR LE REVENU PRELEVE A LA SOURCE`, null, impotSource, null);
     ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(profilAgent.taux_pas * 100)}%)`, null, null, null);
 
-    // =========================================================
-    // LA SOLUTION MAGIQUE : LE RESSORT QUI ABSORBE LE VIDE
-    // =========================================================
+    // Ligne ressort pour absorber le vide
     const trRessort = document.createElement('tr');
-    trRessort.style.backgroundColor = "white"; // Empêche le grisé
+    trRessort.style.backgroundColor = "white"; 
     trRessort.innerHTML = `
         <td style="border-right: 1px solid var(--dgfip-light); height: 100%;"></td>
         <td style="border-right: 1px solid var(--dgfip-light);"></td>
@@ -222,8 +254,6 @@ function calculerPaie() {
         <td></td>
     `;
     tbody.appendChild(trRessort);
-
-    // =========================================================
 
     const netFinal = arrondir(netAPayerAvantImpot - impotSource);
     const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal - transfertPrimes);

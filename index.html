@@ -29,29 +29,50 @@
             <option value="Zone 3">Zone 3 (0% - Reste France)</option>
         </select>
 
-        <h3>Qualifications & Primes</h3>
+        <h3>Fonctions & Expérience</h3>
         
-        <label>Fonction exercée</label>
+        <label>Fonction exercée (RIST)</label>
         <select id="input-fonction">
-            <option value="PC - Liste 1 à 4 (Niveau 9)">PC - Liste 1 à 4 (Niveau 9)</option>
-            <option value="Chefs d'équipe CRNA / PC Listes 1 à 4 (Niveau 10)" selected>Chefs d'équipe CRNA / PC Listes 1 à 4 (Niveau 10)</option>
-            <option value="Chefs de salle CRNA (Niveau 11)">Chefs de salle CRNA (Niveau 11)</option>
+            <option value="Niveau 1 (440,74€) - Formation sans mention">Niveau 1 - Formation sans mention</option>
+            <option value="Niveau 5 (1 156,99€) - PC Liste 8 / Formation 3 mentions">Niveau 5 - PC Liste 8</option>
+            <option value="Niveau 8 (1 432,44€) - PC Listes 5-6">Niveau 8 - PC Listes 5-6</option>
+            <option value="Niveau 9 (1 518,16€) - PC Listes 1-4">Niveau 9 - PC Listes 1-4</option>
+            <option value="Niveau 10 (1 591,62€) - Chefs Équipe CRNA / Chefs Tour Listes 5-6" selected>Niveau 10 - Chefs Équipe CRNA</option>
+            <option value="Niveau 11 (1 701,81€) - Chefs Salle CRNA / Chefs Appro Listes 1-3">Niveau 11 - Chefs Salle CRNA</option>
+            <option value="Niveau 14 (1 936,41€) - Chefs SNA / Chefs Département">Niveau 14 - Chefs SNA</option>
+            <option value="Niveau 15 (1 994,32€) - Chefs CRNA / Roissy / Orly">Niveau 15 - Chefs CRNA / Roissy / Orly</option>
         </select>
 
-        <label>Expérience</label>
+        <label>Expérience (RIST)</label>
         <select id="input-experience">
-            <option value="ICNA Divisionnaire/Normal (Niveau 4)" selected>ICNA Divisionnaire/Normal (Niveau 4)</option>
-            <option value="ICNA en Chef (Niveau 5)">ICNA en Chef (Niveau 5)</option>
+            <option value="Niveau 1 (271,50€) - Personnels stagiaires">Niveau 1 - Stagiaires</option>
+            <option value="Niveau 4 (454,72€) - ICNA Divisionnaire / IEEAC Normal" selected>Niveau 4 - ICNA Divisionnaire</option>
+            <option value="Niveau 5 (559,69€) - ICNA en Chef / IESSA Div.">Niveau 5 - ICNA en Chef</option>
         </select>
+
+        <h3>Qualifications ISQ</h3>
 
         <label>Licence ISQ</label>
-        <select id="input-isq">
-            <option value="Valide (PC Liste 1)" selected>Valide (PC Liste 1)</option>
-            <option value="Perdue / Suspendue">Perdue / Suspendue</option>
+        <select id="input-isq-licence">
+            <option value="0.00€ - Perdue ou Suspendue">Perdue ou Suspendue</option>
+            <option value="Niveau 5 (1 976,11€) - PC Listes 1-3 / Stagiaires L1-3" selected>Niveau 5 - PC Listes 1-3</option>
+            <option value="Niveau 6 (576,11€) - PC Listes 4-6">Niveau 6 - PC Listes 4-6</option>
+            <option value="Niveau 9 (1 276,11€) - Stagiaires Listes 4-11">Niveau 9 - Stagiaires Listes 4-11</option>
         </select>
 
-        <label>Forfait Mobilités Durables du mois (€)</label>
-        <input type="number" id="input-fmd" value="300.00" step="10">
+        <label>Complément ISQ</label>
+        <select id="input-isq-complement">
+            <option value="0.00€ - Aucun ou Suspendu">Aucun ou Suspendu</option>
+            <option value="Niveau 3 (2 136,88€) - PC Listes 5-6">Niveau 3 - PC Listes 5-6</option>
+            <option value="Niveau 7 (2 281,78€) - PC Liste 1" selected>Niveau 7 - PC Liste 1 (Ex: CRNA)</option>
+        </select>
+
+        <label>Majoration Complément ISQ</label>
+        <select id="input-isq-majoration">
+            <option value="0.00€ - Aucune / Non éligible" selected>Aucune / Non éligible</option>
+            <option value="Niveau 4 (376,19€) - Listes 5 et 6">Niveau 4 - Listes 5 et 6</option>
+            <option value="Niveau 8 (405,32€) - Liste 1">Niveau 8 - Liste 1</option>
+        </select>
 
         <h3>Événements du mois</h3>
         
@@ -60,14 +81,30 @@
 
         <label>Jours d'absence (Carence / Grève)</label>
         <input type="number" id="input-absence" value="0" min="0" max="30" step="1">
-
-        <h3>Primes Exceptionnelles</h3>
         
+        <label>Forfait Mobilités Durables du mois (€)</label>
+        <input type="number" id="input-fmd" value="300.00" step="10">
+
+        <h3>Primes Exceptionnelles (Variables)</h3>
+        
+        <label>Calculateur de Part Variable OTT</label>
+        <select id="input-opt-var-type">
+            <option value="none" selected>-- Saisie manuelle --</option>
+            <option value="opt1_l1_6">Option 1 (Listes 1-6) : 1035€ × (N-4)</option>
+            <option value="opt1_cdg">Option 1 (CDG) : 1138,50€ × (N-4)</option>
+            <option value="opt1_l7_11">Option 1 (Listes 7-11) : 879,75€ × (N-4)</option>
+            <option value="opt1_plus">Option 1 Plus : 1794€ × N'</option>
+            <option value="opt2_2">Option 2-2 : 1380€ × (M'-1)</option>
+        </select>
+
+        <label>Coefficient (N, N' ou M')</label>
+        <input type="number" id="input-opt-var-coeff" value="0" step="1">
+
+        <label>Montant RIST Orga Temps Travail (€)</label>
+        <input type="number" id="input-rist-orga" value="0.00" step="10">
+
         <label>Prime Partage Performance (€)</label>
         <input type="number" id="input-perf" value="0.00" step="10">
-
-        <label>RIST Orga Temps Travail (€)</label>
-        <input type="number" id="input-rist-orga" value="0.00" step="10">
 
         <h3>Fiscalité</h3>
         
@@ -125,7 +162,6 @@
                 </tbody>
             
             <tfoot class="pay-table-foot">
-                
                 <tr><td colspan="5" style="height: 4px; padding: 0;"></td></tr>
 
                 <tr style="height: 18px;">
