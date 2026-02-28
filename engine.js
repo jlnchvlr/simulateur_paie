@@ -1,33 +1,20 @@
-// Variable globale qui va accueillir nos données JSON
 let baseDonnees = {};
 
-// ==========================================
-// 1. INITIALISATION (Chargement du JSON)
-// ==========================================
 async function initialiserApplication() {
     try {
         const reponse = await fetch('data.json');
-        if (!reponse.ok) throw new Error("Erreur réseau ou fichier introuvable.");
-        
+        if (!reponse.ok) throw new Error("Fichier introuvable.");
         baseDonnees = await reponse.json();
 
-        // On active les écouteurs sur le menu de gauche
         const inputs = document.querySelectorAll('.sidebar select, .sidebar input');
-        inputs.forEach(input => {
-            input.addEventListener('input', calculerPaie);
-        });
+        inputs.forEach(input => input.addEventListener('input', calculerPaie));
 
         calculerPaie();
-
     } catch (erreur) {
-        console.error("Erreur de chargement des données:", erreur);
-        document.getElementById('lignes-paie').innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Erreur : Impossible de lire data.json. Utilise Live Server.</td></tr>`;
+        console.error("Erreur:", erreur);
     }
 }
 
-// ==========================================
-// 2. LECTURE DE L'INTERFACE
-// ==========================================
 function getProfilDepuisInterface() {
     const fonctionChoisie = document.getElementById('input-fonction').value;
     const experienceChoisie = document.getElementById('input-experience').value;
@@ -57,9 +44,6 @@ function getProfilDepuisInterface() {
     };
 }
 
-// ==========================================
-// 3. FONCTIONS UTILITAIRES
-// ==========================================
 function formaterMontant(montant) {
     if (montant === null || montant === undefined || montant === 0 || isNaN(montant)) return "";
     return montant.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -69,21 +53,16 @@ function arrondir(valeur) {
     return Math.round(valeur * 100) / 100;
 }
 
-// ==========================================
-// 4. LE MOTEUR DE CALCUL
-// ==========================================
 function calculerPaie() {
     const profilAgent = getProfilDepuisInterface();
     let totalAPayer = 0;
     let totalADeduire = 0;
 
-    // --- A. REVENUS & ABSENCES ---
-    const indice = baseDonnees.grilles_icna[profilAgent.grade][profilAgent.echelon].indice || 0;
+    const indice = baseDonnees.grilles_icna[profilAgent.grade][profilAgent.echelon]?.indice || 0;
     const traitementBrut = arrondir(indice * baseDonnees.constantes.valeur_point_mensuel);
     const indemniteResidence = Math.floor(traitementBrut * baseDonnees.zones_residence[profilAgent.zone] * 100) / 100;
     const psc = baseDonnees.constantes.participation_psc;
     const nuit = profilAgent.evenements.indemnites_nuit;
-
     const joursAbs = profilAgent.evenements.jours_absence;
     
     const absenceTraitement = arrondir((traitementBrut / 30) * joursAbs);
@@ -107,7 +86,6 @@ function calculerPaie() {
                                 + profilAgent.evenements.prime_performance 
                                 + profilAgent.evenements.rist_orga;
 
-    // --- B. DÉDUCTIONS ---
     const retenuePC = arrondir(baseTraitementReel * baseDonnees.constantes.taux_retenue_pc);
     const baseRafp = Math.min(totalPrimesSoumises, baseTraitementReel * baseDonnees.constantes.plafond_rafp);
     const cotisationRafp = arrondir(baseRafp * baseDonnees.constantes.taux_rafp);
@@ -124,7 +102,6 @@ function calculerPaie() {
     const csgNonDeductible = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_csg_non_deductible);
     const crds = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_crds);
 
-    // --- C. CHARGES PATRONALES ---
     const patAllocFam = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.alloc_familiale);
     const patAfMajor = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.af_majoration);
     const patFnal = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.fnal);
@@ -134,10 +111,8 @@ function calculerPaie() {
     const patAti = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.ati);
     const patMobilite = arrondir(baseTraitementReel * baseDonnees.taux_patronaux.versement_mobilite);
     const patRafp = cotisationRafp; 
-    
     const totalPatronal = patAllocFam + patAfMajor + patFnal + patCsa + patMaladie + patPensions + patAti + patMobilite + patRafp;
 
-    // --- D. INJECTION HTML ---
     document.getElementById('ui-grade').textContent = profilAgent.grade;
     document.getElementById('ui-echelon').textContent = profilAgent.echelon;
     document.getElementById('ui-indice').textContent = "0" + (indice || "000");
@@ -145,14 +120,20 @@ function calculerPaie() {
     const tbody = document.getElementById('lignes-paie');
     tbody.innerHTML = ''; 
 
+    // Injection normale sans hacks bizarres
     function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo) {
         if (aPayer) totalAPayer += aPayer;
         if (aDeduire) totalADeduire += aDeduire;
 
+        let extraClass = (code === "011100" || code === "011300") ? " font-large" : "";
+        let euroSymbole = (aPayer || aDeduire || pourInfo) ? `<span style="float: right; font-weight: normal; color: #555;">€</span>` : "";
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td class="col-code">${code}</td>
-            <td class="col-libelle label">${libelle}</td>
+            <td class="col-libelle label${extraClass}">
+                <span>${libelle}</span> ${euroSymbole}
+            </td>
             <td class="col-amount">${formaterMontant(aPayer)}</td>
             <td class="col-amount">${formaterMontant(aDeduire)}</td>
             <td class="col-amount">${formaterMontant(pourInfo)}</td>
@@ -160,7 +141,6 @@ function calculerPaie() {
         tbody.appendChild(tr);
     }
 
-    // Lignes Revenus
     ajouterLigne("101000", "TRAITEMENT BRUT", traitementBrut, null, null);
     ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
     ajouterLigne("102000", "INDEMNITE DE RESIDENCE", indemniteResidence, null, null);
@@ -192,7 +172,6 @@ function calculerPaie() {
         ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL", profilAgent.evenements.rist_orga, null, null);
     }
 
-    // Lignes Déductions et Charges patronales
     ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, csgNonDeductible, null);
     ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, csgDeductible, null);
     ajouterLigne("401501", "C.R.D.S.", null, crds, null);
@@ -217,7 +196,6 @@ function calculerPaie() {
     ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, transfertPrimes, null);
     ajouterLigne("751095", "24,6% ISQ", null, retenueIsq, null);
 
-    // --- E. CALCUL DU NET ET TOTAUX FINAUX ---
     const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
     ajouterLigne("", "", null, null, null); 
     ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, netAPayerAvantImpot);
@@ -227,9 +205,26 @@ function calculerPaie() {
 
     const netImposable = netAPayerAvantImpot + csgNonDeductible + crds - profilAgent.primes.forfait_mobilites;
     const impotSource = arrondir(netImposable * profilAgent.taux_pas);
-    ajouterLigne("558000", `IMPOT SUR LE REVENU PRELEVE A LA SOURCE (TAUX PERSONNALISE ${profilAgent.taux_pas * 100}%)`, null, impotSource, null);
+    
+    ajouterLigne("558000", `IMPOT SUR LE REVENU PRELEVE A LA SOURCE`, null, impotSource, null);
+    ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(profilAgent.taux_pas * 100)}%)`, null, null, null);
 
-    // Mise à jour de l'UI
+    // =========================================================
+    // LA SOLUTION MAGIQUE : LE RESSORT QUI ABSORBE LE VIDE
+    // =========================================================
+    const trRessort = document.createElement('tr');
+    trRessort.style.backgroundColor = "white"; // Empêche le grisé
+    trRessort.innerHTML = `
+        <td style="border-right: 1px solid var(--dgfip-light); height: 100%;"></td>
+        <td style="border-right: 1px solid var(--dgfip-light);"></td>
+        <td style="border-right: 1px solid var(--dgfip-light);"></td>
+        <td style="border-right: 1px solid var(--dgfip-light);"></td>
+        <td></td>
+    `;
+    tbody.appendChild(trRessort);
+
+    // =========================================================
+
     const netFinal = arrondir(netAPayerAvantImpot - impotSource);
     const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal - transfertPrimes);
     const baseSS = baseTraitementReel;
@@ -243,5 +238,4 @@ function calculerPaie() {
     document.getElementById('ui-net-imposable').textContent = formaterMontant(netImposable);
 }
 
-// Lancement
 window.onload = initialiserApplication;
