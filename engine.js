@@ -254,7 +254,6 @@ function calculerPaie() {
         100,
     ) / 100;
 
-  const psc = baseDonnees.constantes.participation_psc;
   const nuit = arrondir(
     8.73 * profilAgent.evenements.nuits + 0.97 * profilAgent.evenements.soirees,
   );
@@ -273,6 +272,11 @@ function calculerPaie() {
   // (1 jour à 90% = retenue de 0.1 jour | 1 jour à 50% = retenue de 0.5 jour)
   const joursRetenus =
     joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
+  const psc = Math.max(
+    0,
+    baseDonnees.constantes.participation_psc -
+      arrondir((baseDonnees.constantes.participation_psc / 30) * joursRetenus),
+  );
 
   // -- CALCUL DES ABSENCES --
   // -- CALCUL DES ABSENCES AVEC LE POIDS RÉEL --
@@ -346,7 +350,11 @@ function calculerPaie() {
         (profilAgent.enfants - 3) * (4.57 + traitementReference * 0.06);
   }
   montantSFT = arrondir(montantSFT);
-
+  // Le SFT est également réduit selon les jours d'absence
+  montantSFT = Math.max(
+    0,
+    montantSFT - arrondir((montantSFT / 30) * joursRetenus),
+  );
   // -- 2. SCISSION RETENUE PC --
   const retenuePC = arrondir(
     baseTraitementReel * baseDonnees.constantes.taux_retenue_pc,
@@ -372,8 +380,9 @@ function calculerPaie() {
   const elementsSoumisCsg =
     baseSoumisePC + totalPrimesSoumises + psc + montantSFT;
   const deductionsBaseCsg = transfertPrimes + retenueIsq;
+  // La base de la CSG ne peut pas être négative (on la bloque à 0 au minimum)
   const baseCsgCrdsExacte =
-    (elementsSoumisCsg - deductionsBaseCsg) *
+    Math.max(0, elementsSoumisCsg - deductionsBaseCsg) *
     baseDonnees.constantes.assiette_csg_crds;
 
   const csgDeductible = arrondir(
@@ -809,7 +818,9 @@ function calculerPaie() {
     csgNonDeductible +
     crds -
     profilAgent.primes.forfait_mobilites;
-  const impotSource = arrondir(netImposable * profilAgent.taux_pas);
+  // Le salaire net imposable ne peut pas être négatif
+  let netImposableFinal = Math.max(0, netImposable); // (Remplace netImposable par le nom de ta variable si besoin)
+  const impotSource = arrondir(netImposableFinal * profilAgent.taux_pas);
 
   ajouterLigne(
     "558000",
