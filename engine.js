@@ -19,6 +19,14 @@ async function initialiserApplication() {
         const inputs = document.querySelectorAll('.magic-modal select, .magic-modal input, .info-table select, .info-table input');
         inputs.forEach(input => input.addEventListener('input', calculerPaie));
 
+        // Écouter la touche "Entrée" pour valider et fermer instantanément
+        document.getElementById('magic-modal').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Empêche les comportements bizarres
+                document.getElementById('magic-modal').close();
+            }
+        });
+
         document.getElementById('input-opt-var-type').addEventListener('input', calculerPartVariableOtt);
         document.getElementById('input-opt-var-coeff').addEventListener('input', calculerPartVariableOtt);
 
@@ -161,6 +169,9 @@ function calculerPaie() {
     
     const psc = baseDonnees.constantes.participation_psc;
     const nuit = arrondir((8.73 * profilAgent.evenements.nuits) + (0.97 * profilAgent.evenements.soirees));
+    // Mise à jour de l'aperçu en direct dans le menu des nuits
+    const previewNuits = document.getElementById('preview-nuits');
+    if (previewNuits) previewNuits.textContent = formaterMontant(nuit);
     const joursAbs = profilAgent.evenements.jours_absence;
     
     // -- CALCUL DES ABSENCES --
@@ -322,7 +333,10 @@ function calculerPaie() {
     ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
     if (montantNbi > 0) ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, retenuePcNbi, null);
     
-    ajouterLigne("102000", "INDEMNITE DE RESIDENCE", indemniteResidence, null, null);
+// -- LIGNE DES NUITS ET SOIRÉES --
+    if (nuit > 0) {
+        ajouterLigne("200176", "IND. TRAVAIL DE NUIT", nuit, null, null, ['input-nuit-n', 'input-nuit-s2']);
+    }
     
     if (profilAgent.primes.forfait_mobilites > 0) {
         ajouterLigne("200041", "FORF. MOBILITES DURABLES", profilAgent.primes.forfait_mobilites, null, null, ['input-fmd']);
@@ -372,7 +386,8 @@ function calculerPaie() {
     ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
 
     if (joursAbs > 0) {
-        ajouterLigne("604958", "PREC. CARENCE REM. PR.", null, absenceTraitement, null, ['input-absence']);
+        // La croix n'est QUE sur la ligne principale, et on affiche le nombre de jours pour que ce soit clair !
+        ajouterLigne("604958", `PREC. CARENCE REM. PR. (${joursAbs} J)`, null, absenceTraitement, null, ['input-absence']);
         ajouterLigne("604959", "PREC. CARENCE IND. RESID.", null, absenceResidence, null);
     }
 

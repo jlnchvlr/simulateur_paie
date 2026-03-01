@@ -21,6 +21,7 @@
                     <option value="Zone 1" selected>Zone 1 (3% - Paris/RP)</option>
                     <option value="Zone 2">Zone 2 (1% - Grandes Villes)</option>
                     <option value="Zone 3">Zone 3 (0% - Reste France)</option>
+                    <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
                 </select>
             </div>
 
@@ -61,18 +62,28 @@
                     <option value="Niveau 4 (376,19€) - Listes 5 et 6">Niveau 4 - Listes 5 et 6</option>
                     <option value="Niveau 8 (405,32€) - Liste 1">Niveau 8 - Liste 1</option>
                 </select>
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
             </div>
 
             <div id="panel-nuits" class="setting-panel">
+                <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
                 <label>Nombre de Nuits complètes (N)</label>
                 <input type="number" id="input-nuit-n" value="0" step="1">
                 <label>Nombre de Soirées (S2)</label>
                 <input type="number" id="input-nuit-s2" value="0" step="1">
+                
+                <div style="background-color: #e8f0fe; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 15px; text-align: right; font-family: var(--font-main);">
+                    Montant estimé : <strong style="color: var(--dgfip-dark); font-size: 16px;"><span id="preview-nuits">0,00</span> €</strong>
+                </div>
+
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
             </div>
 
             <div id="panel-absences" class="setting-panel">
+                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
                 <label>Jours d'absence (Carence / Grève)</label>
                 <input type="number" id="input-absence" value="0" min="0" max="30" step="1">
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
             </div>
 
             <div id="panel-menu-ajout" class="setting-panel">
@@ -81,17 +92,20 @@
                     <button onclick="ouvrirModal('panel-nuits', '🌙 Travail de Nuit & Soirées')">🌙 Nuits & Soirées</button>
                     <button onclick="ouvrirModal('panel-absences', '🤒 Absences & Carence')">🤒 Jours d'absence</button>
                     <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
-                    <button onclick="ouvrirModal('panel-ott', '📊 Orga Temps Travail')">📊 Part Variable OTT</button>
+                    <button onclick="ouvrirModal('panel-ott', '📊 PV Options')">📊 PV Options</button>
                     <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">💰 Autres Primes</button>
                 </div>
             </div>
 
             <div id="panel-fmd" class="setting-panel">
+                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
                 <label>Forfait Mobilités Durables du mois (€)</label>
                 <input type="number" id="input-fmd" value="0.00" step="10">
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
             </div>
 
             <div id="panel-ott" class="setting-panel">
+                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
                 <label>Calculateur de Part Variable OTT</label>
                 <select id="input-opt-var-type">
                     <option value="none" selected>-- Saisie manuelle --</option>
@@ -108,23 +122,26 @@
             </div>
 
             <div id="panel-primes" class="setting-panel">
+                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
                 <label>Prime Partage Performance (€)</label>
                 <input type="number" id="input-perf" value="0.00" step="10">
                 <label>Prime de fidélisation territoriale (€)</label>
                 <input type="number" id="input-fidelisation" value="0.00" step="10">
                 <label>Prime d'attractivité géographique (€)</label>
                 <input type="number" id="input-geographique" value="0.00" step="10">
-            </div>
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
 
             <div id="panel-impots" class="setting-panel">
                 <label>Taux de Prélèvement à la Source (%)</label>
                 <input type="number" id="input-pas" value="19.6" step="0.1">
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
             </div>
             
             <div id="panel-csg" class="setting-panel">
                 <label>Indemnité Compensatrice CSG (€)</label>
                 <input type="number" id="input-ind-csg" value="115.18" step="0.01">
                 <p style="font-size: 10px; color: #666; font-style: italic; margin-top: 5px;">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
             </div>
         </div>
     </dialog>
@@ -156,12 +173,12 @@
                     </td>
                     <td>
                         <select id="input-enfants" style="border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: inherit; text-align: center; cursor: pointer; outline: none;" title="Nombre d'enfants à charge">
-                            <option value="0">00</option>
-                            <option value="1">01</option>
-                            <option value="2">02</option>
-                            <option value="3">03</option>
-                            <option value="4">04</option>
-                            <option value="5">05</option>
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
                         </select>
                     </td>
                     <td>
