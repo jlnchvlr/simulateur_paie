@@ -65,6 +65,29 @@
                 <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
             </div>
 
+            <div id="panel-pf-options" class="setting-panel">
+                <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+                
+                <label>Options actives dans le centre (Part Fixe)</label>
+                <div style="margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                    <label style="font-weight: normal; margin-top: 0; cursor: pointer;">
+                        <input type="checkbox" id="input-pf-opt1" class="pf-checkbox" value="150"> Option 1 (Ex: 150€)
+                    </label>
+                    <label style="font-weight: normal; margin-top: 8px; cursor: pointer;">
+                        <input type="checkbox" id="input-pf-opt2" class="pf-checkbox" value="200"> Option 2 (Ex: 200€)
+                    </label>
+                </div>
+                
+                <label>Saisie manuelle ou autre option (PF) (€)</label>
+                <input type="number" id="input-pf-manuel" value="0.00" step="10">
+
+                <div style="background-color: #e8f0fe; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 15px; text-align: right; font-family: var(--font-main);">
+                    Montant PF estimé : <strong style="color: var(--dgfip-dark); font-size: 16px;"><span id="preview-pf">0,00</span> €</strong>
+                </div>
+
+                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
+            </div>
+
             <div id="panel-nuits" class="setting-panel">
                 <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
                 <label>Nombre de Nuits complètes (N)</label>
@@ -94,6 +117,7 @@
                     <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
                     <button onclick="ouvrirModal('panel-ott', '📊 PV Options')">📊 PV Options</button>
                     <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">💰 Autres Primes</button>
+                    <button onclick="ouvrirModal('panel-pf-options', '🛠️ PF Options')">🛠️ PF Options</button>
                 </div>
             </div>
 
@@ -130,6 +154,7 @@
                 <label>Prime d'attractivité géographique (€)</label>
                 <input type="number" id="input-geographique" value="0.00" step="10">
                 <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
+            </div>
 
             <div id="panel-impots" class="setting-panel">
                 <label>Taux de Prélèvement à la Source (%)</label>
