@@ -1,300 +1,718 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulateur Paie ICNA</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <dialog id="magic-modal" class="magic-modal">
-        <div class="modal-header">
-            <h2 id="modal-title">Modifier l'élément</h2>
-            <button class="close-btn" onclick="document.getElementById('magic-modal').close()">✖</button>
+      <div class="modal-header">
+        <h2 id="modal-title">Modifier l'élément</h2>
+        <button
+          class="close-btn"
+          onclick="document.getElementById('magic-modal').close()"
+        >
+          ✖
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="panel-residence" class="setting-panel">
+          <label>Zone de Résidence</label>
+          <select id="input-zone">
+            <option value="Zone 1" selected>Zone 1 (3% - Paris/RP)</option>
+            <option value="Zone 2">Zone 2 (1% - Grandes Villes)</option>
+            <option value="Zone 3">Zone 3 (0% - Reste France)</option>
+            <button
+              type="button"
+              class="validate-btn"
+              onclick="document.getElementById('magic-modal').close()"
+            >
+              Valider & Fermer ↵
+            </button>
+          </select>
         </div>
-        <div class="modal-body">
-            
-            <div id="panel-residence" class="setting-panel">
-                <label>Zone de Résidence</label>
-                <select id="input-zone">
-                    <option value="Zone 1" selected>Zone 1 (3% - Paris/RP)</option>
-                    <option value="Zone 2">Zone 2 (1% - Grandes Villes)</option>
-                    <option value="Zone 3">Zone 3 (0% - Reste France)</option>
-                    <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-                </select>
-            </div>
 
-            <div id="panel-rist" class="setting-panel">
-                <label>Fonction exercée (RIST)</label>
-                <select id="input-fonction">
-                    <option value="Niveau 1 (440,74€) - Formation sans mention">Niveau 1 - Formation sans mention</option>
-                    <option value="Niveau 5 (1 156,99€) - PC Liste 8 / Formation 3 mentions">Niveau 5 - PC Liste 8</option>
-                    <option value="Niveau 8 (1 432,44€) - PC Listes 5-6">Niveau 8 - PC Listes 5-6</option>
-                    <option value="Niveau 9 (1 518,16€) - PC Listes 1-4">Niveau 9 - PC Listes 1-4</option>
-                    <option value="Niveau 10 (1 591,62€) - Chefs Équipe CRNA / Chefs Tour Listes 5-6" selected>Niveau 10 - Chefs Équipe CRNA</option>
-                    <option value="Niveau 11 (1 701,81€) - Chefs Salle CRNA / Chefs Appro Listes 1-3">Niveau 11 - Chefs Salle CRNA</option>
-                    <option value="Niveau 14 (1 936,41€) - Chefs SNA / Chefs Département">Niveau 14 - Chefs SNA</option>
-                    <option value="Niveau 15 (1 994,32€) - Chefs CRNA / Roissy / Orly">Niveau 15 - Chefs CRNA / Roissy / Orly</option>
-                </select>
-                <label>Expérience (RIST)</label>
-                <select id="input-experience">
-                    <option value="Niveau 1 (271,50€) - Personnels stagiaires">Niveau 1 - Stagiaires</option>
-                    <option value="Niveau 4 (454,72€) - ICNA Divisionnaire / IEEAC Normal" selected>Niveau 4 - ICNA Divisionnaire</option>
-                    <option value="Niveau 5 (559,69€) - ICNA en Chef / IESSA Div.">Niveau 5 - ICNA en Chef</option>
-                </select>
-                <label>Licence ISQ</label>
-                <select id="input-isq-licence">
-                    <option value="0.00€ - Perdue ou Suspendue">Perdue ou Suspendue</option>
-                    <option value="Niveau 5 (1 976,11€) - PC Listes 1-3 / Stagiaires L1-3" selected>Niveau 5 - PC Listes 1-3</option>
-                    <option value="Niveau 6 (576,11€) - PC Listes 4-6">Niveau 6 - PC Listes 4-6</option>
-                    <option value="Niveau 9 (1 276,11€) - Stagiaires Listes 4-11">Niveau 9 - Stagiaires Listes 4-11</option>
-                </select>
-                <label>Complément ISQ</label>
-                <select id="input-isq-complement">
-                    <option value="0.00€ - Aucun ou Suspendu">Aucun ou Suspendu</option>
-                    <option value="Niveau 3 (2 136,88€) - PC Listes 5-6">Niveau 3 - PC Listes 5-6</option>
-                    <option value="Niveau 7 (2 281,78€) - PC Liste 1" selected>Niveau 7 - PC Liste 1 (Ex: CRNA)</option>
-                </select>
-                <label>Majoration Complément ISQ</label>
-                <select id="input-isq-majoration">
-                    <option value="0.00€ - Aucune / Non éligible" selected>Aucune / Non éligible</option>
-                    <option value="Niveau 4 (376,19€) - Listes 5 et 6">Niveau 4 - Listes 5 et 6</option>
-                    <option value="Niveau 8 (405,32€) - Liste 1">Niveau 8 - Liste 1</option>
-                </select>
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
-
-            <div id="panel-pf-options" class="setting-panel">
-                <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-                
-                <label>Options actives dans le centre (Part Fixe)</label>
-                <div style="margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
-                    <label style="font-weight: normal; margin-top: 0; cursor: pointer;">
-                        <input type="checkbox" id="input-pf-opt1" class="pf-checkbox" value="150"> Option 1 (Ex: 150€)
-                    </label>
-                    <label style="font-weight: normal; margin-top: 8px; cursor: pointer;">
-                        <input type="checkbox" id="input-pf-opt2" class="pf-checkbox" value="200"> Option 2 (Ex: 200€)
-                    </label>
-                </div>
-                
-                <label>Saisie manuelle ou autre option (PF) (€)</label>
-                <input type="number" id="input-pf-manuel" value="0.00" step="10">
-
-                <div style="background-color: #e8f0fe; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 15px; text-align: right; font-family: var(--font-main);">
-                    Montant PF estimé : <strong style="color: var(--dgfip-dark); font-size: 16px;"><span id="preview-pf">0,00</span> €</strong>
-                </div>
-
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
-
-            <div id="panel-nuits" class="setting-panel">
-                <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-                <label>Nombre de Nuits complètes (N)</label>
-                <input type="number" id="input-nuit-n" value="0" step="1">
-                <label>Nombre de Soirées (S2)</label>
-                <input type="number" id="input-nuit-s2" value="0" step="1">
-                
-                <div style="background-color: #e8f0fe; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 15px; text-align: right; font-family: var(--font-main);">
-                    Montant estimé : <strong style="color: var(--dgfip-dark); font-size: 16px;"><span id="preview-nuits">0,00</span> €</strong>
-                </div>
-
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
-
-            <div id="panel-absences" class="setting-panel">
-                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-                <label>Jours d'absence (Carence / Grève)</label>
-                <input type="number" id="input-absence" value="0" min="0" max="30" step="1">
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
-
-            <div id="panel-menu-ajout" class="setting-panel">
-                <p style="margin-top: 0; font-size: 13px; color: #555;">Sélectionnez l'élément que vous souhaitez ajouter à votre fiche :</p>
-                <div class="add-buttons-grid">
-                    <button onclick="ouvrirModal('panel-nuits', '🌙 Travail de Nuit & Soirées')">🌙 Nuits & Soirées</button>
-                    <button onclick="ouvrirModal('panel-absences', '🤒 Absences & Carence')">🤒 Jours d'absence</button>
-                    <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
-                    <button onclick="ouvrirModal('panel-ott', '📊 PV Options')">📊 PV Options</button>
-                    <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">💰 Autres Primes</button>
-                    <button onclick="ouvrirModal('panel-pf-options', '🛠️ PF Options')">🛠️ PF Options</button>
-                </div>
-            </div>
-
-            <div id="panel-fmd" class="setting-panel">
-                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-                <label>Forfait Mobilités Durables du mois (€)</label>
-                <input type="number" id="input-fmd" value="0.00" step="10">
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
-
-            <div id="panel-ott" class="setting-panel">
-                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-                <label>Calculateur de Part Variable OTT</label>
-                <select id="input-opt-var-type">
-                    <option value="none" selected>-- Saisie manuelle --</option>
-                    <option value="opt1_l1_6">Option 1 (Listes 1-6) : 1035€ × (N-4)</option>
-                    <option value="opt1_cdg">Option 1 (CDG) : 1138,50€ × (N-4)</option>
-                    <option value="opt1_l7_11">Option 1 (Listes 7-11) : 879,75€ × (N-4)</option>
-                    <option value="opt1_plus">Option 1 Plus : 1794€ × N'</option>
-                    <option value="opt2_2">Option 2-2 : 1380€ × (M'-1)</option>
-                </select>
-                <label>Coefficient (N, N' ou M')</label>
-                <input type="number" id="input-opt-var-coeff" value="0" step="1">
-                <label>Montant RIST Orga Temps Travail (€)</label>
-                <input type="number" id="input-rist-orga" value="0.00" step="10">
-            </div>
-
-            <div id="panel-primes" class="setting-panel">
-                <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-                <label>Prime Partage Performance (€)</label>
-                <input type="number" id="input-perf" value="0.00" step="10">
-                <label>Prime de fidélisation territoriale (€)</label>
-                <input type="number" id="input-fidelisation" value="0.00" step="10">
-                <label>Prime d'attractivité géographique (€)</label>
-                <input type="number" id="input-geographique" value="0.00" step="10">
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
-
-            <div id="panel-impots" class="setting-panel">
-                <label>Taux de Prélèvement à la Source (%)</label>
-                <input type="number" id="input-pas" value="19.6" step="0.1">
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
-            
-            <div id="panel-csg" class="setting-panel">
-                <label>Indemnité Compensatrice CSG (€)</label>
-                <input type="number" id="input-ind-csg" value="115.18" step="0.01">
-                <p style="font-size: 10px; color: #666; font-style: italic; margin-top: 5px;">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
-                <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
-            </div>
+        <div id="panel-rist" class="setting-panel">
+          <label>Fonction exercée (RIST)</label>
+          <select id="input-fonction">
+            <option value="Niveau 1 (440,74€) - Formation sans mention">
+              Niveau 1 - Formation sans mention
+            </option>
+            <option
+              value="Niveau 5 (1 156,99€) - PC Liste 8 / Formation 3 mentions"
+            >
+              Niveau 5 - PC Liste 8
+            </option>
+            <option value="Niveau 8 (1 432,44€) - PC Listes 5-6">
+              Niveau 8 - PC Listes 5-6
+            </option>
+            <option value="Niveau 9 (1 518,16€) - PC Listes 1-4">
+              Niveau 9 - PC Listes 1-4
+            </option>
+            <option
+              value="Niveau 10 (1 591,62€) - Chefs Équipe CRNA / Chefs Tour Listes 5-6"
+              selected
+            >
+              Niveau 10 - Chefs Équipe CRNA
+            </option>
+            <option
+              value="Niveau 11 (1 701,81€) - Chefs Salle CRNA / Chefs Appro Listes 1-3"
+            >
+              Niveau 11 - Chefs Salle CRNA
+            </option>
+            <option
+              value="Niveau 14 (1 936,41€) - Chefs SNA / Chefs Département"
+            >
+              Niveau 14 - Chefs SNA
+            </option>
+            <option value="Niveau 15 (1 994,32€) - Chefs CRNA / Roissy / Orly">
+              Niveau 15 - Chefs CRNA / Roissy / Orly
+            </option>
+          </select>
+          <label>Expérience (RIST)</label>
+          <select id="input-experience">
+            <option value="Niveau 1 (271,50€) - Personnels stagiaires">
+              Niveau 1 - Stagiaires
+            </option>
+            <option
+              value="Niveau 4 (454,72€) - ICNA Divisionnaire / IEEAC Normal"
+              selected
+            >
+              Niveau 4 - ICNA Divisionnaire
+            </option>
+            <option value="Niveau 5 (559,69€) - ICNA en Chef / IESSA Div.">
+              Niveau 5 - ICNA en Chef
+            </option>
+          </select>
+          <label>Licence ISQ</label>
+          <select id="input-isq-licence">
+            <option value="0.00€ - Perdue ou Suspendue">
+              Perdue ou Suspendue
+            </option>
+            <option
+              value="Niveau 5 (1 976,11€) - PC Listes 1-3 / Stagiaires L1-3"
+              selected
+            >
+              Niveau 5 - PC Listes 1-3
+            </option>
+            <option value="Niveau 6 (576,11€) - PC Listes 4-6">
+              Niveau 6 - PC Listes 4-6
+            </option>
+            <option value="Niveau 9 (1 276,11€) - Stagiaires Listes 4-11">
+              Niveau 9 - Stagiaires Listes 4-11
+            </option>
+          </select>
+          <label>Complément ISQ</label>
+          <select id="input-isq-complement">
+            <option value="0.00€ - Aucun ou Suspendu">Aucun ou Suspendu</option>
+            <option value="Niveau 3 (2 136,88€) - PC Listes 5-6">
+              Niveau 3 - PC Listes 5-6
+            </option>
+            <option value="Niveau 7 (2 281,78€) - PC Liste 1" selected>
+              Niveau 7 - PC Liste 1 (Ex: CRNA)
+            </option>
+          </select>
+          <label>Majoration Complément ISQ</label>
+          <select id="input-isq-majoration">
+            <option value="0.00€ - Aucune / Non éligible" selected>
+              Aucune / Non éligible
+            </option>
+            <option value="Niveau 4 (376,19€) - Listes 5 et 6">
+              Niveau 4 - Listes 5 et 6
+            </option>
+            <option value="Niveau 8 (405,32€) - Liste 1">
+              Niveau 8 - Liste 1
+            </option>
+          </select>
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
         </div>
+
+        <div id="panel-pf-options" class="setting-panel">
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+
+          <label>Options actives dans le centre (Part Fixe)</label>
+          <div
+            style="
+              margin-bottom: 15px;
+              border: 1px solid #ddd;
+              padding: 10px;
+              border-radius: 4px;
+            "
+          >
+            <label style="font-weight: normal; margin-top: 0; cursor: pointer">
+              <input
+                type="checkbox"
+                id="input-pf-opt1"
+                class="pf-checkbox"
+                value="150"
+              />
+              Option 1 (Ex: 150€)
+            </label>
+            <label
+              style="font-weight: normal; margin-top: 8px; cursor: pointer"
+            >
+              <input
+                type="checkbox"
+                id="input-pf-opt2"
+                class="pf-checkbox"
+                value="200"
+              />
+              Option 2 (Ex: 200€)
+            </label>
+          </div>
+
+          <label>Saisie manuelle ou autre option (PF) (€)</label>
+          <input type="number" id="input-pf-manuel" value="0.00" step="10" />
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant PF estimé :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-pf">0,00</span> €</strong
+            >
+          </div>
+
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-nuits" class="setting-panel">
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+          <label>Nombre de Nuits complètes (N)</label>
+          <input type="number" id="input-nuit-n" value="0" step="1" />
+          <label>Nombre de Soirées (S2)</label>
+          <input type="number" id="input-nuit-s2" value="0" step="1" />
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant estimé :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-nuits">0,00</span> €</strong
+            >
+          </div>
+
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-absences" class="setting-panel">
+          <button
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+          <label>Jours d'absence (Carence / Grève)</label>
+          <input
+            type="number"
+            id="input-absence"
+            value="0"
+            min="0"
+            max="30"
+            step="1"
+          />
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-menu-ajout" class="setting-panel">
+          <p style="margin-top: 0; font-size: 13px; color: #555">
+            Sélectionnez l'élément que vous souhaitez ajouter à votre fiche :
+          </p>
+          <div class="add-buttons-grid">
+            <button
+              onclick="
+                ouvrirModal('panel-nuits', '🌙 Travail de Nuit & Soirées')
+              "
+            >
+              🌙 Nuits & Soirées
+            </button>
+            <button
+              onclick="ouvrirModal('panel-absences', '🤒 Absences & Carence')"
+            >
+              🤒 Jours d'absence
+            </button>
+            <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">
+              🚲 Forfait Mobilités
+            </button>
+            <button onclick="ouvrirModal('panel-ott', '📊 PV Options')">
+              📊 PV Options
+            </button>
+            <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
+              💰 Autres Primes
+            </button>
+            <button onclick="ouvrirModal('panel-pf-options', '🛠️ PF Options')">
+              🛠️ PF Options
+            </button>
+          </div>
+        </div>
+
+        <div id="panel-fmd" class="setting-panel">
+          <button
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+          <label>Forfait Mobilités Durables du mois (€)</label>
+          <input type="number" id="input-fmd" value="0.00" step="10" />
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-ott" class="setting-panel">
+          <button
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+          <label>Calculateur de Part Variable OTT</label>
+          <select id="input-opt-var-type">
+            <option value="none" selected>-- Saisie manuelle --</option>
+            <option value="opt1_l1_6">
+              Option 1 (Listes 1-6) : 1035€ × (N-4)
+            </option>
+            <option value="opt1_cdg">Option 1 (CDG) : 1138,50€ × (N-4)</option>
+            <option value="opt1_l7_11">
+              Option 1 (Listes 7-11) : 879,75€ × (N-4)
+            </option>
+            <option value="opt1_plus">Option 1 Plus : 1794€ × N'</option>
+            <option value="opt2_2">Option 2-2 : 1380€ × (M'-1)</option>
+          </select>
+          <label>Coefficient (N, N' ou M')</label>
+          <input type="number" id="input-opt-var-coeff" value="0" step="1" />
+          <label>Montant RIST Orga Temps Travail (€)</label>
+          <input type="number" id="input-rist-orga" value="0.00" step="10" />
+        </div>
+
+        <div id="panel-primes" class="setting-panel">
+          <button
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+          <label>Prime Partage Performance (€)</label>
+          <input type="number" id="input-perf" value="0.00" step="10" />
+          <label>Prime de fidélisation territoriale (€)</label>
+          <input type="number" id="input-fidelisation" value="0.00" step="10" />
+          <label>Prime d'attractivité géographique (€)</label>
+          <input type="number" id="input-geographique" value="0.00" step="10" />
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-impots" class="setting-panel">
+          <label>Taux de Prélèvement à la Source (%)</label>
+          <input type="number" id="input-pas" value="19.6" step="0.1" />
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-csg" class="setting-panel">
+          <label>Indemnité Compensatrice CSG (€)</label>
+          <input type="number" id="input-ind-csg" value="115.18" step="0.01" />
+          <p
+            style="
+              font-size: 10px;
+              color: #666;
+              font-style: italic;
+              margin-top: 5px;
+            "
+          >
+            Cette indemnité est propre à chaque agent (figée sur la base de la
+            rémunération de 2017).
+          </p>
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+      </div>
     </dialog>
 
     <div class="page-a4">
-        
-        <div style="height: 20px;"></div>
+      <div style="height: 20px"></div>
 
-        <table class="info-table">
-            <thead>
-                <tr>
-                    <th>GRADE</th>
-                    <th>ENFANTS<br>À CHARGE</th>
-                    <th>ÉCH</th>
-                    <th>INDICE OU<br>NB. D'HEURES</th>
-                    <th>NBI</th>
-                    <th>TEMPS PARTIEL</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <select id="input-grade" style="border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: inherit; cursor: pointer; outline: none;" title="Cliquez pour changer de grade">
-                            <option value="ING. EN CHEF CONT.NAV.AE">ING. EN CHEF CONT.NAV.AE</option>
-                            <option value="ING.DIV. CONT.NAV.AE" selected>ING.DIV. CONT.NAV.AE</option>
-                            <option value="ING. CONT.NAV.AE">ING. CONT.NAV.AE</option>
-                            <option value="ELEVE / STAGIAIRE ICNA">ELEVE / STAGIAIRE ICNA</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select id="input-enfants" style="border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: inherit; text-align: center; cursor: pointer; outline: none;" title="Nombre d'enfants à charge">
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select id="input-echelon" style="border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: inherit; cursor: pointer; outline: none;" title="Choisissez votre échelon"></select>
-                    </td>
-                    <td id="ui-indice">0462</td>
-                    <td style="text-align: center;">
-                        <input type="checkbox" id="input-nbi-checkbox" style="cursor: pointer; width: 14px; height: 14px; margin-top: 2px;" title="Activer/Désactiver la NBI">
-                    </td>
-                    <td>&nbsp;</td>
-                </tr>
-            </tbody>
-        </table>
+      <table class="info-table">
+        <thead>
+          <tr>
+            <th>GRADE</th>
+            <th>ENFANTS<br />À CHARGE</th>
+            <th>ÉCH</th>
+            <th>INDICE OU<br />NB. D'HEURES</th>
+            <th>NBI</th>
+            <th>TEMPS PARTIEL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <select
+                id="input-grade"
+                style="
+                  border: none;
+                  background: transparent;
+                  font-family: inherit;
+                  font-size: inherit;
+                  font-weight: inherit;
+                  cursor: pointer;
+                  outline: none;
+                "
+                title="Cliquez pour changer de grade"
+              >
+                <option value="ING. EN CHEF CONT.NAV.AE">
+                  ING. EN CHEF CONT.NAV.AE
+                </option>
+                <option value="ING.DIV. CONT.NAV.AE" selected>
+                  ING.DIV. CONT.NAV.AE
+                </option>
+                <option value="ING. CONT.NAV.AE">ING. CONT.NAV.AE</option>
+                <option value="ELEVE / STAGIAIRE ICNA">
+                  ELEVE / STAGIAIRE ICNA
+                </option>
+              </select>
+            </td>
+            <td>
+              <select
+                id="input-enfants"
+                style="
+                  border: none;
+                  background: transparent;
+                  font-family: inherit;
+                  font-size: inherit;
+                  font-weight: inherit;
+                  text-align: center;
+                  cursor: pointer;
+                  outline: none;
+                "
+                title="Nombre d'enfants à charge"
+              >
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </td>
+            <td>
+              <select
+                id="input-echelon"
+                style="
+                  border: none;
+                  background: transparent;
+                  font-family: inherit;
+                  font-size: inherit;
+                  font-weight: inherit;
+                  cursor: pointer;
+                  outline: none;
+                "
+                title="Choisissez votre échelon"
+              ></select>
+            </td>
+            <td id="ui-indice">0462</td>
+            <td style="text-align: center">
+              <input
+                type="checkbox"
+                id="input-nbi-checkbox"
+                style="
+                  cursor: pointer;
+                  width: 14px;
+                  height: 14px;
+                  margin-top: 2px;
+                "
+                title="Activer/Désactiver la NBI"
+              />
+            </td>
+            <td>&nbsp;</td>
+          </tr>
+        </tbody>
+      </table>
 
-        <table class="pay-table">
-            <thead>
-                <tr>
-                    <th class="col-code center">CODE</th>
-                    <th class="col-libelle center">ÉLÉMENTS</th>
-                    <th class="col-amount center">À PAYER</th>
-                    <th class="col-amount center">À DÉDUIRE</th>
-                    <th class="col-amount center">POUR INFORMATION</th>
-                </tr>
-            </thead>
-            <tbody id="lignes-paie">
-                </tbody>
-            
-      <tfoot class="pay-table-foot">
-                <tr><td colspan="5" style="height: 15px; padding: 0;"></td></tr>
+      <table class="pay-table">
+        <thead>
+          <tr>
+            <th class="col-code center">CODE</th>
+            <th class="col-libelle center">ÉLÉMENTS</th>
+            <th class="col-amount center">À PAYER</th>
+            <th class="col-amount center">À DÉDUIRE</th>
+            <th class="col-amount center">POUR INFORMATION</th>
+          </tr>
+        </thead>
+        <tbody id="lignes-paie"></tbody>
 
-                <tr>
-                    <td colspan="2" rowspan="2" class="no-bg" style="padding: 5px 15px 0 0; vertical-align: top;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                            
-                            <div class="summary-box" style="width: 140px; margin-right: 15px;">
-                                <div class="summary-title">MONTANT IMPOSABLE DU MOIS</div>
-                                <div class="summary-value" style="padding: 4px;">€ <span style="float:right" id="ui-net-imposable">0,00</span></div>
-                            </div>
+        <tfoot class="pay-table-foot">
+          <tr>
+            <td colspan="5" style="height: 15px; padding: 0"></td>
+          </tr>
 
-                            <div style="display: flex; align-items: flex-start;">
-                                <div style="display: flex; flex-direction: column; width: 120px; margin-right: 15px;">
-                                    <div style="border: 1px solid var(--dgfip-dark); border-bottom: none; background: white; padding: 3px 5px; font-family: var(--font-numbers); font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; box-sizing: border-box; height: 20px;">
-                                        <span>€</span><span id="ui-cout-employeur">0,00</span>
-                                    </div>
-                                    <div style="background-color: var(--dgfip-medium); color: white; font-size: 8px; text-align: center; padding: 3px 0; border: 1px solid var(--dgfip-dark); border-top: none; box-sizing: border-box; height: 20px;">
-                                        COÛT TOTAL<br>EMPLOYEUR
-                                    </div>
-                                </div>
-                                <div style="background-color: var(--dgfip-dark); color: white; font-size: 10px; font-weight: bold; padding: 2px 15px; height: 20px; box-sizing: border-box; display: flex; align-items: center;">
-                                    TOTAUX DU MOIS
-                                </div>
-                            </div>
+          <tr>
+            <td
+              colspan="2"
+              rowspan="2"
+              class="no-bg"
+              style="padding: 5px 15px 0 0; vertical-align: top"
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-start;
+                  width: 100%;
+                "
+              >
+                <div
+                  class="summary-box"
+                  style="width: 140px; margin-right: 15px"
+                >
+                  <div class="summary-title">MONTANT IMPOSABLE DU MOIS</div>
+                  <div class="summary-value" style="padding: 4px">
+                    €
+                    <span style="float: right" id="ui-net-imposable">0,00</span>
+                  </div>
+                </div>
 
-                        </div>
-                    </td>
-                    
-                    <td class="col-amount u-border">
-                        <div style="display:flex; justify-content:space-between; width:100%;"><span>€</span><span id="ui-total-a-payer">0,00</span></div>
-                    </td>
-                    <td class="col-amount u-border">
-                        <div style="display:flex; justify-content:space-between; width:100%;"><span>€</span><span id="ui-total-a-deduire">0,00</span></div>
-                    </td>
-                    <td class="col-amount u-border">
-                        <div style="display:flex; justify-content:space-between; width:100%;"><span>€</span><span id="ui-charges-patronales">0,00</span></div>
-                    </td>
-                </tr>
+                <div style="display: flex; align-items: flex-start">
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      width: 120px;
+                      margin-right: 15px;
+                    "
+                  >
+                    <div
+                      style="
+                        border: 1px solid var(--dgfip-dark);
+                        border-bottom: none;
+                        background: white;
+                        padding: 3px 5px;
+                        font-family: var(--font-numbers);
+                        font-size: 12px;
+                        font-weight: bold;
+                        display: flex;
+                        justify-content: space-between;
+                        box-sizing: border-box;
+                        height: 20px;
+                      "
+                    >
+                      <span>€</span><span id="ui-cout-employeur">0,00</span>
+                    </div>
+                    <div
+                      style="
+                        background-color: var(--dgfip-medium);
+                        color: white;
+                        font-size: 8px;
+                        text-align: center;
+                        padding: 3px 0;
+                        border: 1px solid var(--dgfip-dark);
+                        border-top: none;
+                        box-sizing: border-box;
+                        height: 20px;
+                      "
+                    >
+                      COÛT TOTAL<br />EMPLOYEUR
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      background-color: var(--dgfip-dark);
+                      color: white;
+                      font-size: 10px;
+                      font-weight: bold;
+                      padding: 2px 15px;
+                      height: 20px;
+                      box-sizing: border-box;
+                      display: flex;
+                      align-items: center;
+                    "
+                  >
+                    TOTAUX DU MOIS
+                  </div>
+                </div>
+              </div>
+            </td>
 
-                <tr>
-                    <td colspan="2" class="no-bg" style="padding: 15px 5px 0 0; vertical-align: top;">
-                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
-                            <div style="color: var(--dgfip-medium); font-size: 16px; font-weight: bold; white-space: nowrap;">
-                                NET À PAYER
-                            </div>
-                            <div style="background: white; border: 2px solid var(--dgfip-dark); display: inline-block; padding: 5px 10px; font-family: var(--font-numbers); font-size: 18px; font-weight: bold; min-width: 120px; text-align: right;">
-                                <span id="ui-net-a-payer">0,00 €</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="no-bg" style="padding: 15px 0 0 0; vertical-align: top;">
-                        <div style="background-color: var(--dgfip-dark); color: white; text-align: center; font-size: 9px; font-weight: bold; padding: 6px 2px;">
-                            TOTAL CHARGES<br>PATRONALES
-                        </div>
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
+            <td class="col-amount u-border">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  width: 100%;
+                "
+              >
+                <span>€</span><span id="ui-total-a-payer">0,00</span>
+              </div>
+            </td>
+            <td class="col-amount u-border">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  width: 100%;
+                "
+              >
+                <span>€</span><span id="ui-total-a-deduire">0,00</span>
+              </div>
+            </td>
+            <td class="col-amount u-border">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  width: 100%;
+                "
+              >
+                <span>€</span><span id="ui-charges-patronales">0,00</span>
+              </div>
+            </td>
+          </tr>
 
-        
-
+          <tr>
+            <td
+              colspan="2"
+              class="no-bg"
+              style="padding: 15px 5px 0 0; vertical-align: top"
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: flex-end;
+                  align-items: center;
+                  gap: 15px;
+                "
+              >
+                <div
+                  style="
+                    color: var(--dgfip-medium);
+                    font-size: 16px;
+                    font-weight: bold;
+                    white-space: nowrap;
+                  "
+                >
+                  NET À PAYER
+                </div>
+                <div
+                  style="
+                    background: white;
+                    border: 2px solid var(--dgfip-dark);
+                    display: inline-block;
+                    padding: 5px 10px;
+                    font-family: var(--font-numbers);
+                    font-size: 18px;
+                    font-weight: bold;
+                    min-width: 120px;
+                    text-align: right;
+                  "
+                >
+                  <span id="ui-net-a-payer">0,00 €</span>
+                </div>
+              </div>
+            </td>
+            <td class="no-bg" style="padding: 15px 0 0 0; vertical-align: top">
+              <div
+                style="
+                  background-color: var(--dgfip-dark);
+                  color: white;
+                  text-align: center;
+                  font-size: 9px;
+                  font-weight: bold;
+                  padding: 6px 2px;
+                "
+              >
+                TOTAL CHARGES<br />PATRONALES
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
 
     <script src="engine.js"></script>
-</body>
+  </body>
 </html>
