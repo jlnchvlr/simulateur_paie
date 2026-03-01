@@ -104,7 +104,11 @@ function getProfilDepuisInterface() {
             prime_performance: parseFloat(document.getElementById('input-perf')?.value) || 0,
             rist_orga: parseFloat(document.getElementById('input-rist-orga')?.value) || 0,
             fidelisation: parseFloat(document.getElementById('input-fidelisation')?.value) || 0,
-            geographique: parseFloat(document.getElementById('input-geographique')?.value) || 0
+            geographique: parseFloat(document.getElementById('input-geographique')?.value) || 0,
+            // On additionne le champ manuel et les cases cochées
+            pf_options: (parseFloat(document.getElementById('input-pf-manuel')?.value) || 0) +
+                        (document.getElementById('input-pf-opt1')?.checked ? parseFloat(document.getElementById('input-pf-opt1').value) : 0) +
+                        (document.getElementById('input-pf-opt2')?.checked ? parseFloat(document.getElementById('input-pf-opt2').value) : 0)
         },
         
         primes: {
@@ -145,12 +149,13 @@ function ouvrirModal(panelIds, titre) {
 
 // Remet les valeurs à zéro quand on clique sur la petite croix
 window.effacerValeurs = function(event, inputIds) {
-    event.stopPropagation(); // Empêche l'ouverture de la fenêtre modale
+    event.stopPropagation();
     inputIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            if (el.tagName === 'SELECT') el.value = 'none'; // Pour le menu RIST Variable
-            else el.value = 0; // Pour tous les autres nombres
+            if (el.tagName === 'SELECT') el.value = 'none';
+            else if (el.type === 'checkbox') el.checked = false; // NOUVEAU : gère les cases à cocher
+            else el.value = 0;
         }
     });
     calculerPaie();
@@ -204,6 +209,7 @@ function calculerPaie() {
                                 + profilAgent.evenements.rist_orga
                                 + profilAgent.evenements.fidelisation
                                 + profilAgent.evenements.geographique;
+                                + profilAgent.evenements.pf_options;
 
     // -- 1. CALCUL DU SFT --
     let montantSFT = 0;
@@ -321,17 +327,27 @@ function calculerPaie() {
         tbody.appendChild(tr);
     }
 
+    // -- LIGNE D'INFORMATION ABSENCE (Tout en haut) --
+    if (joursAbs > 0) {
+        const totalAbsenceDeduction = absenceTraitement + absenceNbi + absenceResidence + absRistFct + absRistExp + absRistIsq + absRistCplt + absRistMaj + absIndCsg;
+        
+        // LA CROIX EST MAINTENANT ICI (à la fin de la ligne)
+        ajouterLigne("604958", `SERVICE NON FAIT / ABSENCE (${joursAbs} J)`, null, null, totalAbsenceDeduction, ['input-absence']);
+    }
+
     ajouterLigne("101000", "TRAITEMENT BRUT", traitementBrut, null, null);
     
     if (montantNbi > 0) {
         ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", montantNbi, null, null);
-        if (joursAbs > 0) ajouterLigne("101070", "N.B.I. (ABS)", -absenceNbi, null, null);
+        if (joursAbs > 0) ajouterLigne("101070", `N.B.I. (ABS. ${joursAbs} J)`, -absenceNbi, null, null);
     }
 
     if (montantSFT > 0) ajouterLigne("200200", "SUPPLEMENT FAMILIAL DE TRAITEMENT", montantSFT, null, null);
 
     ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
     if (montantNbi > 0) ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, retenuePcNbi, null);
+
+    ajouterLigne("102000", "INDEMNITE DE RESIDENCE", indemniteResidence, null, null);
     
 // -- LIGNE DES NUITS ET SOIRÉES --
     if (nuit > 0) {
@@ -343,24 +359,24 @@ function calculerPaie() {
     }
     
     ajouterLigne("201958", "RIST PART FONCTIONS", profilAgent.primes.rist_fonctions, null, null);
-    if (joursAbs > 0) ajouterLigne("201958", "RIST PART FONCTIONS (ABS)", -absRistFct, null, null);
+    if (joursAbs > 0) ajouterLigne("201958", `RIST PART FONCTIONS (ABS. ${joursAbs} J)`, -absRistFct, null, null);
 
     ajouterLigne("201959", "RIST PART EXPER. PROF.", profilAgent.primes.rist_exper_prof, null, null);
-    if (joursAbs > 0) ajouterLigne("201959", "RIST PART EXPER. PROF. (ABS)", -absRistExp, null, null);
+    if (joursAbs > 0) ajouterLigne("201959", `RIST PART EXPER. PROF. (ABS. ${joursAbs} J)`, -absRistExp, null, null);
 
     ajouterLigne("201960", "RIST PART LIC-ISQ (ICNA)", profilAgent.primes.rist_lic_isq, null, null);
-    if (joursAbs > 0) ajouterLigne("201960", "RIST PART LIC-ISQ (ABS)", -absRistIsq, null, null);
+    if (joursAbs > 0) ajouterLigne("201960", `RIST PART LIC-ISQ (ABS. ${joursAbs} J)`, -absRistIsq, null, null);
 
     ajouterLigne("201961", "RIST CPLT PART LIC-ISQ", profilAgent.primes.rist_cplt_lic_isq, null, null);
-    if (joursAbs > 0) ajouterLigne("201961", "RIST CPLT PART LIC-ISQ (ABS)", -absRistCplt, null, null);
+    if (joursAbs > 0) ajouterLigne("201961", `RIST CPLT PART LIC-ISQ (ABS. ${joursAbs} J)`, -absRistCplt, null, null);
 
     if (profilAgent.primes.rist_maj_isq > 0) {
         ajouterLigne("201962", "MAJORATION CPLT ISQ", profilAgent.primes.rist_maj_isq, null, null);
-        if (joursAbs > 0) ajouterLigne("201962", "MAJORATION CPLT ISQ (ABS)", -absRistMaj, null, null);
+        if (joursAbs > 0) ajouterLigne("201962", `MAJORATION CPLT ISQ (ABS. ${joursAbs} J)`, -absRistMaj, null, null);
     }
 
     ajouterLigne("202206", "IND. COMPENSATRICE CSG", profilAgent.primes.ind_compensatrice_csg, null, null);
-    if (joursAbs > 0) ajouterLigne("202206", "IND. COMPENSATRICE CSG (ABS)", -absIndCsg, null, null);
+    if (joursAbs > 0) ajouterLigne("202206", `IND. COMPENSATRICE CSG (ABS. ${joursAbs} J)`, -absIndCsg, null, null);
 
     ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
     
@@ -368,6 +384,15 @@ function calculerPaie() {
     if (profilAgent.evenements.rist_orga > 0) ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL", profilAgent.evenements.rist_orga, null, null, ['input-rist-orga', 'input-opt-var-type', 'input-opt-var-coeff']);
     if (profilAgent.evenements.fidelisation > 0) ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", profilAgent.evenements.fidelisation, null, null, ['input-fidelisation']);
     if (profilAgent.evenements.geographique > 0) ajouterLigne("203002", "PRIME ATTRACTIVITE GEOGRAPHIQUE", profilAgent.evenements.geographique, null, null, ['input-geographique']);
+
+// -- LIGNE PF OPTIONS ET LIVE FEEDBACK --
+    const previewPf = document.getElementById('preview-pf');
+    if (previewPf) previewPf.textContent = formaterMontant(profilAgent.evenements.pf_options);
+
+    if (profilAgent.evenements.pf_options > 0) {
+        // La ligne cliquable avec sa petite croix rouge pour tout effacer d'un coup
+        ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", profilAgent.evenements.pf_options, null, null, ['input-pf-manuel', 'input-pf-opt1', 'input-pf-opt2']);
+    }
 
     ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, csgNonDeductible, null);
     ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, csgDeductible, null);
@@ -386,9 +411,8 @@ function calculerPaie() {
     ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
 
     if (joursAbs > 0) {
-        // La croix n'est QUE sur la ligne principale, et on affiche le nombre de jours pour que ce soit clair !
-        ajouterLigne("604958", `PREC. CARENCE REM. PR. (${joursAbs} J)`, null, absenceTraitement, null, ['input-absence']);
-        ajouterLigne("604959", "PREC. CARENCE IND. RESID.", null, absenceResidence, null);
+        ajouterLigne("604958", `PREC. CARENCE REM. PR. (${joursAbs} J)`, null, absenceTraitement, null);
+        ajouterLigne("604959", `PREC. CARENCE IND. RESID. (${joursAbs} J)`, null, absenceResidence, null);
     }
 
     ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, transfertPrimes, null);
