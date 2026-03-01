@@ -84,7 +84,17 @@ body { display: flex; justify-content: center; background-color: #525659; margin
 
 .clickable-row { cursor: pointer; transition: background-color 0.15s; }
 .clickable-row:hover td { background-color: #e8f0fe !important; }
-.clickable-row:hover td:first-child { border-left: 3px solid var(--dgfip-dark); }
+/* Empêche le tressautement au survol */
+.clickable-row:hover td:first-child { box-shadow: inset 3px 0 0 var(--dgfip-dark); border-left: none; }
+
+/* Indication visuelle discrète pour les lignes modifiables */
+.clickable-row .col-libelle > span:first-child { border-bottom: 1px dotted #999; padding-bottom: 1px; }
+.clickable-row:hover .col-libelle > span:first-child { border-bottom: 1px solid var(--dgfip-dark); }
+
+/* Design des boutons du nouveau menu "Ajouter" */
+.add-buttons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+.add-buttons-grid button { padding: 12px; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-family: var(--font-main); font-weight: bold; color: #444; transition: all 0.2s; text-align: left; }
+.add-buttons-grid button:hover { background: #e8f0fe; border-color: var(--dgfip-medium); color: var(--dgfip-dark); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 
 .add-row td { cursor: pointer; text-align: center !important; color: var(--dgfip-medium) !important; font-family: var(--font-main) !important; font-size: 11px !important; padding: 4px !important; border: none !important; height: auto !important; line-height: normal !important; }
 .add-row:hover td { background-color: #f1f3f4 !important; color: var(--dgfip-dark) !important; font-weight: bold; }
