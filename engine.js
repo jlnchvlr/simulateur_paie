@@ -123,8 +123,13 @@ function getProfilDepuisInterface() {
     evenements: {
       nuits: parseInt(document.getElementById("input-nuit-n")?.value) || 0,
       soirees: parseInt(document.getElementById("input-nuit-s2")?.value) || 0,
-      jours_absence:
-        parseInt(document.getElementById("input-absence")?.value) || 0,
+      jours_greve: parseInt(document.getElementById("input-greve")?.value) || 0,
+      jours_carence:
+        parseInt(document.getElementById("input-carence")?.value) || 0,
+      jours_maladie_90:
+        parseInt(document.getElementById("input-maladie-90")?.value) || 0,
+      jours_maladie_50:
+        parseInt(document.getElementById("input-maladie-50")?.value) || 0,
       prime_performance:
         parseFloat(document.getElementById("input-perf")?.value) || 0,
       rist_orga:
@@ -256,30 +261,42 @@ function calculerPaie() {
   // Mise à jour de l'aperçu en direct dans le menu des nuits
   const previewNuits = document.getElementById("preview-nuits");
   if (previewNuits) previewNuits.textContent = formaterMontant(nuit);
-  const joursAbs = profilAgent.evenements.jours_absence;
+  const joursGreve = profilAgent.evenements.jours_greve;
+  const joursCarence = profilAgent.evenements.jours_carence;
+  const jours90 = profilAgent.evenements.jours_maladie_90;
+  const jours50 = profilAgent.evenements.jours_maladie_50;
+
+  // Pour l'affichage texte sur la fiche (ex: "ABSENCE 5 J")
+  const joursAbs = joursGreve + joursCarence + jours90 + jours50;
+
+  // Le "poids" mathématique de la retenue en trentièmes
+  // (1 jour à 90% = retenue de 0.1 jour | 1 jour à 50% = retenue de 0.5 jour)
+  const joursRetenus =
+    joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
 
   // -- CALCUL DES ABSENCES --
-  const absenceTraitement = arrondir((traitementBrut / 30) * joursAbs);
-  const absenceNbi = arrondir((montantNbi / 30) * joursAbs);
-  const absenceResidence = arrondir((indemniteResidence / 30) * joursAbs);
+  // -- CALCUL DES ABSENCES AVEC LE POIDS RÉEL --
+  const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
+  const absenceNbi = arrondir((montantNbi / 30) * joursRetenus);
+  const absenceResidence = arrondir((indemniteResidence / 30) * joursRetenus);
 
   const absRistFct = arrondir(
-    (profilAgent.primes.rist_fonctions / 30) * joursAbs,
+    (profilAgent.primes.rist_fonctions / 30) * joursRetenus,
   );
   const absRistExp = arrondir(
-    (profilAgent.primes.rist_exper_prof / 30) * joursAbs,
+    (profilAgent.primes.rist_exper_prof / 30) * joursRetenus,
   );
   const absRistIsq = arrondir(
-    (profilAgent.primes.rist_lic_isq / 30) * joursAbs,
+    (profilAgent.primes.rist_lic_isq / 30) * joursRetenus,
   );
   const absRistCplt = arrondir(
-    (profilAgent.primes.rist_cplt_lic_isq / 30) * joursAbs,
+    (profilAgent.primes.rist_cplt_lic_isq / 30) * joursRetenus,
   );
   const absRistMaj = arrondir(
-    (profilAgent.primes.rist_maj_isq / 30) * joursAbs,
+    (profilAgent.primes.rist_maj_isq / 30) * joursRetenus,
   );
   const absIndCsg = arrondir(
-    (profilAgent.primes.ind_compensatrice_csg / 30) * joursAbs,
+    (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
   );
 
   // -- BASES RÉELLES --

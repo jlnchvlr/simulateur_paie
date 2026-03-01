@@ -249,6 +249,7 @@
 
         <div id="panel-absences" class="setting-panel">
           <button
+            type="button"
             class="back-btn"
             onclick="
               ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
@@ -256,15 +257,37 @@
           >
             ⬅ Retour au menu
           </button>
-          <label>Jours d'absence (Carence / Grève)</label>
+
+          <label>Service Non Fait / Grève (Retenue 100%)</label>
           <input
             type="number"
-            id="input-absence"
+            id="input-greve"
             value="0"
-            min="0"
-            max="30"
             step="1"
+            title="Retenue d'un 1/30ème par jour"
           />
+
+          <label>Jour(s) de Carence Maladie (Retenue 100%)</label>
+          <input type="number" id="input-carence" value="0" step="1" />
+
+          <label>Jours de Maladie rémunérés à 90%</label>
+          <input
+            type="number"
+            id="input-maladie-90"
+            value="0"
+            step="1"
+            title="Retenue de 10% d'un 1/30ème par jour"
+          />
+
+          <label>Jours de Maladie à demi-traitement (50%)</label>
+          <input
+            type="number"
+            id="input-maladie-50"
+            value="0"
+            step="1"
+            title="Retenue de 50% d'un 1/30ème par jour"
+          />
+
           <button
             type="button"
             class="validate-btn"
