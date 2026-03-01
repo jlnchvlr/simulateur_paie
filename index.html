@@ -308,6 +308,7 @@
 
         <div id="panel-fmd" class="setting-panel">
           <button
+            type="button"
             class="back-btn"
             onclick="
               ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
@@ -315,8 +316,27 @@
           >
             ⬅ Retour au menu
           </button>
-          <label>Forfait Mobilités Durables du mois (€)</label>
-          <input type="number" id="input-fmd" value="0.00" step="10" />
+
+          <label>Montant du Forfait Mobilités Durables</label>
+          <select
+            id="input-fmd"
+            style="
+              width: 100%;
+              padding: 10px;
+              border-radius: 4px;
+              border: 1px solid #ccc;
+              font-family: inherit;
+              margin-bottom: 20px;
+              font-size: 14px;
+              cursor: pointer;
+            "
+          >
+            <option value="0">-- Aucun --</option>
+            <option value="100">100 € (30 à 59 jours)</option>
+            <option value="200">200 € (60 à 99 jours)</option>
+            <option value="300">300 € (100 jours et plus)</option>
+          </select>
+
           <button
             type="button"
             class="validate-btn"

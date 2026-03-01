@@ -216,9 +216,11 @@ window.effacerValeurs = function (event, inputIds) {
   inputIds.forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
-      if (el.tagName === "SELECT") el.value = "none";
-      else if (el.type === "checkbox")
-        el.checked = false; // NOUVEAU : gère les cases à cocher
+      // NOUVEAU : Si c'est un select, on remet à 'none' (pour les grades) ou à '0' (pour le FMD/Enfants)
+      if (el.tagName === "SELECT") {
+        if (el.querySelector('option[value="none"]')) el.value = "none";
+        else el.value = "0";
+      } else if (el.type === "checkbox") el.checked = false;
       else el.value = 0;
     }
   });
