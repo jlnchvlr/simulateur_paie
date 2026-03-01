@@ -6,22 +6,18 @@ async function initialiserApplication() {
         if (!reponse.ok) throw new Error("Fichier introuvable.");
         baseDonnees = await reponse.json();
 
+        // On remplit les échelons au chargement
         mettreAJourEchelons();
 
+        // Mise à jour des échelons ET de la paie si on change le grade
         document.getElementById('input-grade').addEventListener('input', () => {
             mettreAJourEchelons();
+            calculerPaie(); 
         });
 
-        const inputs = document.querySelectorAll('.magic-modal select, .magic-modal input, .table-input');
+        // Le JS écoute maintenant tous les menus de la modale ET du tableau d'en-tête
+        const inputs = document.querySelectorAll('.magic-modal select, .magic-modal input, .info-table select, .info-table input');
         inputs.forEach(input => input.addEventListener('input', calculerPaie));
-
-        document.getElementById('input-age').addEventListener('input', (e) => {
-            const age = parseInt(e.target.value) || 0;
-            const nbiInput = document.getElementById('input-nbi');
-            if (age >= 35) nbiInput.value = 55;
-            else nbiInput.value = 0;
-            calculerPaie();
-        });
 
         document.getElementById('input-opt-var-type').addEventListener('input', calculerPartVariableOtt);
         document.getElementById('input-opt-var-coeff').addEventListener('input', calculerPartVariableOtt);
@@ -85,38 +81,32 @@ function calculerPartVariableOtt() {
 }
 
 function getProfilDepuisInterface() {
-    const fonctionChoisie = document.getElementById('input-fonction').value;
-    const experienceChoisie = document.getElementById('input-experience').value;
-    const isqLicence = document.getElementById('input-isq-licence').value;
-    const isqComplement = document.getElementById('input-isq-complement').value;
-    const isqMajoration = document.getElementById('input-isq-majoration').value;
-
     return {
-        grade: document.getElementById('input-grade').value,
-        echelon: document.getElementById('input-echelon').value,
-        zone: document.getElementById('input-zone').value,
-        taux_pas: parseFloat(document.getElementById('input-pas').value) / 100 || 0,
-        age: parseInt(document.getElementById('input-age').value) || 0,
-        points_nbi: parseInt(document.getElementById('input-nbi').value) || 0,
+        grade: document.getElementById('input-grade')?.value || "ING.DIV. CONT.NAV.AE",
+        echelon: document.getElementById('input-echelon')?.value || "",
+        enfants: parseInt(document.getElementById('input-enfants')?.value) || 0,
+        zone: document.getElementById('input-zone')?.value || "Zone 1",
+        taux_pas: parseFloat(document.getElementById('input-pas')?.value) / 100 || 0,
+        points_nbi: document.getElementById('input-nbi-checkbox')?.checked ? 55 : 0,
         
         evenements: {
-            nuits: parseInt(document.getElementById('input-nuit-n').value) || 0,
-            soirees: parseInt(document.getElementById('input-nuit-s2').value) || 0,
-            jours_absence: parseInt(document.getElementById('input-absence').value) || 0,
-            prime_performance: parseFloat(document.getElementById('input-perf').value) || 0,
-            rist_orga: parseFloat(document.getElementById('input-rist-orga').value) || 0,
-            fidelisation: parseFloat(document.getElementById('input-fidelisation').value) || 0,
-            geographique: parseFloat(document.getElementById('input-geographique').value) || 0
+            nuits: parseInt(document.getElementById('input-nuit-n')?.value) || 0,
+            soirees: parseInt(document.getElementById('input-nuit-s2')?.value) || 0,
+            jours_absence: parseInt(document.getElementById('input-absence')?.value) || 0,
+            prime_performance: parseFloat(document.getElementById('input-perf')?.value) || 0,
+            rist_orga: parseFloat(document.getElementById('input-rist-orga')?.value) || 0,
+            fidelisation: parseFloat(document.getElementById('input-fidelisation')?.value) || 0,
+            geographique: parseFloat(document.getElementById('input-geographique')?.value) || 0
         },
         
         primes: {
-            forfait_mobilites: parseFloat(document.getElementById('input-fmd').value) || 0,
-            rist_fonctions: baseDonnees.rist.fonctions[fonctionChoisie] || 0,
-            rist_exper_prof: baseDonnees.rist.experience[experienceChoisie] || 0,
-            rist_lic_isq: baseDonnees.rist.isq_licence[isqLicence] || 0,
-            rist_cplt_lic_isq: baseDonnees.rist.isq_complement[isqComplement] || 0,
-            rist_maj_isq: baseDonnees.rist.isq_majoration[isqMajoration] || 0,
-            ind_compensatrice_csg: parseFloat(document.getElementById('input-ind-csg').value) || 0
+            forfait_mobilites: parseFloat(document.getElementById('input-fmd')?.value) || 0,
+            rist_fonctions: baseDonnees.rist?.fonctions[document.getElementById('input-fonction')?.value] || 0,
+            rist_exper_prof: baseDonnees.rist?.experience[document.getElementById('input-experience')?.value] || 0,
+            rist_lic_isq: baseDonnees.rist?.isq_licence[document.getElementById('input-isq-licence')?.value] || 0,
+            rist_cplt_lic_isq: baseDonnees.rist?.isq_complement[document.getElementById('input-isq-complement')?.value] || 0,
+            rist_maj_isq: baseDonnees.rist?.isq_majoration[document.getElementById('input-isq-majoration')?.value] || 0,
+            ind_compensatrice_csg: parseFloat(document.getElementById('input-ind-csg')?.value) || 0
         }
     };
 }
@@ -173,6 +163,7 @@ function calculerPaie() {
     const nuit = arrondir((8.73 * profilAgent.evenements.nuits) + (0.97 * profilAgent.evenements.soirees));
     const joursAbs = profilAgent.evenements.jours_absence;
     
+    // -- CALCUL DES ABSENCES --
     const absenceTraitement = arrondir((traitementBrut / 30) * joursAbs);
     const absenceNbi = arrondir((montantNbi / 30) * joursAbs);
     const absenceResidence = arrondir((indemniteResidence / 30) * joursAbs);
@@ -184,12 +175,13 @@ function calculerPaie() {
     const absRistMaj = arrondir((profilAgent.primes.rist_maj_isq / 30) * joursAbs);
     const absIndCsg = arrondir((profilAgent.primes.ind_compensatrice_csg / 30) * joursAbs);
 
+    // -- BASES RÉELLES --
     const baseTraitementReel = traitementBrut - absenceTraitement;
     const baseNbiReelle = montantNbi - absenceNbi;
     const baseResidenceReelle = indemniteResidence - absenceResidence;
-    
     const baseSoumisePC = baseTraitementReel + baseNbiReelle;
     
+    // -- LA LIGNE QUI AVAIT DISPARU : TOTAL DES PRIMES --
     const totalPrimesSoumises = baseResidenceReelle + nuit
                                 + (profilAgent.primes.rist_fonctions - absRistFct)
                                 + (profilAgent.primes.rist_exper_prof - absRistExp)
@@ -202,7 +194,28 @@ function calculerPaie() {
                                 + profilAgent.evenements.fidelisation
                                 + profilAgent.evenements.geographique;
 
-    const retenuePC = arrondir(baseSoumisePC * baseDonnees.constantes.taux_retenue_pc);
+    // -- 1. CALCUL DU SFT --
+    let montantSFT = 0;
+    if (profilAgent.enfants === 1) {
+        montantSFT = 2.29;
+    } else if (profilAgent.enfants >= 2) {
+        const traitementPlancher = 449 * baseDonnees.constantes.valeur_point_mensuel;
+        const traitementPlafond = 717 * baseDonnees.constantes.valeur_point_mensuel;
+        let traitementReference = traitementBrut;
+        if (traitementReference < traitementPlancher) traitementReference = traitementPlancher;
+        if (traitementReference > traitementPlafond) traitementReference = traitementPlafond;
+
+        if (profilAgent.enfants === 2) montantSFT = 10.67 + (traitementReference * 0.03);
+        else if (profilAgent.enfants === 3) montantSFT = 15.24 + (traitementReference * 0.08);
+        else montantSFT = 15.24 + (traitementReference * 0.08) + ((profilAgent.enfants - 3) * (4.57 + traitementReference * 0.06));
+    }
+    montantSFT = arrondir(montantSFT);
+
+    // -- 2. SCISSION RETENUE PC --
+    const retenuePC = arrondir(baseTraitementReel * baseDonnees.constantes.taux_retenue_pc);
+    const retenuePcNbi = arrondir(baseNbiReelle * baseDonnees.constantes.taux_retenue_pc);
+
+    // -- 3. RAFP ET ISQ --
     const baseRafp = Math.min(totalPrimesSoumises, baseSoumisePC * baseDonnees.constantes.plafond_rafp);
     const cotisationRafp = arrondir(baseRafp * baseDonnees.constantes.taux_rafp);
     
@@ -210,7 +223,8 @@ function calculerPaie() {
     const retenueIsq = arrondir(ristIsqReel * baseDonnees.constantes.taux_retenue_isq);
     const transfertPrimes = baseDonnees.constantes.transfert_primes_points;
 
-    const elementsSoumisCsg = baseSoumisePC + totalPrimesSoumises + psc;
+    // -- 4. CSG / CRDS --
+    const elementsSoumisCsg = baseSoumisePC + totalPrimesSoumises + psc + montantSFT;
     const deductionsBaseCsg = transfertPrimes + retenueIsq;
     const baseCsgCrdsExacte = (elementsSoumisCsg - deductionsBaseCsg) * baseDonnees.constantes.assiette_csg_crds;
     
@@ -218,6 +232,7 @@ function calculerPaie() {
     const csgNonDeductible = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_csg_non_deductible);
     const crds = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_crds);
 
+    // -- 5. CHARGES PATRONALES --
     const patAllocFam = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.alloc_familiale);
     const patAfMajor = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.af_majoration);
     const patFnal = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.fnal);
@@ -228,9 +243,8 @@ function calculerPaie() {
     const patMobilite = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.versement_mobilite);
     const patRafp = cotisationRafp; 
     const totalPatronal = patAllocFam + patAfMajor + patFnal + patCsa + patMaladie + patPensions + patAti + patMobilite + patRafp;
-
     document.getElementById('ui-indice').textContent = "0" + (indice || "000");
-    document.getElementById('ui-nbi-cell').textContent = profilAgent.points_nbi > 0 ? profilAgent.points_nbi : "";
+    
 
     const tbody = document.getElementById('lignes-paie');
     tbody.innerHTML = ''; 
@@ -250,8 +264,6 @@ function calculerPaie() {
 
         if (code === "102000") {
             estCliquable = true; cibles = 'panel-residence'; titreModal = 'Zone de Résidence';
-        } else if (code === "101000" || code === "101070") {
-            estCliquable = true; cibles = 'panel-age'; titreModal = 'Âge & N.B.I.';
         } else if (code && code.startsWith("2019")) {
             estCliquable = true; cibles = 'panel-rist'; titreModal = 'Primes RIST & Qualifications ISQ';
         } else if (code === "200176") {
@@ -264,7 +276,14 @@ function calculerPaie() {
             estCliquable = true; cibles = 'panel-impots'; titreModal = 'Prélèvement à la Source';
         } else if (code === "202206") {
             estCliquable = true; cibles = 'panel-csg'; titreModal = 'Indemnité Compensatrice CSG';
+        } else if (code === "200041") {
+            estCliquable = true; cibles = 'panel-fmd'; titreModal = 'Forfait Mobilités';
+        } else if (code === "202558") {
+            estCliquable = true; cibles = 'panel-ott'; titreModal = 'Orga Temps Travail';
+        } else if (["202485", "203001", "203002"].includes(code)) {
+            estCliquable = true; cibles = 'panel-primes'; titreModal = 'Primes Exceptionnelles';
         }
+        
 
         if (estCliquable) {
             tr.className = 'clickable-row';
@@ -298,11 +317,16 @@ function calculerPaie() {
         if (joursAbs > 0) ajouterLigne("101070", "N.B.I. (ABS)", -absenceNbi, null, null);
     }
 
+    if (montantSFT > 0) ajouterLigne("200200", "SUPPLEMENT FAMILIAL DE TRAITEMENT", montantSFT, null, null);
+
     ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
+    if (montantNbi > 0) ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, retenuePcNbi, null);
+    
     ajouterLigne("102000", "INDEMNITE DE RESIDENCE", indemniteResidence, null, null);
     
-    if (nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", nuit, null, null, ['input-nuit-n', 'input-nuit-s2']);
-    ajouterLigne("200041", "FORF. MOBILITES DURABLES", profilAgent.primes.forfait_mobilites, null, null, profilAgent.primes.forfait_mobilites > 0 ? ['input-fmd'] : null);
+    if (profilAgent.primes.forfait_mobilites > 0) {
+        ajouterLigne("200041", "FORF. MOBILITES DURABLES", profilAgent.primes.forfait_mobilites, null, null, ['input-fmd']);
+    }
     
     ajouterLigne("201958", "RIST PART FONCTIONS", profilAgent.primes.rist_fonctions, null, null);
     if (joursAbs > 0) ajouterLigne("201958", "RIST PART FONCTIONS (ABS)", -absRistFct, null, null);
@@ -373,7 +397,7 @@ function calculerPaie() {
     trAjout.className = 'add-row';
     trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Nuits, Absences, Mobilité...) </td>`;
     // Ouvre 3 tiroirs d'un coup pour offrir tous les choix !
-    trAjout.onclick = () => ouvrirModal(['panel-nuits', 'panel-absences', 'panel-primes'], 'Ajouter des Variables');
+    trAjout.onclick = () => ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?');
     tbody.appendChild(trAjout);
 
     const trRessort = document.createElement('tr');
