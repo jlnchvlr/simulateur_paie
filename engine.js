@@ -123,8 +123,13 @@ function getProfilDepuisInterface() {
     evenements: {
       nuits: parseInt(document.getElementById("input-nuit-n")?.value) || 0,
       soirees: parseInt(document.getElementById("input-nuit-s2")?.value) || 0,
-      jours_absence:
-        parseInt(document.getElementById("input-absence")?.value) || 0,
+      jours_greve: parseInt(document.getElementById("input-greve")?.value) || 0,
+      jours_carence:
+        parseInt(document.getElementById("input-carence")?.value) || 0,
+      jours_maladie_90:
+        parseInt(document.getElementById("input-maladie-90")?.value) || 0,
+      jours_maladie_50:
+        parseInt(document.getElementById("input-maladie-50")?.value) || 0,
       prime_performance:
         parseFloat(document.getElementById("input-perf")?.value) || 0,
       rist_orga:
@@ -216,14 +221,35 @@ window.effacerValeurs = function (event, inputIds) {
   inputIds.forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
-      // NOUVEAU : Si c'est un select, on remet à 'none' (pour les grades) ou à '0' (pour le FMD/Enfants)
       if (el.tagName === "SELECT") {
         if (el.querySelector('option[value="none"]')) el.value = "none";
         else el.value = "0";
       } else if (el.type === "checkbox") el.checked = false;
-      else el.value = 0;
+      // LA CORRECTION EST ICI : on envoie bien la chaîne de texte '0'
+      else el.value = "0";
     }
   });
+  calculerPaie();
+};
+
+// Empêche de saisir plus de 30 jours d'absence au total (Règle du trentième DGFIP)
+window.limiterAbsences = function (el) {
+  // Force la valeur à 0 si l'agent tape un nombre négatif
+  if (parseInt(el.value) < 0) el.value = "0";
+
+  const greve = parseInt(document.getElementById("input-greve").value) || 0;
+  const carence = parseInt(document.getElementById("input-carence").value) || 0;
+  const m90 = parseInt(document.getElementById("input-maladie-90").value) || 0;
+  const m50 = parseInt(document.getElementById("input-maladie-50").value) || 0;
+
+  const total = greve + carence + m90 + m50;
+
+  // Si on dépasse 30, on annule mathématiquement la dernière frappe
+  if (total > 30) {
+    const surplus = total - 30;
+    el.value = (parseInt(el.value) || 0) - surplus;
+  }
+  // On met à jour la paie instantanément
   calculerPaie();
 };
 
@@ -249,37 +275,53 @@ function calculerPaie() {
         100,
     ) / 100;
 
-  const psc = baseDonnees.constantes.participation_psc;
   const nuit = arrondir(
     8.73 * profilAgent.evenements.nuits + 0.97 * profilAgent.evenements.soirees,
   );
   // Mise à jour de l'aperçu en direct dans le menu des nuits
   const previewNuits = document.getElementById("preview-nuits");
   if (previewNuits) previewNuits.textContent = formaterMontant(nuit);
-  const joursAbs = profilAgent.evenements.jours_absence;
+  const joursGreve = profilAgent.evenements.jours_greve;
+  const joursCarence = profilAgent.evenements.jours_carence;
+  const jours90 = profilAgent.evenements.jours_maladie_90;
+  const jours50 = profilAgent.evenements.jours_maladie_50;
+
+  // Pour l'affichage texte sur la fiche (ex: "ABSENCE 5 J")
+  const joursAbs = joursGreve + joursCarence + jours90 + jours50;
+
+  // Le "poids" mathématique de la retenue en trentièmes
+  // (1 jour à 90% = retenue de 0.1 jour | 1 jour à 50% = retenue de 0.5 jour)
+  const joursRetenus =
+    joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
+  const psc = Math.max(
+    0,
+    baseDonnees.constantes.participation_psc -
+      arrondir((baseDonnees.constantes.participation_psc / 30) * joursRetenus),
+  );
 
   // -- CALCUL DES ABSENCES --
-  const absenceTraitement = arrondir((traitementBrut / 30) * joursAbs);
-  const absenceNbi = arrondir((montantNbi / 30) * joursAbs);
-  const absenceResidence = arrondir((indemniteResidence / 30) * joursAbs);
+  // -- CALCUL DES ABSENCES AVEC LE POIDS RÉEL --
+  const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
+  const absenceNbi = arrondir((montantNbi / 30) * joursRetenus);
+  const absenceResidence = arrondir((indemniteResidence / 30) * joursRetenus);
 
   const absRistFct = arrondir(
-    (profilAgent.primes.rist_fonctions / 30) * joursAbs,
+    (profilAgent.primes.rist_fonctions / 30) * joursRetenus,
   );
   const absRistExp = arrondir(
-    (profilAgent.primes.rist_exper_prof / 30) * joursAbs,
+    (profilAgent.primes.rist_exper_prof / 30) * joursRetenus,
   );
   const absRistIsq = arrondir(
-    (profilAgent.primes.rist_lic_isq / 30) * joursAbs,
+    (profilAgent.primes.rist_lic_isq / 30) * joursRetenus,
   );
   const absRistCplt = arrondir(
-    (profilAgent.primes.rist_cplt_lic_isq / 30) * joursAbs,
+    (profilAgent.primes.rist_cplt_lic_isq / 30) * joursRetenus,
   );
   const absRistMaj = arrondir(
-    (profilAgent.primes.rist_maj_isq / 30) * joursAbs,
+    (profilAgent.primes.rist_maj_isq / 30) * joursRetenus,
   );
   const absIndCsg = arrondir(
-    (profilAgent.primes.ind_compensatrice_csg / 30) * joursAbs,
+    (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
   );
 
   // -- BASES RÉELLES --
@@ -329,7 +371,11 @@ function calculerPaie() {
         (profilAgent.enfants - 3) * (4.57 + traitementReference * 0.06);
   }
   montantSFT = arrondir(montantSFT);
-
+  // Le SFT est également réduit selon les jours d'absence
+  montantSFT = Math.max(
+    0,
+    montantSFT - arrondir((montantSFT / 30) * joursRetenus),
+  );
   // -- 2. SCISSION RETENUE PC --
   const retenuePC = arrondir(
     baseTraitementReel * baseDonnees.constantes.taux_retenue_pc,
@@ -349,14 +395,20 @@ function calculerPaie() {
   const retenueIsq = arrondir(
     ristIsqReel * baseDonnees.constantes.taux_retenue_isq,
   );
-  const transfertPrimes = baseDonnees.constantes.transfert_primes_points;
+  // Le Transfert Primes/Points est soumis à la règle du trentième
+  const transfertPrimesBase = baseDonnees.constantes.transfert_primes_points;
+  const transfertPrimes = Math.max(
+    0,
+    transfertPrimesBase - arrondir((transfertPrimesBase / 30) * joursRetenus),
+  );
 
   // -- 4. CSG / CRDS --
   const elementsSoumisCsg =
     baseSoumisePC + totalPrimesSoumises + psc + montantSFT;
   const deductionsBaseCsg = transfertPrimes + retenueIsq;
+  // La base de la CSG ne peut pas être négative (on la bloque à 0 au minimum)
   const baseCsgCrdsExacte =
-    (elementsSoumisCsg - deductionsBaseCsg) *
+    Math.max(0, elementsSoumisCsg - deductionsBaseCsg) *
     baseDonnees.constantes.assiette_csg_crds;
 
   const csgDeductible = arrondir(
@@ -515,7 +567,7 @@ function calculerPaie() {
       null,
       null,
       totalAbsenceDeduction,
-      ["input-absence"],
+      ["input-greve", "input-carence", "input-maladie-90", "input-maladie-50"],
     );
   }
 
@@ -792,7 +844,9 @@ function calculerPaie() {
     csgNonDeductible +
     crds -
     profilAgent.primes.forfait_mobilites;
-  const impotSource = arrondir(netImposable * profilAgent.taux_pas);
+  // Le salaire net imposable ne peut pas être négatif
+  let netImposableFinal = Math.max(0, netImposable); // (Remplace netImposable par le nom de ta variable si besoin)
+  const impotSource = arrondir(netImposableFinal * profilAgent.taux_pas);
 
   ajouterLigne(
     "558000",
@@ -829,7 +883,9 @@ function calculerPaie() {
     `;
   tbody.appendChild(trRessort);
 
-  const netFinal = arrondir(netAPayerAvantImpot - impotSource);
+  // On empêche le net d'être négatif
+  // On empêche le net d'être négatif
+  const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(
     totalAPayer + totalPatronal - transfertPrimes,
   );
@@ -845,10 +901,16 @@ function calculerPaie() {
     formaterMontant(totalPatronal);
   document.getElementById("ui-cout-employeur").textContent =
     formaterMontant(coutTotalEmployeur);
-  document.getElementById("ui-net-a-payer").textContent =
-    formaterMontant(netFinal) + " €";
-  document.getElementById("ui-net-imposable").textContent =
-    formaterMontant(netImposable);
-}
 
+  // On force l'affichage à "0,00" si le net est à zéro
+  document.getElementById("ui-net-a-payer").textContent =
+    (netFinal === 0 ? "0,00" : formaterMontant(netFinal)) + " €";
+
+  // On utilise un nouveau nom (netImposableAffichage) pour éviter le conflit avec plus haut !
+  const netImposableAffichage = Math.max(0, netImposable);
+  document.getElementById("ui-net-imposable").textContent =
+    netImposableAffichage === 0
+      ? "0,00"
+      : formaterMontant(netImposableAffichage);
+}
 window.onload = initialiserApplication;
