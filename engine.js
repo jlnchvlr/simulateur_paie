@@ -221,14 +221,35 @@ window.effacerValeurs = function (event, inputIds) {
   inputIds.forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
-      // NOUVEAU : Si c'est un select, on remet à 'none' (pour les grades) ou à '0' (pour le FMD/Enfants)
       if (el.tagName === "SELECT") {
         if (el.querySelector('option[value="none"]')) el.value = "none";
         else el.value = "0";
       } else if (el.type === "checkbox") el.checked = false;
-      else el.value = 0;
+      // LA CORRECTION EST ICI : on envoie bien la chaîne de texte '0'
+      else el.value = "0";
     }
   });
+  calculerPaie();
+};
+
+// Empêche de saisir plus de 30 jours d'absence au total (Règle du trentième DGFIP)
+window.limiterAbsences = function (el) {
+  // Force la valeur à 0 si l'agent tape un nombre négatif
+  if (parseInt(el.value) < 0) el.value = "0";
+
+  const greve = parseInt(document.getElementById("input-greve").value) || 0;
+  const carence = parseInt(document.getElementById("input-carence").value) || 0;
+  const m90 = parseInt(document.getElementById("input-maladie-90").value) || 0;
+  const m50 = parseInt(document.getElementById("input-maladie-50").value) || 0;
+
+  const total = greve + carence + m90 + m50;
+
+  // Si on dépasse 30, on annule mathématiquement la dernière frappe
+  if (total > 30) {
+    const surplus = total - 30;
+    el.value = (parseInt(el.value) || 0) - surplus;
+  }
+  // On met à jour la paie instantanément
   calculerPaie();
 };
 
@@ -546,7 +567,7 @@ function calculerPaie() {
       null,
       null,
       totalAbsenceDeduction,
-      ["input-absence"],
+      ["input-greve", "input-carence", "input-maladie-90", "input-maladie-50"],
     );
   }
 
