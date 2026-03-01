@@ -374,7 +374,12 @@ function calculerPaie() {
   const retenueIsq = arrondir(
     ristIsqReel * baseDonnees.constantes.taux_retenue_isq,
   );
-  const transfertPrimes = baseDonnees.constantes.transfert_primes_points;
+  // Le Transfert Primes/Points est soumis à la règle du trentième
+  const transfertPrimesBase = baseDonnees.constantes.transfert_primes_points;
+  const transfertPrimes = Math.max(
+    0,
+    transfertPrimesBase - arrondir((transfertPrimesBase / 30) * joursRetenus),
+  );
 
   // -- 4. CSG / CRDS --
   const elementsSoumisCsg =
