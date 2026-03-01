@@ -862,7 +862,9 @@ function calculerPaie() {
     `;
   tbody.appendChild(trRessort);
 
-  const netFinal = arrondir(netAPayerAvantImpot - impotSource);
+  // On empêche le net d'être négatif
+  // On empêche le net d'être négatif
+  const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(
     totalAPayer + totalPatronal - transfertPrimes,
   );
@@ -878,10 +880,16 @@ function calculerPaie() {
     formaterMontant(totalPatronal);
   document.getElementById("ui-cout-employeur").textContent =
     formaterMontant(coutTotalEmployeur);
-  document.getElementById("ui-net-a-payer").textContent =
-    formaterMontant(netFinal) + " €";
-  document.getElementById("ui-net-imposable").textContent =
-    formaterMontant(netImposable);
-}
 
+  // On force l'affichage à "0,00" si le net est à zéro
+  document.getElementById("ui-net-a-payer").textContent =
+    (netFinal === 0 ? "0,00" : formaterMontant(netFinal)) + " €";
+
+  // On utilise un nouveau nom (netImposableAffichage) pour éviter le conflit avec plus haut !
+  const netImposableAffichage = Math.max(0, netImposable);
+  document.getElementById("ui-net-imposable").textContent =
+    netImposableAffichage === 0
+      ? "0,00"
+      : formaterMontant(netImposableAffichage);
+}
 window.onload = initialiserApplication;
