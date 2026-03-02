@@ -8,18 +8,20 @@
 }
 
 body {
-  background-color: #2b2b2b;
+  background-color: #525659;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   gap: 30px;
   padding: 20px;
   font-family: var(--font-main);
-  margin: 0;
+  margin: 20px 0;
   overflow-x: auto;
 }
 
-/* FEUILLE A4 */
+/* =========================================
+   1. LA FICHE DE PAIE (A4)
+   ========================================= */
 .page-a4 {
   background-color: white !important;
   color: black !important;
@@ -34,7 +36,7 @@ body {
   font-size: 9px;
 }
 
-/* EN-TÊTE ET INFOS */
+/* En-tête et Infos */
 .header-container {
   display: flex;
   justify-content: space-between;
@@ -88,7 +90,9 @@ body {
   font-size: 11px;
 }
 
-/* TABLEAU PRINCIPAL */
+/* =========================================
+   2. LE TABLEAU DES LIGNES (TRAITEMENT)
+   ========================================= */
 .pay-table {
   width: 100%;
   table-layout: fixed;
@@ -123,7 +127,7 @@ body {
   padding-right: 5px !important;
 }
 
-/* Lignes écrasées naturellement par le ressort */
+/* --- LE SECRET DU VISUEL SERRÉ EST ICI --- */
 .pay-table td {
   padding: 1px 4px !important;
   height: 18px !important;
@@ -146,7 +150,7 @@ body {
   background-color: var(--dgfip-light);
 }
 
-/* PIED DE TABLEAU ET BAS DE PAGE */
+/* Pied du tableau */
 .pay-table-foot td {
   border: none;
 }
@@ -159,16 +163,6 @@ body {
   border-bottom: 1px solid var(--dgfip-gray-border) !important;
   background-color: var(--dgfip-light) !important;
   padding: 2px 4px !important;
-}
-
-.footer-bottom {
-  margin-top: 15px;
-  width: 320px;
-}
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
 }
 .summary-box {
   border: 1px solid var(--dgfip-dark);
@@ -188,39 +182,9 @@ body {
   font-weight: bold;
 }
 
-/* --- CHAMPS ÉDITABLES DANS LE TABLEAU (INLINE EDITING) --- */
-.table-input {
-  background-color: transparent;
-  border: none;
-  color: black;
-  font-family: var(--font-numbers);
-  font-size: 11px;
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
-  cursor: pointer;
-  outline: none;
-  /* Cache la flèche du menu déroulant pour faire "vrai texte" */
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  text-align-last: center;
-}
-
-.table-input:hover,
-.table-input:focus {
-  background-color: white;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3) inset;
-  border-radius: 2px;
-}
-/* --- OPTION 3 : ÉDITION MAGIQUE AU CLIC --- */
-body {
-  display: flex;
-  justify-content: center;
-  background-color: #525659;
-  margin: 20px 0;
-}
-
+/* =========================================
+   3. INTERACTIVITÉ DU TABLEAU
+   ========================================= */
 .clickable-row {
   cursor: pointer;
   transition: background-color 0.15s;
@@ -228,46 +192,16 @@ body {
 .clickable-row:hover td {
   background-color: #e8f0fe !important;
 }
-/* Empêche le tressautement au survol */
 .clickable-row:hover td:first-child {
   box-shadow: inset 3px 0 0 var(--dgfip-dark);
   border-left: none;
 }
-
-/* Indication visuelle discrète pour les lignes modifiables */
 .clickable-row .col-libelle > span:first-child {
   border-bottom: 1px dotted #999;
   padding-bottom: 1px;
 }
 .clickable-row:hover .col-libelle > span:first-child {
   border-bottom: 1px solid var(--dgfip-dark);
-}
-
-/* Design des boutons du nouveau menu "Ajouter" */
-.add-buttons-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 15px;
-}
-.add-buttons-grid button {
-  padding: 12px;
-  background: #f8f9fa;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: var(--font-main);
-  font-weight: bold;
-  color: #444;
-  transition: all 0.2s;
-  text-align: left;
-}
-.add-buttons-grid button:hover {
-  background: #e8f0fe;
-  border-color: var(--dgfip-medium);
-  color: var(--dgfip-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .add-row td {
@@ -287,7 +221,32 @@ body {
   font-weight: bold;
 }
 
-/* Fenêtre Modale (Pop-up) */
+.delete-btn {
+  color: #d9534f;
+  cursor: pointer;
+  margin-left: 8px;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
+}
+.clickable-row:hover .delete-btn {
+  opacity: 0.5;
+  visibility: visible;
+  display: inline-block;
+}
+.delete-btn:hover {
+  color: #c9302c !important;
+  opacity: 1 !important;
+  transform: scale(1.3);
+}
+
+/* =========================================
+   4. FENÊTRE MODALE & UI
+   ========================================= */
 .magic-modal {
   border: 2px solid var(--dgfip-dark);
   border-radius: 8px;
@@ -334,10 +293,10 @@ body {
 }
 .setting-panel {
   display: none;
-} /* Caché par défaut */
+}
 .setting-panel.active {
   display: block;
-} /* Affiché si ciblé */
+}
 .modal-body label {
   display: block;
   font-weight: bold;
@@ -360,24 +319,6 @@ body {
   outline: 2px solid var(--dgfip-medium);
 }
 
-/* --- BOUTON EFFACER RAPIDE (Croix rouge) --- */
-.delete-btn {
-  color: #d9534f;
-  cursor: pointer;
-  margin-left: 8px;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  display: none; /* Caché par défaut */
-  transition: transform 0.1s;
-}
-.clickable-row:hover .delete-btn {
-  display: inline-block; /* Rend la croix visible au survol de la ligne */
-}
-.delete-btn:hover {
-  color: #c9302c;
-  transform: scale(1.3);
-}
-/* --- Bouton Retour dans les menus --- */
 .back-btn {
   background: transparent;
   border: none;
@@ -392,7 +333,7 @@ body {
 .back-btn:hover {
   color: #003d82;
 }
-/* --- Bouton de validation (Confort UX) --- */
+
 .validate-btn {
   display: block;
   width: 100%;
@@ -414,26 +355,45 @@ body {
   background-color: var(--dgfip-medium);
   transform: scale(1.02);
 }
-/* --- Rend la croix de suppression toujours visible --- */
-.clickable-row .col-libelle .croix-suppression,
-.clickable-row .col-libelle span[onclick*="effacerValeurs"] {
-  opacity: 0.5 !important; /* Visible mais discret */
-  display: inline-block !important;
-  visibility: visible !important;
-  transition: opacity 0.2s;
+
+.add-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 15px;
+}
+.add-buttons-grid button {
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-weight: bold;
+  color: #444;
+  transition: all 0.2s;
+  text-align: left;
+}
+.add-buttons-grid button:hover {
+  background: #e8f0fe;
+  border-color: var(--dgfip-medium);
+  color: var(--dgfip-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.clickable-row:hover .col-libelle span[onclick*="effacerValeurs"] {
-  opacity: 1 !important; /* Rouge vif au survol */
-}
-/* --- Sélecteur Indemnité de Résidence (Onglets) --- */
+/* =========================================
+   5. COMPOSANTS SPÉCIFIQUES (Menus)
+   ========================================= */
+
+/* Indemnité de Résidence */
 .ir-tabs {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
 }
 .ir-tabs input[type="radio"] {
-  display: none; /* On cache le bouton rond moche de base */
+  display: none;
 }
 .ir-tabs label {
   flex: 1;
@@ -454,7 +414,6 @@ body {
   margin-top: 4px;
   line-height: 1.2;
 }
-/* Le style quand on clique sur une case */
 .ir-tabs input[type="radio"]:checked + label {
   background-color: var(--dgfip-dark);
   color: white;
@@ -463,9 +422,10 @@ body {
 .ir-tabs input[type="radio"]:checked + label small {
   color: #e0e0e0;
 }
-/* --- Liste RIST interactive sur-mesure --- */
+
+/* Liste RIST interactive */
 .rist-list-container {
-  max-height: 180px; /* Hauteur fixe avec ascenseur */
+  max-height: 180px;
   overflow-y: auto;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -484,14 +444,15 @@ body {
   border-bottom: none;
 }
 .rist-option:hover {
-  background-color: #f1f3f4; /* Gris clair au survol */
+  background-color: #f1f3f4;
 }
 .rist-option.selected {
   background-color: var(--dgfip-dark);
   color: white;
   font-weight: bold;
 }
-/* --- Grille d'options OTT (Toggle Cards) --- */
+
+/* Cartes OTT (Protocole) */
 .ott-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -499,30 +460,28 @@ body {
   margin-bottom: 15px;
 }
 .ott-grid input[type="checkbox"] {
-  display: none; /* On cache la case native carrée */
+  display: none;
 }
 .ott-card {
   border: 2px solid #e0e6ed;
   border-radius: 6px;
-  padding: 12px 6px; /* Un peu de place en haut et en bas */
+  padding: 12px 6px;
   cursor: pointer;
   background: #f8f9fa;
   transition: all 0.2s;
   text-align: center;
-  min-height: 25px; /* On donne une belle hauteur fixe à toutes les cartes */
+  min-height: 25px;
 }
-
 .ott-card-title {
-  display: block; /* LA MAGIE EST ICI : force le retour à la ligne */
+  display: block;
   width: 100%;
   font-size: 11px;
   color: #444;
   line-height: 1.3;
-  margin-bottom: 8px; /* Le bel espace entre le texte et la bulle */
+  margin-bottom: 8px;
 }
-
 .ott-card-amount {
-  display: inline-block; /* La bulle reste compacte au centre */
+  display: inline-block;
   font-size: 11px;
   color: var(--dgfip-dark);
   background-color: #e8f0fe;
@@ -532,7 +491,6 @@ body {
   border: 1px solid #c2d7fa;
   margin-top: 0;
 }
-/* Le style quand la carte est cliquée (on garde l'effet blanc propre) */
 .ott-grid input[type="checkbox"]:checked + .ott-card {
   background-color: var(--dgfip-dark);
   border-color: var(--dgfip-dark);
