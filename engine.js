@@ -1034,7 +1034,7 @@ function calculerPaie() {
   ajouterLigne("501180", "COT PAT RAFP", null, null, patRafp);
   ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
 
-  // CARENCE TRAITEMENT & RÉSIDENCE
+  // CARENCE TRAITEMENT & RÉSIDENCE (Ligne simple + Tooltip sur le montant)
   if (joursAbs > 0) {
     ajouterLigne(
       "604958",
@@ -1046,13 +1046,6 @@ function calculerPaie() {
       genererTooltipAbsence(traitementBrut),
     );
     ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
-    );
-    ajouterLigne(
       "604959",
       `PREC. CARENCE IND. RESID.`,
       null,
@@ -1060,13 +1053,6 @@ function calculerPaie() {
       null,
       null,
       genererTooltipAbsence(indemniteResidence),
-    );
-    ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
     );
   }
 
