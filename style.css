@@ -173,7 +173,7 @@ body {
   padding: 1px 4px !important;
   height: 18px !important;
   font-family: var(--font-numbers);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   border-right: 1px solid var(--dgfip-light);
   color: black !important;
@@ -182,7 +182,7 @@ body {
 .pay-table td.label {
   font-family: var(--font-main);
   font-weight: bold;
-  font-size: 9.5px;
+  font-size: 10px;
 }
 .pay-table td.label.font-large {
   font-size: 12px !important;
