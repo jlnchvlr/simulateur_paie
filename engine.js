@@ -396,37 +396,8 @@ function calculerPaie() {
   const joursRetenus =
     joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
 
-  // --- NOUVEAU : Le générateur de détails au survol ---
-  // Il calcule le montant exact déduit pour chaque type d'absence selon la prime concernée
-  function genererTooltipAbsence(montantDeBase) {
-    let details = [];
-    const parJour = montantDeBase / 30; // La règle du 1/30ème
-
-    if (joursGreve > 0)
-      details.push(
-        `Grève (${joursGreve}J) : -${formaterMontant(arrondir(parJour * joursGreve))} €`,
-      );
-    if (joursCarence > 0)
-      details.push(
-        `Carence (${joursCarence}J) : -${formaterMontant(arrondir(parJour * joursCarence))} €`,
-      );
-    if (jours90 > 0)
-      details.push(
-        `Maladie 90% (${jours90}J) : -${formaterMontant(arrondir(parJour * jours90 * 0.1))} €`,
-      );
-    if (jours50 > 0)
-      details.push(
-        `Maladie 50% (${jours50}J) : -${formaterMontant(arrondir(parJour * jours50 * 0.5))} €`,
-      );
-
-    return details.join("\n"); // Le \n crée les vraies lignes (façon colonnes)
-  }
-
-  const psc = Math.max(
-    0,
-    baseDonnees.constantes.participation_psc -
-      arrondir((baseDonnees.constantes.participation_psc / 30) * joursRetenus),
-  );
+  // 1. CORRECTION PSC : Montant fixe, non proratisé !
+  const psc = baseDonnees.constantes.participation_psc;
 
   const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
   const absenceNbi = arrondir((montantNbi / 30) * joursRetenus);
@@ -450,7 +421,37 @@ function calculerPaie() {
     (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
   );
 
-  // Live Feedback RIST & ISQ
+  // --- LE GÉNÉRATEUR D'INFO-BULLE (Détail des montants) ---
+  function genererTooltipAbsence(montantDeBase) {
+    let details = [];
+    const parJour = montantDeBase / 30;
+    if (joursGreve > 0)
+      details.push(
+        `Grève (${joursGreve}J) : -${formaterMontant(arrondir(parJour * joursGreve))} €`,
+      );
+    if (joursCarence > 0)
+      details.push(
+        `Carence (${joursCarence}J) : -${formaterMontant(arrondir(parJour * joursCarence))} €`,
+      );
+    if (jours90 > 0)
+      details.push(
+        `Maladie 90% (${jours90}J) : -${formaterMontant(arrondir(parJour * jours90 * 0.1))} €`,
+      );
+    if (jours50 > 0)
+      details.push(
+        `Maladie 50% (${jours50}J) : -${formaterMontant(arrondir(parJour * jours50 * 0.5))} €`,
+      );
+    return details.join("\n");
+  }
+
+  // --- LA LIGNE TEXTE VISUELLE (Façon DGFIP) ---
+  let detailsLigneTexte = [];
+  if (joursGreve > 0) detailsLigneTexte.push(`GREVE ${joursGreve}J`);
+  if (joursCarence > 0) detailsLigneTexte.push(`CAR ${joursCarence}J`);
+  if (jours90 > 0) detailsLigneTexte.push(`MAL 90% ${jours90}J`);
+  if (jours50 > 0) detailsLigneTexte.push(`MAL 50% ${jours50}J`);
+  const ligneDetailAbsence = detailsLigneTexte.join(" // ");
+
   const majPreview = (id, montant) => {
     const el = document.getElementById(id);
     if (el) el.textContent = formaterMontant(montant);
@@ -586,7 +587,6 @@ function calculerPaie() {
   const tbody = document.getElementById("lignes-paie");
   tbody.innerHTML = "";
 
-  // Routage Intelligent
   const routageModal = {
     102000: { cible: "panel-residence", titre: "Zone de Résidence" },
     201958: {
@@ -632,6 +632,7 @@ function calculerPaie() {
     },
   };
 
+  // Ajout du support pour le Tooltip sur les montants
   function ajouterLigne(
     code,
     libelle,
@@ -669,12 +670,11 @@ function calculerPaie() {
       croixEffacer = `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${idsStr})">✖</span>`;
     }
 
-    // --- NOUVEAU : On applique l'info-bulle uniquement sur le chiffre ---
+    // Le span pointillé pour montrer qu'on peut survoler
     const formatMontantCellule = (valeur) => {
       if (valeur === null || valeur === undefined || valeur === 0) return "";
       const texteFormate = formaterMontant(valeur);
       if (tooltipMontant) {
-        // Le soulignement pointillé indique que c'est survolable
         return `<span title="${tooltipMontant}" style="cursor: help; border-bottom: 1px dotted var(--dgfip-medium);">${texteFormate}</span>`;
       }
       return texteFormate;
@@ -691,6 +691,8 @@ function calculerPaie() {
   }
 
   // --- DESSIN DES LIGNES ---
+
+  // Ligne récapitulative info tout en haut
   if (joursAbs > 0) {
     const totalAbsenceDeduction =
       absenceTraitement +
@@ -702,7 +704,6 @@ function calculerPaie() {
       absRistCplt +
       absRistMaj +
       absIndCsg;
-    // On calcule la base totale pour faire une info-bulle globale
     const baseTotaleDeduction =
       traitementBrut +
       montantNbi +
@@ -713,7 +714,6 @@ function calculerPaie() {
       profilAgent.primes.rist_cplt_lic_isq +
       profilAgent.primes.rist_maj_isq +
       profilAgent.primes.ind_compensatrice_csg;
-
     ajouterLigne(
       "604958",
       `SERVICE NON FAIT / ABSENCE (${joursAbs} J)`,
@@ -726,18 +726,27 @@ function calculerPaie() {
   }
 
   ajouterLigne("101000", "TRAITEMENT BRUT", traitementBrut, null, null);
+
   if (montantNbi > 0) {
     ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", montantNbi, null, null);
-    if (joursAbs > 0)
+    if (joursAbs > 0) {
       ajouterLigne(
         "101070",
-        `N.B.I. (ABS. ${joursAbs} J)`,
+        "TRAITEMENT BRUT N.B.I.",
         -absenceNbi,
         null,
         null,
         null,
         genererTooltipAbsence(montantNbi),
       );
+      ajouterLigne(
+        "",
+        `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+        null,
+        null,
+        null,
+      );
+    }
   }
 
   if (montantSFT > 0)
@@ -775,6 +784,7 @@ function calculerPaie() {
       ["input-fmd"],
     );
 
+  // --- BLOCS RIST AVEC VISUEL DGFIP ---
   ajouterLigne(
     "201958",
     "RIST PART FONCTIONS",
@@ -782,16 +792,24 @@ function calculerPaie() {
     null,
     null,
   );
-  if (joursAbs > 0)
+  if (joursAbs > 0) {
     ajouterLigne(
       "201958",
-      `RIST PART FONCTIONS (ABS. ${joursAbs} J)`,
+      "RIST PART FONCTIONS",
       -absRistFct,
       null,
       null,
       null,
       genererTooltipAbsence(profilAgent.primes.rist_fonctions),
     );
+    ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
+    );
+  }
 
   ajouterLigne(
     "201959",
@@ -800,16 +818,24 @@ function calculerPaie() {
     null,
     null,
   );
-  if (joursAbs > 0)
+  if (joursAbs > 0) {
     ajouterLigne(
       "201959",
-      `RIST PART EXPER. PROF. (ABS. ${joursAbs} J)`,
+      "RIST PART EXPER. PROF.",
       -absRistExp,
       null,
       null,
       null,
       genererTooltipAbsence(profilAgent.primes.rist_exper_prof),
     );
+    ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
+    );
+  }
 
   ajouterLigne(
     "201960",
@@ -818,16 +844,24 @@ function calculerPaie() {
     null,
     null,
   );
-  if (joursAbs > 0)
+  if (joursAbs > 0) {
     ajouterLigne(
       "201960",
-      `RIST PART LIC-ISQ (ABS. ${joursAbs} J)`,
+      "RIST PART LIC-ISQ (ICNA)",
       -absRistIsq,
       null,
       null,
       null,
       genererTooltipAbsence(profilAgent.primes.rist_lic_isq),
     );
+    ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
+    );
+  }
 
   ajouterLigne(
     "201961",
@@ -836,16 +870,24 @@ function calculerPaie() {
     null,
     null,
   );
-  if (joursAbs > 0)
+  if (joursAbs > 0) {
     ajouterLigne(
       "201961",
-      `RIST CPLT PART LIC-ISQ (ABS. ${joursAbs} J)`,
+      "RIST CPLT PART LIC-ISQ",
       -absRistCplt,
       null,
       null,
       null,
       genererTooltipAbsence(profilAgent.primes.rist_cplt_lic_isq),
     );
+    ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
+    );
+  }
 
   ajouterLigne(
     "201962",
@@ -854,16 +896,24 @@ function calculerPaie() {
     null,
     null,
   );
-  if (joursAbs > 0)
+  if (joursAbs > 0) {
     ajouterLigne(
       "201962",
-      `MAJORATION CPLT ISQ (ABS. ${joursAbs} J)`,
+      "MAJORATION CPLT ISQ",
       -absRistMaj,
       null,
       null,
       null,
       genererTooltipAbsence(profilAgent.primes.rist_maj_isq),
     );
+    ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
+    );
+  }
 
   ajouterLigne(
     "202206",
@@ -872,16 +922,24 @@ function calculerPaie() {
     null,
     null,
   );
-  if (joursAbs > 0)
+  if (joursAbs > 0) {
     ajouterLigne(
       "202206",
-      `IND. COMPENSATRICE CSG (ABS. ${joursAbs} J)`,
+      "IND. COMPENSATRICE CSG",
       -absIndCsg,
       null,
       null,
       null,
       genererTooltipAbsence(profilAgent.primes.ind_compensatrice_csg),
     );
+    ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
+    );
+  }
 
   ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
 
@@ -976,10 +1034,11 @@ function calculerPaie() {
   ajouterLigne("501180", "COT PAT RAFP", null, null, patRafp);
   ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
 
+  // CARENCE TRAITEMENT & RÉSIDENCE
   if (joursAbs > 0) {
     ajouterLigne(
       "604958",
-      `PREC. CARENCE REM. PR. (${joursAbs} J)`,
+      `PREC. CARENCE REM. PR.`,
       null,
       absenceTraitement,
       null,
@@ -987,13 +1046,27 @@ function calculerPaie() {
       genererTooltipAbsence(traitementBrut),
     );
     ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
+    );
+    ajouterLigne(
       "604959",
-      `PREC. CARENCE IND. RESID. (${joursAbs} J)`,
+      `PREC. CARENCE IND. RESID.`,
       null,
       absenceResidence,
       null,
       null,
       genererTooltipAbsence(indemniteResidence),
+    );
+    ajouterLigne(
+      "",
+      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
+      null,
+      null,
+      null,
     );
   }
 
@@ -1055,7 +1128,7 @@ function calculerPaie() {
     ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?");
   tbody.appendChild(trAjout);
 
-  // --- LE FAMEUX RESSORT MAGIQUE EN LIGNE (INTACT) ---
+  // Ressort magique original
   const trRessort = document.createElement("tr");
   trRessort.style.backgroundColor = "white";
   trRessort.innerHTML = `
