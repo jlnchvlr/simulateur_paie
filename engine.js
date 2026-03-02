@@ -40,6 +40,9 @@ async function initialiserApplication() {
     mettreAJourHelperRist();
     resetHelperRist();
     resetHelperExp();
+    resetHelperIsqLicence();
+    resetHelperIsqComplement();
+    resetHelperIsqMajoration();
   } catch (erreur) {
     console.error("Erreur:", erreur);
   }
@@ -194,6 +197,120 @@ const expDetails = {
     "ICNA Divisionnaire / TSEEAC Exceptionnel / TSEEAC Principal (2e qualif + 1 an) / IEEAC Normal / IESSA Principal",
   "Niveau 5":
     "ICNA en Chef / IESSA Div ou Chef / IEEAC Principal ou HC / RTAC, CTAC, CSTAC",
+};
+
+// --- LOGIQUE ISQ LICENCE & COMPLÉMENT ---
+const isqLicenceDetails = {
+  Aucune: "Licence non détenue, perdue ou suspendue.",
+  "Niveau 1": "Formation LFPG/LFPO/CRNA (détenteur LOC ou CR).",
+  "Niveau 2": "Personnels d'un organisme classé en liste 11.",
+  "Niveau 3": "Personnels d'un organisme classé en liste 10.",
+  "Niveau 4": "PC d'un organisme classé en liste 7 ou 8.",
+  "Niveau 5": "PC Listes 1 à 3 / ICNA stagiaires listes 1-3 (max 30 mois).",
+  "Niveau 6": "PC d'un organisme classé en liste 4 à 6.",
+  "Niveau 7": "PC d'un organisme classé en liste 9.",
+  "Niveau 8": "ICNA titularisés sur CDG/ORY en formation LOC ou Approche.",
+  "Niveau 9": "ICNA stagiaires affectés Listes 4 à 11 (max 30 mois).",
+};
+
+const isqComplementDetails = {
+  Aucun: "Aucun complément, non éligible ou suspendu.",
+  "Niveau 1": "PC d'un organisme classé en liste 8.",
+  "Niveau 2": "PC d'un organisme classé en liste 7.",
+  "Niveau 3": "PC d'un organisme classé en liste 5 ou 6.",
+  "Niveau 4": "PC d'un organisme classé en liste 4.",
+  "Niveau 5": "PC d'un organisme classé en liste 3.",
+  "Niveau 6": "PC d'un organisme classé en liste 2.",
+  "Niveau 7": "PC d'un organisme classé en liste 1.",
+  "Niveau 8": "PC d'un organisme classé en listes 9 à 11.",
+};
+
+// --- LOGIQUE ISQ MAJORATION ---
+const isqMajorationDetails = {
+  Aucune: "Aucune majoration / Non éligible.",
+  "Niveau 1": "Personnels d'un organisme classé en listes 9 à 11.",
+  "Niveau 2": "Personnels d'un organisme classé en liste 8.",
+  "Niveau 3": "Personnels d'un organisme classé en liste 7.",
+  "Niveau 4": "Personnels d'un organisme classé en listes 5 et 6.",
+  "Niveau 5": "Personnels d'un organisme classé en liste 4.",
+  "Niveau 6": "Personnels d'un organisme classé en liste 3.",
+  "Niveau 7": "Personnels d'un organisme classé en liste 2.",
+  "Niveau 8": "Personnels d'un organisme classé en liste 1.",
+};
+
+window.previewHelperIsqMajoration = (nv) => {
+  const el = document.getElementById("isq-majoration-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Aperçu :</strong> ${isqMajorationDetails[nv] || ""}`;
+};
+window.resetHelperIsqMajoration = () => {
+  const nv = document.getElementById("input-isq-majoration").value;
+  const el = document.getElementById("isq-majoration-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Sélectionné :</strong> ${isqMajorationDetails[nv] || ""}`;
+};
+window.selectIsqMajoration = (nv) => {
+  document.getElementById("input-isq-majoration").value = nv;
+  document
+    .querySelectorAll("#panel-rist-isq-majoration .rist-option")
+    .forEach((e) => e.classList.remove("selected"));
+  document
+    .querySelector(
+      `#panel-rist-isq-majoration .rist-option[data-value="${nv}"]`,
+    )
+    ?.classList.add("selected");
+  resetHelperIsqMajoration();
+  calculerPaie();
+};
+
+// Fonctions ISQ Licence
+window.previewHelperIsqLicence = (nv) => {
+  const el = document.getElementById("isq-licence-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Aperçu :</strong> ${isqLicenceDetails[nv] || ""}`;
+};
+window.resetHelperIsqLicence = () => {
+  const nv = document.getElementById("input-isq-licence").value;
+  const el = document.getElementById("isq-licence-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Sélectionné :</strong> ${isqLicenceDetails[nv] || ""}`;
+};
+window.selectIsqLicence = (nv) => {
+  document.getElementById("input-isq-licence").value = nv;
+  document
+    .querySelectorAll("#panel-rist-isq-licence .rist-option")
+    .forEach((e) => e.classList.remove("selected"));
+  document
+    .querySelector(`#panel-rist-isq-licence .rist-option[data-value="${nv}"]`)
+    ?.classList.add("selected");
+  resetHelperIsqLicence();
+  calculerPaie();
+};
+
+// Fonctions ISQ Complément
+window.previewHelperIsqComplement = (nv) => {
+  const el = document.getElementById("isq-complement-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Aperçu :</strong> ${isqComplementDetails[nv] || ""}`;
+};
+window.resetHelperIsqComplement = () => {
+  const nv = document.getElementById("input-isq-complement").value;
+  const el = document.getElementById("isq-complement-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Sélectionné :</strong> ${isqComplementDetails[nv] || ""}`;
+};
+window.selectIsqComplement = (nv) => {
+  document.getElementById("input-isq-complement").value = nv;
+  document
+    .querySelectorAll("#panel-rist-isq-complement .rist-option")
+    .forEach((e) => e.classList.remove("selected"));
+  document
+    .querySelector(
+      `#panel-rist-isq-complement .rist-option[data-value="${nv}"]`,
+    )
+    ?.classList.add("selected");
+  resetHelperIsqComplement();
+  calculerPaie();
 };
 
 window.previewHelperExp = function (niveau) {
@@ -367,20 +484,40 @@ function ouvrirModal(panelIds, titre) {
 
   document.getElementById("magic-modal").showModal();
 
-  // On vérifie si on vient d'ouvrir le tiroir de la part fonctions
-  // --- NOUVEAU : AUTO-SCROLL POUR LES MENUS RIST ---
+  // --- NOUVEAU : AUTO-SCROLL POUR LES 5 MENUS RIST ---
   const isRistFonctions = Array.isArray(panelIds)
     ? panelIds.includes("panel-rist-fonctions")
     : panelIds === "panel-rist-fonctions";
   const isRistExperience = Array.isArray(panelIds)
     ? panelIds.includes("panel-rist-experience")
     : panelIds === "panel-rist-experience";
+  const isIsqLicence = Array.isArray(panelIds)
+    ? panelIds.includes("panel-rist-isq-licence")
+    : panelIds === "panel-rist-isq-licence";
+  const isIsqComplement = Array.isArray(panelIds)
+    ? panelIds.includes("panel-rist-isq-complement")
+    : panelIds === "panel-rist-isq-complement";
+  const isIsqMajoration = Array.isArray(panelIds)
+    ? panelIds.includes("panel-rist-isq-majoration")
+    : panelIds === "panel-rist-isq-majoration";
 
-  if (isRistFonctions || isRistExperience) {
+  if (
+    isRistFonctions ||
+    isRistExperience ||
+    isIsqLicence ||
+    isIsqComplement ||
+    isIsqMajoration
+  ) {
     setTimeout(() => {
-      const selector = isRistFonctions
-        ? "#panel-rist-fonctions .selected"
-        : "#panel-rist-experience .selected";
+      let selector = "";
+      if (isRistFonctions) selector = "#panel-rist-fonctions .selected";
+      else if (isRistExperience) selector = "#panel-rist-experience .selected";
+      else if (isIsqLicence) selector = "#panel-rist-isq-licence .selected";
+      else if (isIsqComplement)
+        selector = "#panel-rist-isq-complement .selected";
+      else if (isIsqMajoration)
+        selector = "#panel-rist-isq-majoration .selected";
+
       const selectedOption = document.querySelector(selector);
       if (selectedOption)
         selectedOption.scrollIntoView({ block: "center", behavior: "instant" });
@@ -509,6 +646,27 @@ function calculerPaie() {
     if (previewRistExp)
       previewRistExp.textContent = formaterMontant(
         profilAgent.primes.rist_exper_prof,
+      );
+    // -- LIVE FEEDBACK : ISQ --
+    const previewIsqLic = document.getElementById("preview-rist-isq-licence");
+    if (previewIsqLic)
+      previewIsqLic.textContent = formaterMontant(
+        profilAgent.primes.rist_lic_isq,
+      );
+
+    const previewIsqCplt = document.getElementById(
+      "preview-rist-isq-complement",
+    );
+    if (previewIsqCplt)
+      previewIsqCplt.textContent = formaterMontant(
+        profilAgent.primes.rist_cplt_lic_isq,
+      );
+    const previewIsqMaj = document.getElementById(
+      "preview-rist-isq-majoration",
+    );
+    if (previewIsqMaj)
+      previewIsqMaj.textContent = formaterMontant(
+        profilAgent.primes.rist_maj_isq,
       );
   }
 
@@ -678,6 +836,18 @@ function calculerPaie() {
       estCliquable = true;
       cibles = "panel-rist-experience";
       titreModal = "Ristourne Part Expérience";
+    } else if (code === "201960") {
+      estCliquable = true;
+      cibles = "panel-rist-isq-licence";
+      titreModal = "Ristourne Part LIC-ISQ";
+    } else if (code === "201961") {
+      estCliquable = true;
+      cibles = "panel-rist-isq-complement";
+      titreModal = "Ristourne CPLT Part LIC-ISQ";
+    } else if (code === "201962") {
+      estCliquable = true;
+      cibles = "panel-rist-isq-majoration";
+      titreModal = "Majoration Complément ISQ";
     } else if (code && code.startsWith("2019")) {
       estCliquable = true;
       cibles = "panel-rist";
@@ -885,22 +1055,22 @@ function calculerPaie() {
       null,
     );
 
-  if (profilAgent.primes.rist_maj_isq > 0) {
+  // On affiche toujours la ligne, même si le montant est à 0 (pour pouvoir cliquer dessus !)
+  ajouterLigne(
+    "201962",
+    "MAJORATION CPLT ISQ",
+    profilAgent.primes.rist_maj_isq,
+    null,
+    null,
+  );
+  if (joursAbs > 0) {
     ajouterLigne(
       "201962",
-      "MAJORATION CPLT ISQ",
-      profilAgent.primes.rist_maj_isq,
+      `MAJORATION CPLT ISQ (ABS. ${joursAbs} J)`,
+      -absRistMaj,
       null,
       null,
     );
-    if (joursAbs > 0)
-      ajouterLigne(
-        "201962",
-        `MAJORATION CPLT ISQ (ABS. ${joursAbs} J)`,
-        -absRistMaj,
-        null,
-        null,
-      );
   }
 
   ajouterLigne(

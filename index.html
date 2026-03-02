@@ -52,14 +52,14 @@
           <div class="ir-tabs">
             <input
               type="radio"
-              id="ir-zone3"
+              id="ir-zone1"
               name="ir-zone"
-              value="Zone 3"
+              value="Zone 1"
               checked
               onchange="calculerPaie()"
             />
-            <label for="ir-zone3"
-              ><strong>0 %</strong><br /><small>Zone 3</small></label
+            <label for="ir-zone1"
+              ><strong>3 %</strong><br /><small>Zone 1</small></label
             >
 
             <input
@@ -75,13 +75,13 @@
 
             <input
               type="radio"
-              id="ir-zone1"
+              id="ir-zone3"
               name="ir-zone"
-              value="Zone 1"
+              value="Zone 3"
               onchange="calculerPaie()"
             />
-            <label for="ir-zone1"
-              ><strong>3 %</strong><br /><small>Zone 1</small></label
+            <label for="ir-zone3"
+              ><strong>0 %</strong><br /><small>Zone 3</small></label
             >
           </div>
 
@@ -372,7 +372,7 @@
           </button>
         </div>
 
-        <div id="panel-rist" class="setting-panel">
+        <div id="panel-rist-isq-licence" class="setting-panel">
           <button
             type="button"
             class="back-btn"
@@ -383,46 +383,393 @@
             ⬅ Retour au menu
           </button>
 
-          <label>Licence ISQ</label>
-          <select id="input-isq-licence" onchange="calculerPaie()">
-            <option value="0.00€ - Perdue ou Suspendue">
-              Perdue ou Suspendue
-            </option>
-            <option
-              value="Niveau 5 (1 976,11€) - PC Listes 1-3 / Stagiaires L1-3"
-              selected
+          <label>Niveau de la Licence ISQ</label>
+          <input type="hidden" id="input-isq-licence" value="Niveau 5" />
+
+          <div
+            class="rist-list-container"
+            onmouseleave="resetHelperIsqLicence()"
+          >
+            <div
+              class="rist-option"
+              data-value="Aucune"
+              onmouseenter="previewHelperIsqLicence('Aucune')"
+              onclick="selectIsqLicence('Aucune')"
             >
-              Niveau 5 - PC Listes 1-3
-            </option>
-            <option value="Niveau 6 (576,11€) - PC Listes 4-6">
-              Niveau 6 - PC Listes 4-6
-            </option>
-            <option value="Niveau 9 (1 276,11€) - Stagiaires Listes 4-11">
-              Niveau 9 - Stagiaires Listes 4-11
-            </option>
-          </select>
-          <label>Complément ISQ</label>
-          <select id="input-isq-complement" onchange="calculerPaie()">
-            <option value="0.00€ - Aucun ou Suspendu">Aucun ou Suspendu</option>
-            <option value="Niveau 3 (2 136,88€) - PC Listes 5-6">
-              Niveau 3 - PC Listes 5-6
-            </option>
-            <option value="Niveau 7 (2 281,78€) - PC Liste 1" selected>
-              Niveau 7 - PC Liste 1 (Ex: CRNA)
-            </option>
-          </select>
-          <label>Majoration Complément ISQ</label>
-          <select id="input-isq-majoration" onchange="calculerPaie()">
-            <option value="0.00€ - Aucune / Non éligible" selected>
-              Aucune / Non éligible
-            </option>
-            <option value="Niveau 4 (376,19€) - Listes 5 et 6">
-              Niveau 4 - Listes 5 et 6
-            </option>
-            <option value="Niveau 8 (405,32€) - Liste 1">
-              Niveau 8 - Liste 1
-            </option>
-          </select>
+              Aucune / Suspendue (0,00 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 1"
+              onmouseenter="previewHelperIsqLicence('Niveau 1')"
+              onclick="selectIsqLicence('Niveau 1')"
+            >
+              Niveau 1 (932,04 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 2"
+              onmouseenter="previewHelperIsqLicence('Niveau 2')"
+              onclick="selectIsqLicence('Niveau 2')"
+            >
+              Niveau 2 (1 258,42 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 3"
+              onmouseenter="previewHelperIsqLicence('Niveau 3')"
+              onclick="selectIsqLicence('Niveau 3')"
+            >
+              Niveau 3 (1 376,85 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 4"
+              onmouseenter="previewHelperIsqLicence('Niveau 4')"
+              onclick="selectIsqLicence('Niveau 4')"
+            >
+              Niveau 4 (377,53 €)
+            </div>
+            <div
+              class="rist-option selected"
+              data-value="Niveau 5"
+              onmouseenter="previewHelperIsqLicence('Niveau 5')"
+              onclick="selectIsqLicence('Niveau 5')"
+            >
+              Niveau 5 (1 976,11 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 6"
+              onmouseenter="previewHelperIsqLicence('Niveau 6')"
+              onclick="selectIsqLicence('Niveau 6')"
+            >
+              Niveau 6 (576,11 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 7"
+              onmouseenter="previewHelperIsqLicence('Niveau 7')"
+              onclick="selectIsqLicence('Niveau 7')"
+            >
+              Niveau 7 (1 526,85 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 8"
+              onmouseenter="previewHelperIsqLicence('Niveau 8')"
+              onclick="selectIsqLicence('Niveau 8')"
+            >
+              Niveau 8 (1 077,53 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 9"
+              onmouseenter="previewHelperIsqLicence('Niveau 9')"
+              onclick="selectIsqLicence('Niveau 9')"
+            >
+              Niveau 9 (1 276,11 €)
+            </div>
+          </div>
+
+          <div
+            id="isq-licence-helper-text"
+            style="
+              font-size: 11px;
+              color: #0056b3;
+              background-color: #e6f2ff;
+              padding: 10px;
+              border-radius: 4px;
+              font-style: italic;
+              min-height: 35px;
+              border-left: 3px solid #0056b3;
+            "
+          >
+            Sélectionnez un niveau pour voir l'affectation correspondante...
+          </div>
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant sur la paie :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-rist-isq-licence">0,00</span> €</strong
+            >
+          </div>
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-rist-isq-complement" class="setting-panel">
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+
+          <label>Niveau du Complément ISQ</label>
+          <input type="hidden" id="input-isq-complement" value="Niveau 7" />
+
+          <div
+            class="rist-list-container"
+            onmouseleave="resetHelperIsqComplement()"
+          >
+            <div
+              class="rist-option"
+              data-value="Aucun"
+              onmouseenter="previewHelperIsqComplement('Aucun')"
+              onclick="selectIsqComplement('Aucun')"
+            >
+              Aucun / Suspendu (0,00 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 1"
+              onmouseenter="previewHelperIsqComplement('Niveau 1')"
+              onclick="selectIsqComplement('Niveau 1')"
+            >
+              Niveau 1 (1 679,36 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 2"
+              onmouseenter="previewHelperIsqComplement('Niveau 2')"
+              onclick="selectIsqComplement('Niveau 2')"
+            >
+              Niveau 2 (1 751,15 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 3"
+              onmouseenter="previewHelperIsqComplement('Niveau 3')"
+              onclick="selectIsqComplement('Niveau 3')"
+            >
+              Niveau 3 (2 136,88 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 4"
+              onmouseenter="previewHelperIsqComplement('Niveau 4')"
+              onclick="selectIsqComplement('Niveau 4')"
+            >
+              Niveau 4 (2 202,45 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 5"
+              onmouseenter="previewHelperIsqComplement('Niveau 5')"
+              onclick="selectIsqComplement('Niveau 5')"
+            >
+              Niveau 5 (1 969,09 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 6"
+              onmouseenter="previewHelperIsqComplement('Niveau 6')"
+              onclick="selectIsqComplement('Niveau 6')"
+            >
+              Niveau 6 (2 037,51 €)
+            </div>
+            <div
+              class="rist-option selected"
+              data-value="Niveau 7"
+              onmouseenter="previewHelperIsqComplement('Niveau 7')"
+              onclick="selectIsqComplement('Niveau 7')"
+            >
+              Niveau 7 (2 281,78 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 8"
+              onmouseenter="previewHelperIsqComplement('Niveau 8')"
+              onclick="selectIsqComplement('Niveau 8')"
+            >
+              Niveau 8 (396,01 €)
+            </div>
+          </div>
+
+          <div
+            id="isq-complement-helper-text"
+            style="
+              font-size: 11px;
+              color: #0056b3;
+              background-color: #e6f2ff;
+              padding: 10px;
+              border-radius: 4px;
+              font-style: italic;
+              min-height: 35px;
+              border-left: 3px solid #0056b3;
+            "
+          >
+            Sélectionnez un niveau pour voir l'affectation correspondante...
+          </div>
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant sur la paie :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-rist-isq-complement">0,00</span> €</strong
+            >
+          </div>
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-rist-isq-majoration" class="setting-panel">
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+
+          <label>Niveau de Majoration du Complément ISQ</label>
+          <input type="hidden" id="input-isq-majoration" value="Aucune" />
+
+          <div
+            class="rist-list-container"
+            onmouseleave="resetHelperIsqMajoration()"
+          >
+            <div
+              class="rist-option selected"
+              data-value="Aucune"
+              onmouseenter="previewHelperIsqMajoration('Aucune')"
+              onclick="selectIsqMajoration('Aucune')"
+            >
+              Aucune / Non éligible (0,00 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 1"
+              onmouseenter="previewHelperIsqMajoration('Niveau 1')"
+              onclick="selectIsqMajoration('Niveau 1')"
+            >
+              Niveau 1 (215,00 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 2"
+              onmouseenter="previewHelperIsqMajoration('Niveau 2')"
+              onclick="selectIsqMajoration('Niveau 2')"
+            >
+              Niveau 2 (284,98 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 3"
+              onmouseenter="previewHelperIsqMajoration('Niveau 3')"
+              onclick="selectIsqMajoration('Niveau 3')"
+            >
+              Niveau 3 (319,39 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 4"
+              onmouseenter="previewHelperIsqMajoration('Niveau 4')"
+              onclick="selectIsqMajoration('Niveau 4')"
+            >
+              Niveau 4 (376,19 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 5"
+              onmouseenter="previewHelperIsqMajoration('Niveau 5')"
+              onclick="selectIsqMajoration('Niveau 5')"
+            >
+              Niveau 5 (421,12 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 6"
+              onmouseenter="previewHelperIsqMajoration('Niveau 6')"
+              onclick="selectIsqMajoration('Niveau 6')"
+            >
+              Niveau 6 (191,60 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 7"
+              onmouseenter="previewHelperIsqMajoration('Niveau 7')"
+              onclick="selectIsqMajoration('Niveau 7')"
+            >
+              Niveau 7 (217,60 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 8"
+              onmouseenter="previewHelperIsqMajoration('Niveau 8')"
+              onclick="selectIsqMajoration('Niveau 8')"
+            >
+              Niveau 8 (405,32 €)
+            </div>
+          </div>
+
+          <div
+            id="isq-majoration-helper-text"
+            style="
+              font-size: 11px;
+              color: #0056b3;
+              background-color: #e6f2ff;
+              padding: 10px;
+              border-radius: 4px;
+              font-style: italic;
+              min-height: 35px;
+              border-left: 3px solid #0056b3;
+            "
+          >
+            Sélectionnez un niveau pour voir l'affectation correspondante...
+          </div>
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant sur la paie :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-rist-isq-majoration">0,00</span> €</strong
+            >
+          </div>
           <button
             type="button"
             class="validate-btn"
