@@ -50,6 +50,64 @@ async function initialiserApplication() {
       }
     });
 
+    // ---------------------------------------------------------
+    // --- SÉCURITÉ ET LOGIQUE DES CHAMPS NUMÉRIQUES ---
+    // ---------------------------------------------------------
+    const champsNumeriques = document.querySelectorAll(
+      '.magic-modal input[type="number"]',
+    );
+
+    champsNumeriques.forEach((champ) => {
+      champ.addEventListener("input", function () {
+        if (this.value === "") return; // On le laisse effacer temporairement
+
+        let valeur = parseFloat(this.value);
+        let valeurCorrigee = false; // 👈 Le marqueur magique
+
+        // Règle A : Pas de nombres négatifs
+        if (valeur < 0) {
+          this.value = "0";
+          valeurCorrigee = true;
+        }
+
+        // Règle B : L'impôt à la source ne peut pas dépasser 100%
+        if (this.id === "input-pas" && valeur > 100) {
+          this.value = "100";
+          valeurCorrigee = true;
+        }
+
+        // Règle C : Règle du 30ème (Plafond à 30 jours pour nuits/soirées)
+        if (
+          (this.id === "input-nuit-n" || this.id === "input-nuit-s2") &&
+          valeur > 30
+        ) {
+          this.value = "30";
+          valeurCorrigee = true;
+        }
+
+        // 👈 LA CORRECTION EST LÀ :
+        // Si le script a dû modifier la valeur saisie, on force le recalcul
+        // pour écraser le calcul faussé (le fameux -0.97)
+        if (valeurCorrigee) {
+          calculerPaie();
+        }
+      });
+
+      // Quand l'utilisateur clique en dehors de la case (Blur)
+      champ.addEventListener("blur", function () {
+        // S'il a laissé la case totalement vide, on remet un zéro propre
+        if (this.value === "") {
+          if (this.step && this.step.includes(".")) {
+            this.value = "0.00";
+          } else {
+            this.value = "0";
+          }
+          calculerPaie();
+        }
+      });
+    });
+    // ---------------------------------------------------------
+
     calculerPaie();
     resetHelperRist();
     resetHelperExp();
