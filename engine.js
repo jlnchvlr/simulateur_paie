@@ -1,4 +1,6 @@
 let baseDonnees = {};
+window.isTourActive = false; // Le verrou de la visite
+window.tourSavedStep = undefined; // Pour mémoriser l'étape en cours
 
 async function initialiserApplication() {
   try {
@@ -18,12 +20,93 @@ async function initialiserApplication() {
     );
     inputs.forEach((input) => input.addEventListener("input", calculerPaie));
 
-    document.getElementById("magic-modal").addEventListener("keydown", (e) => {
+    const modal = document.getElementById("magic-modal");
+
+    // Fermeture avec Entrée
+    modal.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        document.getElementById("magic-modal").close();
+        modal.close();
       }
     });
+
+    // --- NOUVEAU : Réveil de la Visite Guidée (et passage à la suite !) ---
+    modal.addEventListener("close", () => {
+      if (window.tourSavedStep !== undefined) {
+        setTimeout(() => {
+          // On calcule l'étape d'après
+          const etapeSuivante = window.tourSavedStep + 1;
+
+          // Comme on a 6 étapes au total (l'index va de 0 à 5),
+          // on vérifie qu'on ne dépasse pas la fin de la visite
+          if (etapeSuivante <= 5) {
+            window.lancerVisiteGuidee(etapeSuivante);
+          } else {
+            window.isTourActive = false; // La visite est terminée
+          }
+
+          window.tourSavedStep = undefined;
+        }, 150); // Petit délai pour laisser le menu disparaître
+      }
+    });
+
+    // ---------------------------------------------------------
+    // --- SÉCURITÉ ET LOGIQUE DES CHAMPS NUMÉRIQUES ---
+    // ---------------------------------------------------------
+    const champsNumeriques = document.querySelectorAll(
+      '.magic-modal input[type="number"]',
+    );
+
+    champsNumeriques.forEach((champ) => {
+      champ.addEventListener("input", function () {
+        if (this.value === "") return; // On le laisse effacer temporairement
+
+        let valeur = parseFloat(this.value);
+        let valeurCorrigee = false; // 👈 Le marqueur magique
+
+        // Règle A : Pas de nombres négatifs
+        if (valeur < 0) {
+          this.value = "0";
+          valeurCorrigee = true;
+        }
+
+        // Règle B : L'impôt à la source ne peut pas dépasser 100%
+        if (this.id === "input-pas" && valeur > 100) {
+          this.value = "100";
+          valeurCorrigee = true;
+        }
+
+        // Règle C : Règle du 30ème (Plafond à 30 jours pour nuits/soirées)
+        if (
+          (this.id === "input-nuit-n" || this.id === "input-nuit-s2") &&
+          valeur > 30
+        ) {
+          this.value = "30";
+          valeurCorrigee = true;
+        }
+
+        // 👈 LA CORRECTION EST LÀ :
+        // Si le script a dû modifier la valeur saisie, on force le recalcul
+        // pour écraser le calcul faussé (le fameux -0.97)
+        if (valeurCorrigee) {
+          calculerPaie();
+        }
+      });
+
+      // Quand l'utilisateur clique en dehors de la case (Blur)
+      champ.addEventListener("blur", function () {
+        // S'il a laissé la case totalement vide, on remet un zéro propre
+        if (this.value === "") {
+          if (this.step && this.step.includes(".")) {
+            this.value = "0.00";
+          } else {
+            this.value = "0";
+          }
+          calculerPaie();
+        }
+      });
+    });
+    // ---------------------------------------------------------
 
     calculerPaie();
     resetHelperRist();
@@ -176,7 +259,6 @@ const isqMajorationDetails = {
   "Niveau 8": "Personnels d'un organisme classé en liste 1.",
 };
 
-// Application de l'usine à tous les menus !
 creerMenuInteractif(
   "Rist",
   "input-fonction",
@@ -297,11 +379,20 @@ function formaterMontant(montant) {
     maximumFractionDigits: 2,
   });
 }
+
 function arrondir(valeur) {
   return Math.round(valeur * 100) / 100;
 }
 
 function ouvrirModal(panelIds, titre) {
+  // --- NOUVEAU : MISE EN PAUSE DE LA VISITE ---
+  // Si le tuto est en cours, on l'efface le temps que le menu soit ouvert
+  if (window.isTourActive && window.tourObj) {
+    const state = window.tourObj.getState();
+    window.tourSavedStep = state ? state.activeIndex : 0;
+    window.tourObj.destroy();
+  }
+
   document.getElementById("modal-title").textContent = titre;
   document
     .querySelectorAll(".setting-panel")
@@ -317,7 +408,6 @@ function ouvrirModal(panelIds, titre) {
 
   document.getElementById("magic-modal").showModal();
 
-  // Auto-scroll générique
   setTimeout(() => {
     const activePanel = document.querySelector(".setting-panel.active");
     if (activePanel) {
@@ -354,9 +444,7 @@ window.limiterAbsences = function (el) {
   const m50 = parseInt(document.getElementById("input-maladie-50").value) || 0;
 
   const total = greve + carence + m90 + m50;
-  if (total > 30) {
-    el.value = (parseInt(el.value) || 0) - (total - 30);
-  }
+  if (total > 30) el.value = (parseInt(el.value) || 0) - (total - 30);
   calculerPaie();
 };
 
@@ -396,7 +484,6 @@ function calculerPaie() {
   const joursRetenus =
     joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
 
-  // 1. CORRECTION PSC : Montant fixe, non proratisé !
   const psc = baseDonnees.constantes.participation_psc;
 
   const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
@@ -421,7 +508,6 @@ function calculerPaie() {
     (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
   );
 
-  // --- LE GÉNÉRATEUR D'INFO-BULLE (Détail des montants) ---
   function genererTooltipAbsence(montantDeBase) {
     let details = [];
     const parJour = montantDeBase / 30;
@@ -444,7 +530,6 @@ function calculerPaie() {
     return details.join("\n");
   }
 
-  // --- LA LIGNE TEXTE VISUELLE (Façon DGFIP) ---
   let detailsLigneTexte = [];
   if (joursGreve > 0) detailsLigneTexte.push(`GREVE ${joursGreve}J`);
   if (joursCarence > 0) detailsLigneTexte.push(`CAR ${joursCarence}J`);
@@ -632,7 +717,6 @@ function calculerPaie() {
     },
   };
 
-  // Ajout du support pour le Tooltip sur les montants
   function ajouterLigne(
     code,
     libelle,
@@ -641,6 +725,7 @@ function calculerPaie() {
     pourInfo,
     inputsAReset = null,
     tooltipMontant = null,
+    customId = null,
   ) {
     if (aPayer) totalAPayer += aPayer;
     if (aDeduire) totalADeduire += aDeduire;
@@ -653,6 +738,12 @@ function calculerPaie() {
         : "";
 
     const tr = document.createElement("tr");
+
+    if (customId) {
+      tr.id = customId;
+    } else if (code) {
+      tr.id = `row-${code}`;
+    }
 
     if (routageModal[code]) {
       tr.className = "clickable-row";
@@ -670,7 +761,6 @@ function calculerPaie() {
       croixEffacer = `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${idsStr})">✖</span>`;
     }
 
-    // Le span pointillé pour montrer qu'on peut survoler
     const formatMontantCellule = (valeur) => {
       if (valeur === null || valeur === undefined || valeur === 0) return "";
       const texteFormate = formaterMontant(valeur);
@@ -691,8 +781,6 @@ function calculerPaie() {
   }
 
   // --- DESSIN DES LIGNES ---
-
-  // Ligne récapitulative info tout en haut
   if (joursAbs > 0) {
     const totalAbsenceDeduction =
       absenceTraitement +
@@ -784,7 +872,6 @@ function calculerPaie() {
       ["input-fmd"],
     );
 
-  // --- BLOCS RIST AVEC VISUEL DGFIP ---
   ajouterLigne(
     "201958",
     "RIST PART FONCTIONS",
@@ -1034,7 +1121,6 @@ function calculerPaie() {
   ajouterLigne("501180", "COT PAT RAFP", null, null, patRafp);
   ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
 
-  // CARENCE TRAITEMENT & RÉSIDENCE (Ligne simple + Tooltip sur le montant)
   if (joursAbs > 0) {
     ajouterLigne(
       "604958",
@@ -1104,19 +1190,21 @@ function calculerPaie() {
     null,
     null,
     null,
+    null,
+    null,
+    "row-taux-impot",
   );
 
-  // Bouton Ajout
   const trAjout = document.createElement("tr");
   trAjout.className = "add-row";
-  trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Nuits, Absences, Mobilité...) </td>`;
+  trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Options protocolaires, Absences, Indemnité de Nuit...) </td>`;
   trAjout.onclick = () =>
     ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?");
   tbody.appendChild(trAjout);
 
-  // Ressort magique original
   const trRessort = document.createElement("tr");
   trRessort.style.backgroundColor = "white";
+  trRessort.id = "ressort-magique";
   trRessort.innerHTML = `
         <td style="border-right: 1px solid var(--dgfip-light); height: 100%;"></td>
         <td style="border-right: 1px solid var(--dgfip-light);"></td>
@@ -1126,7 +1214,6 @@ function calculerPaie() {
   `;
   tbody.appendChild(trRessort);
 
-  // Totaux finaux
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(
     totalAPayer + totalPatronal - transfertPrimes,
@@ -1150,6 +1237,129 @@ function calculerPaie() {
     netImposableAffichage === 0
       ? "0,00"
       : formaterMontant(netImposableAffichage);
+
+  // --- REMPLISSAGE ZÉBRÉ INTELLIGENT ET RÉ-ANCRAGE DU TOUR ---
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".ligne-fantome").forEach((el) => el.remove());
+
+    const ressort = document.getElementById("ressort-magique");
+    if (ressort) {
+      const espaceVide = ressort.getBoundingClientRect().height;
+      const hauteurLigne = 18;
+
+      if (espaceVide > hauteurLigne) {
+        const nbLignes = Math.floor(espaceVide / hauteurLigne);
+        for (let i = 0; i < nbLignes; i++) {
+          const tr = document.createElement("tr");
+          tr.className = "ligne-fantome";
+          tr.innerHTML = `
+                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
+                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
+                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
+                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
+                  <td>&nbsp;</td>
+              `;
+          tbody.insertBefore(tr, ressort);
+        }
+      }
+    }
+
+    // NOUVEAU : Si l'utilisateur modifie la paie depuis le header (Grade, Echelon...)
+    // on relance la visite proprement sur l'étape actuelle sans faire planter Driver.js
+    if (window.isTourActive && window.tourObj) {
+      const state = window.tourObj.getState();
+      const currentStep = state ? state.activeIndex : 0;
+      window.tourObj.destroy();
+
+      setTimeout(() => {
+        window.lancerVisiteGuidee(currentStep);
+      }, 50);
+    }
+  });
 }
 
 window.onload = initialiserApplication;
+
+// =========================================
+// VISITE GUIDÉE (Driver.js)
+// =========================================
+window.lancerVisiteGuidee = function (startStep = 0) {
+  window.isTourActive = true;
+  const driver = window.driver.js.driver;
+
+  window.tourObj = driver({
+    showProgress: true,
+    nextBtnText: "Suivant ➔",
+    prevBtnText: "⬅ Précédent",
+    doneBtnText: "Terminer",
+    allowClose: true,
+    onDestroyed: () => {
+      window.isTourActive = false;
+      window.tourObj = null;
+    },
+    steps: [
+      {
+        element: ".info-table",
+        popover: {
+          title: "1. Votre Profil",
+          description:
+            "Bienvenue ! Commencez par définir votre grade, votre échelon, vos enfants à charge et la NBI pour initialiser votre base de traitement.",
+          side: "bottom",
+          align: "start",
+        },
+      },
+      {
+        element: "#row-201958",
+        popover: {
+          title: "2. Une paie sur-mesure",
+          description:
+            "Le tableau est interactif ! Cliquez sur n'importe quelle ligne de prime (comme la RIST ou l'ISQ) pour ajuster les valeurs selon votre centre.",
+          side: "bottom",
+          align: "start",
+        },
+      },
+      {
+        element: "#row-202206",
+        popover: {
+          title: "3. N'oubliez pas la CSG !",
+          description:
+            "Attention : l'Indemnité Compensatrice CSG est propre à chaque agent. Pensez bien à cliquer sur cette ligne pour saisir votre montant exact (indiqué sur votre vraie fiche).",
+          side: "top",
+          align: "start",
+        },
+      },
+      {
+        element: "#row-taux-impot",
+        popover: {
+          title: "4. Prélèvement à la Source",
+          description:
+            "Il est essentiel de bien régler votre taux d'imposition personnalisé pour avoir un Net à Payer réaliste. Cliquez ici pour le modifier.",
+          side: "top",
+          align: "start",
+        },
+      },
+      {
+        element: ".add-row",
+        popover: {
+          title: "5. Les éléments variables",
+          description:
+            "C'est ici que vous pourrez ajouter les options protocolaires, vos forfaits mobilités, nuits travaillées ou vos jours d'absence.",
+          side: "top",
+          align: "center",
+        },
+      },
+      {
+        element: ".pay-table-foot",
+        popover: {
+          title: "6. Le Verdict",
+          description:
+            "Vos charges, votre Net Social et votre Net à Payer se mettront à jour instantanément à chaque modification. Bonne simulation !",
+          side: "top",
+          align: "end",
+        },
+      },
+    ],
+  });
+
+  window.tourObj.drive(startStep);
+};
