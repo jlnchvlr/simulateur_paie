@@ -396,6 +396,18 @@ function calculerPaie() {
   const joursRetenus =
     joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
 
+  // --- NOUVEAU : Création de l'info-bulle dynamique des absences ---
+  let detailsAbsence = [];
+  if (joursGreve > 0) detailsAbsence.push(`${joursGreve}J Grève`);
+  if (joursCarence > 0) detailsAbsence.push(`${joursCarence}J Carence`);
+  if (jours90 > 0) detailsAbsence.push(`${jours90}J Maladie (90%)`);
+  if (jours50 > 0) detailsAbsence.push(`${jours50}J Maladie (50%)`);
+  const tooltipAbsence =
+    detailsAbsence.length > 0
+      ? "Détails : " + detailsAbsence.join(" / ")
+      : null;
+  // -----------------------------------------------------------------
+
   const psc = Math.max(
     0,
     baseDonnees.constantes.participation_psc -
@@ -613,6 +625,7 @@ function calculerPaie() {
     aDeduire,
     pourInfo,
     inputsAReset = null,
+    tooltipText = null,
   ) {
     if (aPayer) totalAPayer += aPayer;
     if (aDeduire) totalADeduire += aDeduire;
@@ -626,9 +639,15 @@ function calculerPaie() {
 
     const tr = document.createElement("tr");
 
+    // On applique le survol (tooltip) si on en a un
+    if (tooltipText) {
+      tr.title = tooltipText;
+    } else if (routageModal[code]) {
+      tr.title = "Cliquez pour modifier";
+    }
+
     if (routageModal[code]) {
       tr.className = "clickable-row";
-      tr.title = "Cliquez pour modifier";
       tr.onclick = () =>
         ouvrirModal(routageModal[code].cible, routageModal[code].titre);
     } else if (libelle.includes("TAUX PERSONNALISE")) {
@@ -642,9 +661,14 @@ function calculerPaie() {
       croixEffacer = `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${idsStr})">✖</span>`;
     }
 
+    // Petite icône d'information si un tooltip est présent
+    let infoIcon = tooltipText
+      ? ` <span style="cursor: help; color: var(--dgfip-medium); font-size: 10px; border-bottom: 1px dotted var(--dgfip-medium);">ⓘ</span>`
+      : "";
+
     tr.innerHTML = `
         <td class="col-code">${code || ""}</td>
-        <td class="col-libelle label${extraClass}"><span>${libelle}</span>${croixEffacer} ${euroSymbole}</td>
+        <td class="col-libelle label${extraClass}"><span>${libelle}</span>${infoIcon}${croixEffacer} ${euroSymbole}</td>
         <td class="col-amount">${formaterMontant(aPayer)}</td>
         <td class="col-amount">${formaterMontant(aDeduire)}</td>
         <td class="col-amount">${formaterMontant(pourInfo)}</td>
@@ -671,6 +695,7 @@ function calculerPaie() {
       null,
       totalAbsenceDeduction,
       ["input-greve", "input-carence", "input-maladie-90", "input-maladie-50"],
+      tooltipAbsence,
     );
   }
 
@@ -684,6 +709,8 @@ function calculerPaie() {
         -absenceNbi,
         null,
         null,
+        null,
+        tooltipAbsence,
       );
   }
 
@@ -736,6 +763,8 @@ function calculerPaie() {
       -absRistFct,
       null,
       null,
+      null,
+      tooltipAbsence,
     );
 
   ajouterLigne(
@@ -752,6 +781,8 @@ function calculerPaie() {
       -absRistExp,
       null,
       null,
+      null,
+      tooltipAbsence,
     );
 
   ajouterLigne(
@@ -768,6 +799,8 @@ function calculerPaie() {
       -absRistIsq,
       null,
       null,
+      null,
+      tooltipAbsence,
     );
 
   ajouterLigne(
@@ -784,6 +817,8 @@ function calculerPaie() {
       -absRistCplt,
       null,
       null,
+      null,
+      tooltipAbsence,
     );
 
   ajouterLigne(
@@ -816,6 +851,8 @@ function calculerPaie() {
       -absIndCsg,
       null,
       null,
+      null,
+      tooltipAbsence,
     );
 
   ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
@@ -918,6 +955,8 @@ function calculerPaie() {
       null,
       absenceTraitement,
       null,
+      null,
+      tooltipAbsence,
     );
     ajouterLigne(
       "604959",
