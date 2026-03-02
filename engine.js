@@ -42,6 +42,7 @@ async function initialiserApplication() {
     resetHelperExp();
     resetHelperIsqLicence();
     resetHelperIsqComplement();
+    resetHelperIsqMajoration();
   } catch (erreur) {
     console.error("Erreur:", erreur);
   }
@@ -222,6 +223,44 @@ const isqComplementDetails = {
   "Niveau 6": "PC d'un organisme classé en liste 2.",
   "Niveau 7": "PC d'un organisme classé en liste 1.",
   "Niveau 8": "PC d'un organisme classé en listes 9 à 11.",
+};
+
+// --- LOGIQUE ISQ MAJORATION ---
+const isqMajorationDetails = {
+  Aucune: "Aucune majoration / Non éligible.",
+  "Niveau 1": "Personnels d'un organisme classé en listes 9 à 11.",
+  "Niveau 2": "Personnels d'un organisme classé en liste 8.",
+  "Niveau 3": "Personnels d'un organisme classé en liste 7.",
+  "Niveau 4": "Personnels d'un organisme classé en listes 5 et 6.",
+  "Niveau 5": "Personnels d'un organisme classé en liste 4.",
+  "Niveau 6": "Personnels d'un organisme classé en liste 3.",
+  "Niveau 7": "Personnels d'un organisme classé en liste 2.",
+  "Niveau 8": "Personnels d'un organisme classé en liste 1.",
+};
+
+window.previewHelperIsqMajoration = (nv) => {
+  const el = document.getElementById("isq-majoration-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Aperçu :</strong> ${isqMajorationDetails[nv] || ""}`;
+};
+window.resetHelperIsqMajoration = () => {
+  const nv = document.getElementById("input-isq-majoration").value;
+  const el = document.getElementById("isq-majoration-helper-text");
+  if (el)
+    el.innerHTML = `<strong>Sélectionné :</strong> ${isqMajorationDetails[nv] || ""}`;
+};
+window.selectIsqMajoration = (nv) => {
+  document.getElementById("input-isq-majoration").value = nv;
+  document
+    .querySelectorAll("#panel-rist-isq-majoration .rist-option")
+    .forEach((e) => e.classList.remove("selected"));
+  document
+    .querySelector(
+      `#panel-rist-isq-majoration .rist-option[data-value="${nv}"]`,
+    )
+    ?.classList.add("selected");
+  resetHelperIsqMajoration();
+  calculerPaie();
 };
 
 // Fonctions ISQ Licence
@@ -445,7 +484,7 @@ function ouvrirModal(panelIds, titre) {
 
   document.getElementById("magic-modal").showModal();
 
-  // --- NOUVEAU : AUTO-SCROLL POUR LES 4 MENUS RIST ---
+  // --- NOUVEAU : AUTO-SCROLL POUR LES 5 MENUS RIST ---
   const isRistFonctions = Array.isArray(panelIds)
     ? panelIds.includes("panel-rist-fonctions")
     : panelIds === "panel-rist-fonctions";
@@ -458,8 +497,17 @@ function ouvrirModal(panelIds, titre) {
   const isIsqComplement = Array.isArray(panelIds)
     ? panelIds.includes("panel-rist-isq-complement")
     : panelIds === "panel-rist-isq-complement";
+  const isIsqMajoration = Array.isArray(panelIds)
+    ? panelIds.includes("panel-rist-isq-majoration")
+    : panelIds === "panel-rist-isq-majoration";
 
-  if (isRistFonctions || isRistExperience || isIsqLicence || isIsqComplement) {
+  if (
+    isRistFonctions ||
+    isRistExperience ||
+    isIsqLicence ||
+    isIsqComplement ||
+    isIsqMajoration
+  ) {
     setTimeout(() => {
       let selector = "";
       if (isRistFonctions) selector = "#panel-rist-fonctions .selected";
@@ -467,6 +515,8 @@ function ouvrirModal(panelIds, titre) {
       else if (isIsqLicence) selector = "#panel-rist-isq-licence .selected";
       else if (isIsqComplement)
         selector = "#panel-rist-isq-complement .selected";
+      else if (isIsqMajoration)
+        selector = "#panel-rist-isq-majoration .selected";
 
       const selectedOption = document.querySelector(selector);
       if (selectedOption)
@@ -610,6 +660,13 @@ function calculerPaie() {
     if (previewIsqCplt)
       previewIsqCplt.textContent = formaterMontant(
         profilAgent.primes.rist_cplt_lic_isq,
+      );
+    const previewIsqMaj = document.getElementById(
+      "preview-rist-isq-majoration",
+    );
+    if (previewIsqMaj)
+      previewIsqMaj.textContent = formaterMontant(
+        profilAgent.primes.rist_maj_isq,
       );
   }
 
@@ -998,22 +1055,22 @@ function calculerPaie() {
       null,
     );
 
-  if (profilAgent.primes.rist_maj_isq > 0) {
+  // On affiche toujours la ligne, même si le montant est à 0 (pour pouvoir cliquer dessus !)
+  ajouterLigne(
+    "201962",
+    "MAJORATION CPLT ISQ",
+    profilAgent.primes.rist_maj_isq,
+    null,
+    null,
+  );
+  if (joursAbs > 0) {
     ajouterLigne(
       "201962",
-      "MAJORATION CPLT ISQ",
-      profilAgent.primes.rist_maj_isq,
+      `MAJORATION CPLT ISQ (ABS. ${joursAbs} J)`,
+      -absRistMaj,
       null,
       null,
     );
-    if (joursAbs > 0)
-      ajouterLigne(
-        "201962",
-        `MAJORATION CPLT ISQ (ABS. ${joursAbs} J)`,
-        -absRistMaj,
-        null,
-        null,
-      );
   }
 
   ajouterLigne(

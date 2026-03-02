@@ -657,18 +657,119 @@
             ⬅ Retour au menu
           </button>
 
-          <label>Majoration Complément ISQ</label>
-          <select id="input-isq-majoration" onchange="calculerPaie()">
-            <option value="0.00€ - Aucune / Non éligible" selected>
-              Aucune / Non éligible
-            </option>
-            <option value="Niveau 4 (376,19€) - Listes 5 et 6">
-              Niveau 4 - Listes 5 et 6
-            </option>
-            <option value="Niveau 8 (405,32€) - Liste 1">
-              Niveau 8 - Liste 1
-            </option>
-          </select>
+          <label>Niveau de Majoration du Complément ISQ</label>
+          <input type="hidden" id="input-isq-majoration" value="Aucune" />
+
+          <div
+            class="rist-list-container"
+            onmouseleave="resetHelperIsqMajoration()"
+          >
+            <div
+              class="rist-option selected"
+              data-value="Aucune"
+              onmouseenter="previewHelperIsqMajoration('Aucune')"
+              onclick="selectIsqMajoration('Aucune')"
+            >
+              Aucune / Non éligible (0,00 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 1"
+              onmouseenter="previewHelperIsqMajoration('Niveau 1')"
+              onclick="selectIsqMajoration('Niveau 1')"
+            >
+              Niveau 1 (215,00 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 2"
+              onmouseenter="previewHelperIsqMajoration('Niveau 2')"
+              onclick="selectIsqMajoration('Niveau 2')"
+            >
+              Niveau 2 (284,98 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 3"
+              onmouseenter="previewHelperIsqMajoration('Niveau 3')"
+              onclick="selectIsqMajoration('Niveau 3')"
+            >
+              Niveau 3 (319,39 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 4"
+              onmouseenter="previewHelperIsqMajoration('Niveau 4')"
+              onclick="selectIsqMajoration('Niveau 4')"
+            >
+              Niveau 4 (376,19 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 5"
+              onmouseenter="previewHelperIsqMajoration('Niveau 5')"
+              onclick="selectIsqMajoration('Niveau 5')"
+            >
+              Niveau 5 (421,12 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 6"
+              onmouseenter="previewHelperIsqMajoration('Niveau 6')"
+              onclick="selectIsqMajoration('Niveau 6')"
+            >
+              Niveau 6 (191,60 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 7"
+              onmouseenter="previewHelperIsqMajoration('Niveau 7')"
+              onclick="selectIsqMajoration('Niveau 7')"
+            >
+              Niveau 7 (217,60 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 8"
+              onmouseenter="previewHelperIsqMajoration('Niveau 8')"
+              onclick="selectIsqMajoration('Niveau 8')"
+            >
+              Niveau 8 (405,32 €)
+            </div>
+          </div>
+
+          <div
+            id="isq-majoration-helper-text"
+            style="
+              font-size: 11px;
+              color: #0056b3;
+              background-color: #e6f2ff;
+              padding: 10px;
+              border-radius: 4px;
+              font-style: italic;
+              min-height: 35px;
+              border-left: 3px solid #0056b3;
+            "
+          >
+            Sélectionnez un niveau pour voir l'affectation correspondante...
+          </div>
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant sur la paie :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-rist-isq-majoration">0,00</span> €</strong
+            >
+          </div>
           <button
             type="button"
             class="validate-btn"
