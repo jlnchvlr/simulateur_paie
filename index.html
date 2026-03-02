@@ -93,9 +93,35 @@
           </button>
         </div>
 
-        <div id="panel-rist" class="setting-panel">
-          <label>Fonction exercée (RIST)</label>
-          <select id="input-fonction">
+        <div id="panel-rist-fonctions" class="setting-panel">
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+
+          <p
+            style="
+              font-size: 12px;
+              color: #555;
+              margin-bottom: 20px;
+              line-height: 1.5;
+              background-color: #f9f9f9;
+              padding: 10px;
+              border-left: 3px solid var(--dgfip-dark);
+            "
+          >
+            La <strong>Part Fonctions</strong> rémunère l'exercice de vos
+            missions au quotidien. Son montant est lié à votre niveau et à vos
+            responsabilités.
+          </p>
+
+          <label>Fonction exercée (Niveau RIST)</label>
+          <select id="input-fonction" onchange="calculerPaie()">
             <option value="Niveau 1 (440,74€) - Formation sans mention">
               Niveau 1 - Formation sans mention
             </option>
@@ -130,6 +156,44 @@
               Niveau 15 - Chefs CRNA / Roissy / Orly
             </option>
           </select>
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant sur la paie :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-rist-fonctions">0,00</span> €</strong
+            >
+          </div>
+
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-rist" class="setting-panel">
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+
           <label>Expérience (RIST)</label>
           <select id="input-experience">
             <option value="Niveau 1 (271,50€) - Personnels stagiaires">

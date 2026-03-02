@@ -329,6 +329,16 @@ function calculerPaie() {
     (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
   );
 
+  // -- LIVE FEEDBACK : RISTOURNE PART FONCTIONS --
+  const previewRistFonctions = document.getElementById(
+    "preview-rist-fonctions",
+  );
+  if (previewRistFonctions) {
+    previewRistFonctions.textContent = formaterMontant(
+      profilAgent.primes.rist_fonctions,
+    );
+  }
+
   // -- BASES RÉELLES --
   const baseTraitementReel = traitementBrut - absenceTraitement;
   const baseNbiReelle = montantNbi - absenceNbi;
@@ -487,6 +497,10 @@ function calculerPaie() {
       estCliquable = true;
       cibles = "panel-residence";
       titreModal = "Zone de Résidence";
+    } else if (code === "201958") {
+      estCliquable = true;
+      cibles = "panel-rist-fonctions";
+      titreModal = "Ristourne Part Fonctions";
     } else if (code && code.startsWith("2019")) {
       estCliquable = true;
       cibles = "panel-rist";
