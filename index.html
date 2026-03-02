@@ -836,8 +836,8 @@
                 margin: 0;
                 cursor: pointer;
                 display: flex;
-                align-items: center;
-                gap: 5px;
+                align-items: flex-start;
+                gap: 8px;
               "
             >
               <input
@@ -846,8 +846,9 @@
                 class="pf-checkbox"
                 value="345"
                 onchange="calculerPaie()"
+                style="margin-top: 2px"
               />
-              Option 1 - Listes 1 à 6 (+ 345,00 €)
+              <span>Option 1 - Listes 1 à 6 (+ 345,00 €)</span>
             </label>
             <label
               style="
@@ -855,8 +856,8 @@
                 margin: 0;
                 cursor: pointer;
                 display: flex;
-                align-items: center;
-                gap: 5px;
+                align-items: flex-start;
+                gap: 8px;
               "
             >
               <input
@@ -865,8 +866,9 @@
                 class="pf-checkbox"
                 value="379.50"
                 onchange="calculerPaie()"
+                style="margin-top: 2px"
               />
-              Option 1 - CDG (+ 379,50 €)
+              <span>Option 1 - CDG (+ 379,50 €)</span>
             </label>
             <label
               style="
@@ -874,8 +876,8 @@
                 margin: 0;
                 cursor: pointer;
                 display: flex;
-                align-items: center;
-                gap: 5px;
+                align-items: flex-start;
+                gap: 8px;
               "
             >
               <input
@@ -884,8 +886,9 @@
                 class="pf-checkbox"
                 value="293.25"
                 onchange="calculerPaie()"
+                style="margin-top: 2px"
               />
-              Option 1 - Listes 7 à 8 (+ 293,25 €)
+              <span>Option 1 - Listes 7 à 8 (+ 293,25 €)</span>
             </label>
             <label
               style="
@@ -893,8 +896,8 @@
                 margin: 0;
                 cursor: pointer;
                 display: flex;
-                align-items: center;
-                gap: 5px;
+                align-items: flex-start;
+                gap: 8px;
               "
             >
               <input
@@ -903,8 +906,9 @@
                 class="pf-checkbox"
                 value="241.50"
                 onchange="calculerPaie()"
+                style="margin-top: 2px"
               />
-              Option 1 - Listes 9 à 11 (+ 241,50 €)
+              <span>Option 1 - Listes 9 à 11 (+ 241,50 €)</span>
             </label>
             <label
               style="
@@ -912,18 +916,19 @@
                 margin: 0;
                 cursor: pointer;
                 display: flex;
-                align-items: center;
-                gap: 5px;
+                align-items: flex-start;
+                gap: 8px;
               "
             >
               <input
                 type="checkbox"
-                id="pf-opt1-plus"
+                id="pf-opt1-plus-n1"
                 class="pf-checkbox"
-                value="160"
+                value="80"
                 onchange="calculerPaie()"
+                style="margin-top: 2px"
               />
-              Option 1 Plus (N' > 2) (+ 160,00 €)
+              <span>Option 1 Plus (N' &le; 2) (+ 80,00 €)</span>
             </label>
             <label
               style="
@@ -931,8 +936,28 @@
                 margin: 0;
                 cursor: pointer;
                 display: flex;
-                align-items: center;
-                gap: 5px;
+                align-items: flex-start;
+                gap: 8px;
+              "
+            >
+              <input
+                type="checkbox"
+                id="pf-opt1-plus-n2"
+                class="pf-checkbox"
+                value="160"
+                onchange="calculerPaie()"
+                style="margin-top: 2px"
+              />
+              <span>Option 1 Plus (N' &gt; 2) (+ 160,00 €)</span>
+            </label>
+            <label
+              style="
+                font-weight: normal;
+                margin: 0;
+                cursor: pointer;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
               "
             >
               <input
@@ -941,8 +966,9 @@
                 class="pf-checkbox"
                 value="115"
                 onchange="calculerPaie()"
+                style="margin-top: 2px"
               />
-              Option 2-1 / 2-2 (+ 115,00 €)
+              <span>Option 2-1 / 2-2 (+ 115,00 €)</span>
             </label>
             <label
               style="
@@ -950,8 +976,28 @@
                 margin: 0;
                 cursor: pointer;
                 display: flex;
-                align-items: center;
-                gap: 5px;
+                align-items: flex-start;
+                gap: 8px;
+              "
+            >
+              <input
+                type="checkbox"
+                id="pf-opt2-bis"
+                class="pf-checkbox"
+                value="105.05"
+                onchange="calculerPaie()"
+                style="margin-top: 2px"
+              />
+              <span>Option 2 bis (+ 105,05 €)</span>
+            </label>
+            <label
+              style="
+                font-weight: normal;
+                margin: 0;
+                cursor: pointer;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
               "
             >
               <input
@@ -960,9 +1006,51 @@
                 class="pf-checkbox"
                 value="150"
                 onchange="calculerPaie()"
+                style="margin-top: 2px"
               />
-              Option 4 (+ 150,00 €)
+              <span>Option 4 (+ 150,00 €)</span>
             </label>
+            <label
+              style="
+                font-weight: normal;
+                margin: 0;
+                cursor: pointer;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+              "
+            >
+              <input
+                type="checkbox"
+                id="pf-opt1-enac"
+                class="pf-checkbox"
+                value="680"
+                onchange="calculerPaie()"
+                style="margin-top: 2px"
+              />
+              <span>Option 1 ENAC (+ 680,00 €)</span>
+            </label>
+            <label
+              style="
+                font-weight: normal;
+                margin: 0;
+                cursor: pointer;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+              "
+            >
+              <input
+                type="checkbox"
+                id="pf-opt1-plus-enac"
+                class="pf-checkbox"
+                value="880"
+                onchange="calculerPaie()"
+                style="margin-top: 2px"
+              />
+              <span>Option 1-Plus ENAC (+ 880,00 €)</span>
+            </label>
+
             <div
               style="
                 margin-top: 5px;

@@ -373,6 +373,8 @@ function getProfilDepuisInterface() {
         parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
       geographique:
         parseFloat(document.getElementById("input-geographique")?.value) || 0,
+
+      // Nouvelles variables OTT propres
       ott_pf: pfTotal,
       ott_pv_globale:
         parseFloat(document.getElementById("pv-globale")?.value) || 0,
@@ -636,7 +638,6 @@ function calculerPaie() {
   const baseResidenceReelle = indemniteResidence - absenceResidence;
   const baseSoumisePC = baseTraitementReel + baseNbiReelle;
 
-  // -- LA LIGNE QUI AVAIT DISPARU : TOTAL DES PRIMES --
   const totalPrimesSoumises =
     baseResidenceReelle +
     nuit +
@@ -647,12 +648,11 @@ function calculerPaie() {
     (profilAgent.primes.rist_maj_isq - absRistMaj) +
     (profilAgent.primes.ind_compensatrice_csg - absIndCsg) +
     profilAgent.evenements.prime_performance +
-    profilAgent.evenements.rist_orga +
     profilAgent.evenements.fidelisation +
+    profilAgent.evenements.geographique +
     profilAgent.evenements.ott_pf +
     profilAgent.evenements.ott_pv_globale +
     profilAgent.evenements.ott_pv_opt32;
-
   // -- 1. CALCUL DU SFT --
   let montantSFT = 0;
   if (profilAgent.enfants === 1) {
