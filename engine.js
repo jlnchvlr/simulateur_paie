@@ -1054,29 +1054,18 @@ function calculerPaie() {
     );
   }
 
-  if (profilAgent.evenements.fidelisation > 0) {
-    ajouterLigne(
-      "203001",
-      "PRIME DE FIDELISATION TERR.",
-      profilAgent.evenements.fidelisation,
-      null,
-      null,
-      ["input-fidelisation"],
-    );
-  }
-
-  if (profilAgent.evenements.geographique > 0) {
-    ajouterLigne(
-      "203002",
-      "PRIME ATTRACTIVITE GEOGRAPHIQUE",
-      profilAgent.evenements.geographique,
-      null,
-      null,
-      ["input-geographique"],
-    );
-  }
-
   // --- NOUVELLES LIGNES OTT (Protocole) ---
+
+  if (profilAgent.evenements.ott_pv_globale > 0) {
+    ajouterLigne(
+      "202558",
+      "RIST ORGA TEMPS TRAVAIL (PV)",
+      profilAgent.evenements.ott_pv_globale,
+      null,
+      null,
+      ["pv-globale"],
+    );
+  }
   if (profilAgent.evenements.ott_pf > 0) {
     // La liste COMPLÈTE pour que la croix efface bien toutes les cartes
     ajouterLigne(
@@ -1102,16 +1091,7 @@ function calculerPaie() {
       ],
     );
   }
-  if (profilAgent.evenements.ott_pv_globale > 0) {
-    ajouterLigne(
-      "202558",
-      "RIST ORGA TEMPS TRAVAIL (PV)",
-      profilAgent.evenements.ott_pv_globale,
-      null,
-      null,
-      ["pv-globale"],
-    );
-  }
+
   if (profilAgent.evenements.ott_pv_opt32 > 0) {
     ajouterLigne(
       "202560",
@@ -1120,6 +1100,27 @@ function calculerPaie() {
       null,
       null,
       ["pv-opt32"],
+    );
+  }
+  if (profilAgent.evenements.fidelisation > 0) {
+    ajouterLigne(
+      "203001",
+      "PRIME DE FIDELISATION TERR.",
+      profilAgent.evenements.fidelisation,
+      null,
+      null,
+      ["input-fidelisation"],
+    );
+  }
+
+  if (profilAgent.evenements.geographique > 0) {
+    ajouterLigne(
+      "203002",
+      "PRIME ATTRACTIVITE GEOGRAPHIQUE",
+      profilAgent.evenements.geographique,
+      null,
+      null,
+      ["input-geographique"],
     );
   }
 
