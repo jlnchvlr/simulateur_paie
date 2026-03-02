@@ -39,6 +39,7 @@ async function initialiserApplication() {
     calculerPaie();
     mettreAJourHelperRist();
     resetHelperRist();
+    resetHelperExp();
   } catch (erreur) {
     console.error("Erreur:", erreur);
   }
@@ -181,6 +182,44 @@ const ristDetails = {
     "Chefs SNA, Chefs département (DSNA, ENAC...), Chefs de pôles majeurs DO/DTI...",
   "Niveau 15":
     "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
+};
+
+// --- LOGIQUE RIST EXPÉRIENCE INTERACTIVE ---
+const expDetails = {
+  "Niveau 1": "Personnels stagiaires",
+  "Niveau 2": "TSEEAC Normal",
+  "Niveau 3":
+    "TSEEAC Principal / TSEEAC Normal (1e qualif + 1 an) / IESSA Normal / ICNA Normal",
+  "Niveau 4":
+    "ICNA Divisionnaire / TSEEAC Exceptionnel / TSEEAC Principal (2e qualif + 1 an) / IEEAC Normal / IESSA Principal",
+  "Niveau 5":
+    "ICNA en Chef / IESSA Div ou Chef / IEEAC Principal ou HC / RTAC, CTAC, CSTAC",
+};
+
+window.previewHelperExp = function (niveau) {
+  const helperText = document.getElementById("exp-helper-text");
+  if (helperText)
+    helperText.innerHTML = `<strong>Aperçu :</strong> ${expDetails[niveau] || ""}`;
+};
+
+window.resetHelperExp = function () {
+  const niveauActuel = document.getElementById("input-experience").value;
+  const helperText = document.getElementById("exp-helper-text");
+  if (helperText)
+    helperText.innerHTML = `<strong>Sélectionné :</strong> ${expDetails[niveauActuel] || ""}`;
+};
+
+window.selectExp = function (niveau) {
+  document.getElementById("input-experience").value = niveau;
+  document
+    .querySelectorAll("#panel-rist-experience .rist-option")
+    .forEach((el) => el.classList.remove("selected"));
+  const selectedEl = document.querySelector(
+    `#panel-rist-experience .rist-option[data-value="${niveau}"]`,
+  );
+  if (selectedEl) selectedEl.classList.add("selected");
+  resetHelperExp();
+  calculerPaie();
 };
 
 window.previewHelperRist = function (niveau) {
@@ -328,22 +367,23 @@ function ouvrirModal(panelIds, titre) {
 
   document.getElementById("magic-modal").showModal();
 
-  // --- NOUVEAU : AUTO-SCROLL POUR LE MENU RIST ---
   // On vérifie si on vient d'ouvrir le tiroir de la part fonctions
+  // --- NOUVEAU : AUTO-SCROLL POUR LES MENUS RIST ---
   const isRistFonctions = Array.isArray(panelIds)
     ? panelIds.includes("panel-rist-fonctions")
     : panelIds === "panel-rist-fonctions";
+  const isRistExperience = Array.isArray(panelIds)
+    ? panelIds.includes("panel-rist-experience")
+    : panelIds === "panel-rist-experience";
 
-  if (isRistFonctions) {
-    // On laisse 15 millisecondes au navigateur pour bien dessiner la fenêtre
+  if (isRistFonctions || isRistExperience) {
     setTimeout(() => {
-      const selectedOption = document.querySelector(
-        ".rist-list-container .selected",
-      );
-      if (selectedOption) {
-        // La méthode native et parfaite pour centrer automatiquement !
+      const selector = isRistFonctions
+        ? "#panel-rist-fonctions .selected"
+        : "#panel-rist-experience .selected";
+      const selectedOption = document.querySelector(selector);
+      if (selectedOption)
         selectedOption.scrollIntoView({ block: "center", behavior: "instant" });
-      }
     }, 15);
   }
 }
@@ -432,7 +472,6 @@ function calculerPaie() {
       arrondir((baseDonnees.constantes.participation_psc / 30) * joursRetenus),
   );
 
-  // -- CALCUL DES ABSENCES --
   // -- CALCUL DES ABSENCES AVEC LE POIDS RÉEL --
   const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
   const absenceNbi = arrondir((montantNbi / 30) * joursRetenus);
@@ -465,6 +504,12 @@ function calculerPaie() {
     previewRistFonctions.textContent = formaterMontant(
       profilAgent.primes.rist_fonctions,
     );
+    // -- LIVE FEEDBACK : RISTOURNE PART EXPÉRIENCE --
+    const previewRistExp = document.getElementById("preview-rist-experience");
+    if (previewRistExp)
+      previewRistExp.textContent = formaterMontant(
+        profilAgent.primes.rist_exper_prof,
+      );
   }
 
   // -- BASES RÉELLES --
@@ -629,6 +674,10 @@ function calculerPaie() {
       estCliquable = true;
       cibles = "panel-rist-fonctions";
       titreModal = "Ristourne Part Fonctions";
+    } else if (code === "201959") {
+      estCliquable = true;
+      cibles = "panel-rist-experience";
+      titreModal = "Ristourne Part Expérience";
     } else if (code && code.startsWith("2019")) {
       estCliquable = true;
       cibles = "panel-rist";

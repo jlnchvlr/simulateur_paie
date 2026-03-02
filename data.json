@@ -94,11 +94,11 @@
       "Niveau 15": 1994.32
     },
     "experience": {
-      "Niveau 1 (271,50€) - Personnels stagiaires": 271.5,
-      "Niveau 2 (325,49€) - TSEEAC Normal": 325.49,
-      "Niveau 3 (379,72€) - ICNA Normal / TSEEAC Principal": 379.72,
-      "Niveau 4 (454,72€) - ICNA Divisionnaire / IEEAC Normal": 454.72,
-      "Niveau 5 (559,69€) - ICNA en Chef / IESSA Div.": 559.69
+      "Niveau 1": 271.5,
+      "Niveau 2": 325.49,
+      "Niveau 3": 379.72,
+      "Niveau 4": 454.72,
+      "Niveau 5": 559.69
     },
     "isq_licence": {
       "0.00€ - Perdue ou Suspendue": 0.0,
