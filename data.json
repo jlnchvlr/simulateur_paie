@@ -101,27 +101,27 @@
       "Niveau 5": 559.69
     },
     "isq_licence": {
-      "0.00€ - Perdue ou Suspendue": 0.0,
-      "Niveau 1 (932,04€) - Formation LFPG/LFPO/CRNA": 932.04,
-      "Niveau 2 (1 258,42€) - Liste 11": 1258.42,
-      "Niveau 3 (1 376,85€) - Liste 10": 1376.85,
-      "Niveau 4 (377,53€) - PC Listes 7-8": 377.53,
-      "Niveau 5 (1 976,11€) - PC Listes 1-3 / Stagiaires L1-3": 1976.11,
-      "Niveau 6 (576,11€) - PC Listes 4-6": 576.11,
-      "Niveau 7 (1 526,85€) - PC Liste 9": 1526.85,
-      "Niveau 8 (1 077,53€) - Formation LOC CDG/ORY": 1077.53,
-      "Niveau 9 (1 276,11€) - Stagiaires Listes 4-11": 1276.11
+      "Aucune": 0.0,
+      "Niveau 1": 932.04,
+      "Niveau 2": 1258.42,
+      "Niveau 3": 1376.85,
+      "Niveau 4": 377.53,
+      "Niveau 5": 1976.11,
+      "Niveau 6": 576.11,
+      "Niveau 7": 1526.85,
+      "Niveau 8": 1077.53,
+      "Niveau 9": 1276.11
     },
     "isq_complement": {
-      "0.00€ - Aucun ou Suspendu": 0.0,
-      "Niveau 1 (1 679,36€) - PC Liste 8": 1679.36,
-      "Niveau 2 (1 751,15€) - PC Liste 7": 1751.15,
-      "Niveau 3 (2 136,88€) - PC Listes 5-6": 2136.88,
-      "Niveau 4 (2 202,45€) - PC Liste 4": 2202.45,
-      "Niveau 5 (1 969,09€) - PC Liste 3": 1969.09,
-      "Niveau 6 (2 037,51€) - PC Liste 2": 2037.51,
-      "Niveau 7 (2 281,78€) - PC Liste 1": 2281.78,
-      "Niveau 8 (396,01€) - PC Listes 9-11": 396.01
+      "Aucun": 0.0,
+      "Niveau 1": 1679.36,
+      "Niveau 2": 1751.15,
+      "Niveau 3": 2136.88,
+      "Niveau 4": 2202.45,
+      "Niveau 5": 1969.09,
+      "Niveau 6": 2037.51,
+      "Niveau 7": 2281.78,
+      "Niveau 8": 396.01
     },
     "isq_majoration": {
       "0.00€ - Aucune / Non éligible": 0.0,
