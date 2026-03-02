@@ -114,8 +114,13 @@ function getProfilDepuisInterface() {
     grade:
       document.getElementById("input-grade")?.value || "ING.DIV. CONT.NAV.AE",
     echelon: document.getElementById("input-echelon")?.value || "",
-    enfants: parseInt(document.getElementById("input-enfants")?.value) || 0,
-    zone: document.getElementById("input-zone")?.value || "Zone 1",
+    residence:
+      parseFloat(
+        document.querySelector('input[name="ir-taux"]:checked')?.value,
+      ) || 0,
+    zone:
+      document.querySelector('input[name="ir-zone"]:checked')?.value ||
+      "Zone 1",
     taux_pas:
       parseFloat(document.getElementById("input-pas")?.value) / 100 || 0,
     points_nbi: document.getElementById("input-nbi-checkbox")?.checked ? 55 : 0,
