@@ -505,3 +505,31 @@ body {
   border-color: transparent;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
+.btn-visite-flottant {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: var(--dgfip-dark);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px; /* Forme de pilule arrondie */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 14px;
+  font-weight: bold;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  z-index: 1000;
+}
+.btn-visite-flottant:hover {
+  transform: translateY(-3px); /* Petit effet de soulèvement au survol */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+@media print {
+  .btn-visite-flottant {
+    display: none !important;
+  }
+}

@@ -5,8 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulateur Paie ICNA</title>
     <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"
+    />
   </head>
   <body>
+    <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">
+      💡 Comment ça marche ?
+    </button>
+
     <dialog id="magic-modal" class="magic-modal">
       <div class="modal-header">
         <h2 id="modal-title">Modifier l'élément</h2>
@@ -1616,6 +1624,7 @@
       </table>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script src="engine.js"></script>
   </body>
 </html>
