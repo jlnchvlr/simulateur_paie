@@ -52,15 +52,16 @@
           <div class="ir-tabs">
             <input
               type="radio"
-              id="ir-zone1"
+              id="ir-zone3"
               name="ir-zone"
-              value="Zone 1"
+              value="Zone 3"
               checked
               onchange="calculerPaie()"
             />
-            <label for="ir-zone1"
-              ><strong>3 %</strong><br /><small>Zone 1</small></label
+            <label for="ir-zone3"
+              ><strong>0 %</strong><br /><small>Zone 3</small></label
             >
+
             <input
               type="radio"
               id="ir-zone2"
@@ -74,13 +75,13 @@
 
             <input
               type="radio"
-              id="ir-zone3"
+              id="ir-zone1"
               name="ir-zone"
-              value="Zone 3"
+              value="Zone 1"
               onchange="calculerPaie()"
             />
-            <label for="ir-zone3"
-              ><strong>0 %</strong><br /><small>Zone 3</small></label
+            <label for="ir-zone1"
+              ><strong>3 %</strong><br /><small>Zone 1</small></label
             >
           </div>
 
@@ -94,38 +95,184 @@
         </div>
 
         <div id="panel-rist-fonctions" class="setting-panel">
-          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
 
           <label>Niveau de la Part Fonctions (RIST)</label>
-          <input type="hidden" id="input-fonction" value="Niveau 10">
+          <input type="hidden" id="input-fonction" value="Niveau 10" />
 
           <div class="rist-list-container" onmouseleave="resetHelperRist()">
-              <div class="rist-option" data-value="Niveau 1" onmouseenter="previewHelperRist('Niveau 1')" onclick="selectRist('Niveau 1')">Niveau 1 (440,74 €)</div>
-              <div class="rist-option" data-value="Niveau 2" onmouseenter="previewHelperRist('Niveau 2')" onclick="selectRist('Niveau 2')">Niveau 2 (550,93 €)</div>
-              <div class="rist-option" data-value="Niveau 3" onmouseenter="previewHelperRist('Niveau 3')" onclick="selectRist('Niveau 3')">Niveau 3 (637,87 €)</div>
-              <div class="rist-option" data-value="Niveau 4" onmouseenter="previewHelperRist('Niveau 4')" onclick="selectRist('Niveau 4')">Niveau 4 (711,40 €)</div>
-              <div class="rist-option" data-value="Niveau 5" onmouseenter="previewHelperRist('Niveau 5')" onclick="selectRist('Niveau 5')">Niveau 5 (1 156,99 €)</div>
-              <div class="rist-option" data-value="Niveau 6" onmouseenter="previewHelperRist('Niveau 6')" onclick="selectRist('Niveau 6')">Niveau 6 (1 242,67 €)</div>
-              <div class="rist-option" data-value="Niveau 7" onmouseenter="previewHelperRist('Niveau 7')" onclick="selectRist('Niveau 7')">Niveau 7 (1 322,26 €)</div>
-              <div class="rist-option" data-value="Niveau 8" onmouseenter="previewHelperRist('Niveau 8')" onclick="selectRist('Niveau 8')">Niveau 8 (1 432,44 €)</div>
-              <div class="rist-option" data-value="Niveau 9" onmouseenter="previewHelperRist('Niveau 9')" onclick="selectRist('Niveau 9')">Niveau 9 (1 518,16 €)</div>
-              <div class="rist-option selected" data-value="Niveau 10" onmouseenter="previewHelperRist('Niveau 10')" onclick="selectRist('Niveau 10')">Niveau 10 (1 591,62 €)</div>
-              <div class="rist-option" data-value="Niveau 11" onmouseenter="previewHelperRist('Niveau 11')" onclick="selectRist('Niveau 11')">Niveau 11 (1 701,81 €)</div>
-              <div class="rist-option" data-value="Niveau 12" onmouseenter="previewHelperRist('Niveau 12')" onclick="selectRist('Niveau 12')">Niveau 12 (1 775,28 €)</div>
-              <div class="rist-option" data-value="Niveau 13" onmouseenter="previewHelperRist('Niveau 13')" onclick="selectRist('Niveau 13')">Niveau 13 (1 878,50 €)</div>
-              <div class="rist-option" data-value="Niveau 14" onmouseenter="previewHelperRist('Niveau 14')" onclick="selectRist('Niveau 14')">Niveau 14 (1 936,41 €)</div>
-              <div class="rist-option" data-value="Niveau 15" onmouseenter="previewHelperRist('Niveau 15')" onclick="selectRist('Niveau 15')">Niveau 15 (1 994,32 €)</div>
+            <div
+              class="rist-option"
+              data-value="Niveau 1"
+              onmouseenter="previewHelperRist('Niveau 1')"
+              onclick="selectRist('Niveau 1')"
+            >
+              Niveau 1 (440,74 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 2"
+              onmouseenter="previewHelperRist('Niveau 2')"
+              onclick="selectRist('Niveau 2')"
+            >
+              Niveau 2 (550,93 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 3"
+              onmouseenter="previewHelperRist('Niveau 3')"
+              onclick="selectRist('Niveau 3')"
+            >
+              Niveau 3 (637,87 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 4"
+              onmouseenter="previewHelperRist('Niveau 4')"
+              onclick="selectRist('Niveau 4')"
+            >
+              Niveau 4 (711,40 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 5"
+              onmouseenter="previewHelperRist('Niveau 5')"
+              onclick="selectRist('Niveau 5')"
+            >
+              Niveau 5 (1 156,99 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 6"
+              onmouseenter="previewHelperRist('Niveau 6')"
+              onclick="selectRist('Niveau 6')"
+            >
+              Niveau 6 (1 242,67 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 7"
+              onmouseenter="previewHelperRist('Niveau 7')"
+              onclick="selectRist('Niveau 7')"
+            >
+              Niveau 7 (1 322,26 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 8"
+              onmouseenter="previewHelperRist('Niveau 8')"
+              onclick="selectRist('Niveau 8')"
+            >
+              Niveau 8 (1 432,44 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 9"
+              onmouseenter="previewHelperRist('Niveau 9')"
+              onclick="selectRist('Niveau 9')"
+            >
+              Niveau 9 (1 518,16 €)
+            </div>
+            <div
+              class="rist-option selected"
+              data-value="Niveau 10"
+              onmouseenter="previewHelperRist('Niveau 10')"
+              onclick="selectRist('Niveau 10')"
+            >
+              Niveau 10 (1 591,62 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 11"
+              onmouseenter="previewHelperRist('Niveau 11')"
+              onclick="selectRist('Niveau 11')"
+            >
+              Niveau 11 (1 701,81 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 12"
+              onmouseenter="previewHelperRist('Niveau 12')"
+              onclick="selectRist('Niveau 12')"
+            >
+              Niveau 12 (1 775,28 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 13"
+              onmouseenter="previewHelperRist('Niveau 13')"
+              onclick="selectRist('Niveau 13')"
+            >
+              Niveau 13 (1 878,50 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 14"
+              onmouseenter="previewHelperRist('Niveau 14')"
+              onclick="selectRist('Niveau 14')"
+            >
+              Niveau 14 (1 936,41 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 15"
+              onmouseenter="previewHelperRist('Niveau 15')"
+              onclick="selectRist('Niveau 15')"
+            >
+              Niveau 15 (1 994,32 €)
+            </div>
           </div>
 
-          <div id="rist-helper-text" style="font-size: 11px; color: #0056b3; background-color: #e6f2ff; padding: 10px; border-radius: 4px; font-style: italic; min-height: 35px; border-left: 3px solid #0056b3;">
+          <div
+            id="rist-helper-text"
+            style="
+              font-size: 11px;
+              color: #0056b3;
+              background-color: #e6f2ff;
+              padding: 10px;
+              border-radius: 4px;
+              font-style: italic;
+              min-height: 35px;
+              border-left: 3px solid #0056b3;
+            "
+          >
             Sélectionnez un niveau pour voir les fonctions...
           </div>
 
-          <div style="background-color: #e8f0fe; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 15px; text-align: right; font-family: var(--font-main);">
-            Montant sur la paie : <strong style="color: var(--dgfip-dark); font-size: 16px;"><span id="preview-rist-fonctions">0,00</span> €</strong>
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant sur la paie :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-rist-fonctions">0,00</span> €</strong
+            >
           </div>
 
-          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider & Fermer ↵</button>
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
         <div id="panel-rist" class="setting-panel">
           <button
             type="button"
