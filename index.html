@@ -273,6 +273,105 @@
           </button>
         </div>
 
+        <div id="panel-rist-experience" class="setting-panel">
+          <button
+            type="button"
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+
+          <label>Niveau de la Part Expérience Professionnelle</label>
+          <input type="hidden" id="input-experience" value="Niveau 4" />
+
+          <div class="rist-list-container" onmouseleave="resetHelperExp()">
+            <div
+              class="rist-option"
+              data-value="Niveau 1"
+              onmouseenter="previewHelperExp('Niveau 1')"
+              onclick="selectExp('Niveau 1')"
+            >
+              Niveau 1 (271,50 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 2"
+              onmouseenter="previewHelperExp('Niveau 2')"
+              onclick="selectExp('Niveau 2')"
+            >
+              Niveau 2 (325,49 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 3"
+              onmouseenter="previewHelperExp('Niveau 3')"
+              onclick="selectExp('Niveau 3')"
+            >
+              Niveau 3 (379,72 €)
+            </div>
+            <div
+              class="rist-option selected"
+              data-value="Niveau 4"
+              onmouseenter="previewHelperExp('Niveau 4')"
+              onclick="selectExp('Niveau 4')"
+            >
+              Niveau 4 (454,72 €)
+            </div>
+            <div
+              class="rist-option"
+              data-value="Niveau 5"
+              onmouseenter="previewHelperExp('Niveau 5')"
+              onclick="selectExp('Niveau 5')"
+            >
+              Niveau 5 (559,69 €)
+            </div>
+          </div>
+
+          <div
+            id="exp-helper-text"
+            style="
+              font-size: 11px;
+              color: #0056b3;
+              background-color: #e6f2ff;
+              padding: 10px;
+              border-radius: 4px;
+              font-style: italic;
+              min-height: 35px;
+              border-left: 3px solid #0056b3;
+            "
+          >
+            Sélectionnez un niveau pour voir les grades correspondants...
+          </div>
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 10px;
+              border-radius: 4px;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Montant sur la paie :
+            <strong style="color: var(--dgfip-dark); font-size: 16px"
+              ><span id="preview-rist-experience">0,00</span> €</strong
+            >
+          </div>
+
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
         <div id="panel-rist" class="setting-panel">
           <button
             type="button"
@@ -284,23 +383,8 @@
             ⬅ Retour au menu
           </button>
 
-          <label>Expérience (RIST)</label>
-          <select id="input-experience">
-            <option value="Niveau 1 (271,50€) - Personnels stagiaires">
-              Niveau 1 - Stagiaires
-            </option>
-            <option
-              value="Niveau 4 (454,72€) - ICNA Divisionnaire / IEEAC Normal"
-              selected
-            >
-              Niveau 4 - ICNA Divisionnaire
-            </option>
-            <option value="Niveau 5 (559,69€) - ICNA en Chef / IESSA Div.">
-              Niveau 5 - ICNA en Chef
-            </option>
-          </select>
           <label>Licence ISQ</label>
-          <select id="input-isq-licence">
+          <select id="input-isq-licence" onchange="calculerPaie()">
             <option value="0.00€ - Perdue ou Suspendue">
               Perdue ou Suspendue
             </option>
@@ -318,7 +402,7 @@
             </option>
           </select>
           <label>Complément ISQ</label>
-          <select id="input-isq-complement">
+          <select id="input-isq-complement" onchange="calculerPaie()">
             <option value="0.00€ - Aucun ou Suspendu">Aucun ou Suspendu</option>
             <option value="Niveau 3 (2 136,88€) - PC Listes 5-6">
               Niveau 3 - PC Listes 5-6
@@ -328,7 +412,7 @@
             </option>
           </select>
           <label>Majoration Complément ISQ</label>
-          <select id="input-isq-majoration">
+          <select id="input-isq-majoration" onchange="calculerPaie()">
             <option value="0.00€ - Aucune / Non éligible" selected>
               Aucune / Non éligible
             </option>
