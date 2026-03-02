@@ -396,6 +396,32 @@ function calculerPaie() {
   const joursRetenus =
     joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
 
+  // --- NOUVEAU : Le générateur de détails au survol ---
+  // Il calcule le montant exact déduit pour chaque type d'absence selon la prime concernée
+  function genererTooltipAbsence(montantDeBase) {
+    let details = [];
+    const parJour = montantDeBase / 30; // La règle du 1/30ème
+
+    if (joursGreve > 0)
+      details.push(
+        `Grève (${joursGreve}J) : -${formaterMontant(arrondir(parJour * joursGreve))} €`,
+      );
+    if (joursCarence > 0)
+      details.push(
+        `Carence (${joursCarence}J) : -${formaterMontant(arrondir(parJour * joursCarence))} €`,
+      );
+    if (jours90 > 0)
+      details.push(
+        `Maladie 90% (${jours90}J) : -${formaterMontant(arrondir(parJour * jours90 * 0.1))} €`,
+      );
+    if (jours50 > 0)
+      details.push(
+        `Maladie 50% (${jours50}J) : -${formaterMontant(arrondir(parJour * jours50 * 0.5))} €`,
+      );
+
+    return details.join("\n"); // Le \n crée les vraies lignes (façon colonnes)
+  }
+
   const psc = Math.max(
     0,
     baseDonnees.constantes.participation_psc -
@@ -613,6 +639,7 @@ function calculerPaie() {
     aDeduire,
     pourInfo,
     inputsAReset = null,
+    tooltipMontant = null,
   ) {
     if (aPayer) totalAPayer += aPayer;
     if (aDeduire) totalADeduire += aDeduire;
@@ -642,12 +669,23 @@ function calculerPaie() {
       croixEffacer = `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${idsStr})">✖</span>`;
     }
 
+    // --- NOUVEAU : On applique l'info-bulle uniquement sur le chiffre ---
+    const formatMontantCellule = (valeur) => {
+      if (valeur === null || valeur === undefined || valeur === 0) return "";
+      const texteFormate = formaterMontant(valeur);
+      if (tooltipMontant) {
+        // Le soulignement pointillé indique que c'est survolable
+        return `<span title="${tooltipMontant}" style="cursor: help; border-bottom: 1px dotted var(--dgfip-medium);">${texteFormate}</span>`;
+      }
+      return texteFormate;
+    };
+
     tr.innerHTML = `
         <td class="col-code">${code || ""}</td>
         <td class="col-libelle label${extraClass}"><span>${libelle}</span>${croixEffacer} ${euroSymbole}</td>
-        <td class="col-amount">${formaterMontant(aPayer)}</td>
-        <td class="col-amount">${formaterMontant(aDeduire)}</td>
-        <td class="col-amount">${formaterMontant(pourInfo)}</td>
+        <td class="col-amount">${formatMontantCellule(aPayer)}</td>
+        <td class="col-amount">${formatMontantCellule(aDeduire)}</td>
+        <td class="col-amount">${formatMontantCellule(pourInfo)}</td>
     `;
     tbody.appendChild(tr);
   }
@@ -664,6 +702,18 @@ function calculerPaie() {
       absRistCplt +
       absRistMaj +
       absIndCsg;
+    // On calcule la base totale pour faire une info-bulle globale
+    const baseTotaleDeduction =
+      traitementBrut +
+      montantNbi +
+      indemniteResidence +
+      profilAgent.primes.rist_fonctions +
+      profilAgent.primes.rist_exper_prof +
+      profilAgent.primes.rist_lic_isq +
+      profilAgent.primes.rist_cplt_lic_isq +
+      profilAgent.primes.rist_maj_isq +
+      profilAgent.primes.ind_compensatrice_csg;
+
     ajouterLigne(
       "604958",
       `SERVICE NON FAIT / ABSENCE (${joursAbs} J)`,
@@ -671,6 +721,7 @@ function calculerPaie() {
       null,
       totalAbsenceDeduction,
       ["input-greve", "input-carence", "input-maladie-90", "input-maladie-50"],
+      genererTooltipAbsence(baseTotaleDeduction),
     );
   }
 
@@ -684,6 +735,8 @@ function calculerPaie() {
         -absenceNbi,
         null,
         null,
+        null,
+        genererTooltipAbsence(montantNbi),
       );
   }
 
@@ -736,6 +789,8 @@ function calculerPaie() {
       -absRistFct,
       null,
       null,
+      null,
+      genererTooltipAbsence(profilAgent.primes.rist_fonctions),
     );
 
   ajouterLigne(
@@ -752,6 +807,8 @@ function calculerPaie() {
       -absRistExp,
       null,
       null,
+      null,
+      genererTooltipAbsence(profilAgent.primes.rist_exper_prof),
     );
 
   ajouterLigne(
@@ -768,6 +825,8 @@ function calculerPaie() {
       -absRistIsq,
       null,
       null,
+      null,
+      genererTooltipAbsence(profilAgent.primes.rist_lic_isq),
     );
 
   ajouterLigne(
@@ -784,6 +843,8 @@ function calculerPaie() {
       -absRistCplt,
       null,
       null,
+      null,
+      genererTooltipAbsence(profilAgent.primes.rist_cplt_lic_isq),
     );
 
   ajouterLigne(
@@ -800,6 +861,8 @@ function calculerPaie() {
       -absRistMaj,
       null,
       null,
+      null,
+      genererTooltipAbsence(profilAgent.primes.rist_maj_isq),
     );
 
   ajouterLigne(
@@ -816,6 +879,8 @@ function calculerPaie() {
       -absIndCsg,
       null,
       null,
+      null,
+      genererTooltipAbsence(profilAgent.primes.ind_compensatrice_csg),
     );
 
   ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
@@ -918,6 +983,8 @@ function calculerPaie() {
       null,
       absenceTraitement,
       null,
+      null,
+      genererTooltipAbsence(traitementBrut),
     );
     ajouterLigne(
       "604959",
@@ -925,6 +992,8 @@ function calculerPaie() {
       null,
       absenceResidence,
       null,
+      null,
+      genererTooltipAbsence(indemniteResidence),
     );
   }
 
