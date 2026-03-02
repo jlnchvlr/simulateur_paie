@@ -17,6 +17,7 @@
           ✖
         </button>
       </div>
+
       <div class="modal-body">
         <div id="panel-residence" class="setting-panel">
           <button
@@ -1087,8 +1088,10 @@
           >
             ⬅ Retour au menu
           </button>
+
           <label>Nombre de Nuits complètes (N)</label>
           <input type="number" id="input-nuit-n" value="0" step="1" />
+
           <label>Nombre de Soirées (S2)</label>
           <input type="number" id="input-nuit-s2" value="0" step="1" />
 
@@ -1201,7 +1204,7 @@
             <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">
               🚲 Forfait Mobilités
             </button>
-            <button onclick="ouvrirModal('panel-ott', '📊 PV Options')">
+            <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">
               📊 Protocole (OTT)
             </button>
             <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
@@ -1259,12 +1262,16 @@
           >
             ⬅ Retour au menu
           </button>
+
           <label>Prime Partage Performance (€)</label>
           <input type="number" id="input-perf" value="0.00" step="10" />
+
           <label>Prime de fidélisation territoriale (€)</label>
           <input type="number" id="input-fidelisation" value="0.00" step="10" />
+
           <label>Prime d'attractivité géographique (€)</label>
           <input type="number" id="input-geographique" value="0.00" step="10" />
+
           <button
             type="button"
             class="validate-btn"
