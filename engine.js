@@ -6,31 +6,26 @@ async function initialiserApplication() {
     if (!reponse.ok) throw new Error("Fichier introuvable.");
     baseDonnees = await reponse.json();
 
-    // On remplit les échelons au chargement
     mettreAJourEchelons();
 
-    // Mise à jour des échelons ET de la paie si on change le grade
     document.getElementById("input-grade").addEventListener("input", () => {
       mettreAJourEchelons();
       calculerPaie();
     });
 
-    // Le JS écoute maintenant tous les menus de la modale ET du tableau d'en-tête
     const inputs = document.querySelectorAll(
       ".magic-modal select, .magic-modal input, .info-table select, .info-table input",
     );
     inputs.forEach((input) => input.addEventListener("input", calculerPaie));
 
-    // Écouter la touche "Entrée" pour valider et fermer instantanément
     document.getElementById("magic-modal").addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        e.preventDefault(); // Empêche les comportements bizarres
+        e.preventDefault();
         document.getElementById("magic-modal").close();
       }
     });
 
     calculerPaie();
-    mettreAJourHelperRist();
     resetHelperRist();
     resetHelperExp();
     resetHelperIsqLicence();
@@ -41,7 +36,6 @@ async function initialiserApplication() {
   }
 }
 
-// TRI INTELLIGENT DES ÉCHELONS (1 à 14 puis Lettres)
 function mettreAJourEchelons() {
   const grade = document.getElementById("input-grade").value;
   const selectEchelon = document.getElementById("input-echelon");
@@ -50,13 +44,11 @@ function mettreAJourEchelons() {
 
   const echelons = Object.keys(baseDonnees.grilles_icna[grade] || {});
 
-  // Algorithme de tri : d'abord les nombres purs, puis les textes
   echelons.sort((a, b) => {
-    const numA = parseInt(a);
-    const numB = parseInt(b);
-    const isNumA = !isNaN(numA);
-    const isNumB = !isNaN(numB);
-
+    const numA = parseInt(a),
+      numB = parseInt(b);
+    const isNumA = !isNaN(numA),
+      isNumB = !isNaN(numB);
     if (isNumA && isNumB) return numA - numB;
     if (isNumA && !isNumB) return -1;
     if (!isNumA && isNumB) return 1;
@@ -70,55 +62,42 @@ function mettreAJourEchelons() {
     selectEchelon.appendChild(option);
   });
 
-  if (echelons.includes(echelonActuel)) {
-    selectEchelon.value = echelonActuel;
-  } else {
-    selectEchelon.value = echelons[0] || "";
-  }
+  selectEchelon.value = echelons.includes(echelonActuel)
+    ? echelonActuel
+    : echelons[0] || "";
 }
 
-function mettreAJourHelperRist() {
-  const niveau = document.getElementById("input-fonction").value;
-  const helperText = document.getElementById("rist-helper-text");
-
-  const details = {
-    "Niveau 1":
-      "ICNA en formation sans mention, IESSA 1ère affectation, TSEEAC en qualification...",
-    "Niveau 2":
-      "ICNA formation 1 mention (sauf Cayenne appro/CR), IESSA stagiaires > 9 mois...",
-    "Niveau 3": "ICNA formation 2 mentions, Contrôleurs Listes 9 à 11...",
-    "Niveau 4":
-      "PC examinateurs / évaluateurs / facilitateurs FH Listes 9 à 11...",
-    "Niveau 5":
-      "PC Liste 8, ICNA formation 3 mentions, Chefs CA Listes 9-11...",
-    "Niveau 6":
-      "Chefs de tour/quart Liste 8, PC exam/éval/FH Liste 8, PC Liste 7...",
-    "Niveau 7":
-      "Chefs de tour/quart Liste 7, Chefs CA Liste 8, PC exam/éval/FH Liste 7...",
-    "Niveau 8": "PC Listes 5 et 6, Chefs CA Liste 7, Spécialistes...",
-    "Niveau 9":
-      "PC Listes 1 à 4, Chefs de quart Listes 5-6, PC exam/éval/FH Listes 5-6...",
-    "Niveau 10":
-      "Chefs d'équipe CRNA, Adjoints chefs de salle ATFCM (ACDS), Chefs de tour L5-6, PC exam/éval/FH Listes 1 à 4, Assistants subdivision...",
-    "Niveau 11":
-      "Chefs de salle CRNA, Chefs d'approche CDG, Chefs de tour L1-3, Chargés de projet, Chefs de subdivision...",
-    "Niveau 12":
-      "Chefs de programmes, Chefs de projet, Chefs d'organismes L7-8, Chefs de division...",
-    "Niveau 13":
-      "Chefs de division, Chefs de pôle, Chefs d'organismes L4-6, Adjoints chefs de département...",
-    "Niveau 14":
-      "Chefs SNA, Chefs de département (DSNA, ENAC...), Chefs de pôles majeurs DO/DTI...",
-    "Niveau 15":
-      "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
+// --- L'USINE À MENUS INTERACTIFS (DRY) ---
+function creerMenuInteractif(
+  nomGlobal,
+  inputId,
+  helperId,
+  panelId,
+  dictDetails,
+) {
+  window[`previewHelper${nomGlobal}`] = (nv) => {
+    const el = document.getElementById(helperId);
+    if (el) el.innerHTML = `<strong>Aperçu :</strong> ${dictDetails[nv] || ""}`;
   };
-
-  if (helperText) {
-    helperText.textContent =
-      "Exemples de postes : " + (details[niveau] || "Fonctions non définies.");
-  }
+  window[`resetHelper${nomGlobal}`] = () => {
+    const nv = document.getElementById(inputId).value;
+    const el = document.getElementById(helperId);
+    if (el)
+      el.innerHTML = `<strong>Sélectionné :</strong> ${dictDetails[nv] || ""}`;
+  };
+  window[`select${nomGlobal}`] = (nv) => {
+    document.getElementById(inputId).value = nv;
+    document
+      .querySelectorAll(`#${panelId} .rist-option`)
+      .forEach((e) => e.classList.remove("selected"));
+    document
+      .querySelector(`#${panelId} .rist-option[data-value="${nv}"]`)
+      ?.classList.add("selected");
+    window[`resetHelper${nomGlobal}`]();
+    calculerPaie();
+  };
 }
 
-// --- LOGIQUE RIST INTERACTIVE ---
 const ristDetails = {
   "Niveau 1":
     "ICNA en formation sans mention, IESSA 1ère affectation, TSEEAC en qualif...",
@@ -149,7 +128,6 @@ const ristDetails = {
     "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
 };
 
-// --- LOGIQUE RIST EXPÉRIENCE INTERACTIVE ---
 const expDetails = {
   "Niveau 1": "Personnels stagiaires",
   "Niveau 2": "TSEEAC Normal",
@@ -161,7 +139,6 @@ const expDetails = {
     "ICNA en Chef / IESSA Div ou Chef / IEEAC Principal ou HC / RTAC, CTAC, CSTAC",
 };
 
-// --- LOGIQUE ISQ LICENCE & COMPLÉMENT ---
 const isqLicenceDetails = {
   Aucune: "Licence non détenue, perdue ou suspendue.",
   "Niveau 1": "Formation LFPG/LFPO/CRNA (détenteur LOC ou CR).",
@@ -187,7 +164,6 @@ const isqComplementDetails = {
   "Niveau 8": "PC d'un organisme classé en listes 9 à 11.",
 };
 
-// --- LOGIQUE ISQ MAJORATION ---
 const isqMajorationDetails = {
   Aucune: "Aucune majoration / Non éligible.",
   "Niveau 1": "Personnels d'un organisme classé en listes 9 à 11.",
@@ -200,144 +176,44 @@ const isqMajorationDetails = {
   "Niveau 8": "Personnels d'un organisme classé en liste 1.",
 };
 
-window.previewHelperIsqMajoration = (nv) => {
-  const el = document.getElementById("isq-majoration-helper-text");
-  if (el)
-    el.innerHTML = `<strong>Aperçu :</strong> ${isqMajorationDetails[nv] || ""}`;
-};
-window.resetHelperIsqMajoration = () => {
-  const nv = document.getElementById("input-isq-majoration").value;
-  const el = document.getElementById("isq-majoration-helper-text");
-  if (el)
-    el.innerHTML = `<strong>Sélectionné :</strong> ${isqMajorationDetails[nv] || ""}`;
-};
-window.selectIsqMajoration = (nv) => {
-  document.getElementById("input-isq-majoration").value = nv;
-  document
-    .querySelectorAll("#panel-rist-isq-majoration .rist-option")
-    .forEach((e) => e.classList.remove("selected"));
-  document
-    .querySelector(
-      `#panel-rist-isq-majoration .rist-option[data-value="${nv}"]`,
-    )
-    ?.classList.add("selected");
-  resetHelperIsqMajoration();
-  calculerPaie();
-};
-
-// Fonctions ISQ Licence
-window.previewHelperIsqLicence = (nv) => {
-  const el = document.getElementById("isq-licence-helper-text");
-  if (el)
-    el.innerHTML = `<strong>Aperçu :</strong> ${isqLicenceDetails[nv] || ""}`;
-};
-window.resetHelperIsqLicence = () => {
-  const nv = document.getElementById("input-isq-licence").value;
-  const el = document.getElementById("isq-licence-helper-text");
-  if (el)
-    el.innerHTML = `<strong>Sélectionné :</strong> ${isqLicenceDetails[nv] || ""}`;
-};
-window.selectIsqLicence = (nv) => {
-  document.getElementById("input-isq-licence").value = nv;
-  document
-    .querySelectorAll("#panel-rist-isq-licence .rist-option")
-    .forEach((e) => e.classList.remove("selected"));
-  document
-    .querySelector(`#panel-rist-isq-licence .rist-option[data-value="${nv}"]`)
-    ?.classList.add("selected");
-  resetHelperIsqLicence();
-  calculerPaie();
-};
-
-// Fonctions ISQ Complément
-window.previewHelperIsqComplement = (nv) => {
-  const el = document.getElementById("isq-complement-helper-text");
-  if (el)
-    el.innerHTML = `<strong>Aperçu :</strong> ${isqComplementDetails[nv] || ""}`;
-};
-window.resetHelperIsqComplement = () => {
-  const nv = document.getElementById("input-isq-complement").value;
-  const el = document.getElementById("isq-complement-helper-text");
-  if (el)
-    el.innerHTML = `<strong>Sélectionné :</strong> ${isqComplementDetails[nv] || ""}`;
-};
-window.selectIsqComplement = (nv) => {
-  document.getElementById("input-isq-complement").value = nv;
-  document
-    .querySelectorAll("#panel-rist-isq-complement .rist-option")
-    .forEach((e) => e.classList.remove("selected"));
-  document
-    .querySelector(
-      `#panel-rist-isq-complement .rist-option[data-value="${nv}"]`,
-    )
-    ?.classList.add("selected");
-  resetHelperIsqComplement();
-  calculerPaie();
-};
-
-window.previewHelperExp = function (niveau) {
-  const helperText = document.getElementById("exp-helper-text");
-  if (helperText)
-    helperText.innerHTML = `<strong>Aperçu :</strong> ${expDetails[niveau] || ""}`;
-};
-
-window.resetHelperExp = function () {
-  const niveauActuel = document.getElementById("input-experience").value;
-  const helperText = document.getElementById("exp-helper-text");
-  if (helperText)
-    helperText.innerHTML = `<strong>Sélectionné :</strong> ${expDetails[niveauActuel] || ""}`;
-};
-
-window.selectExp = function (niveau) {
-  document.getElementById("input-experience").value = niveau;
-  document
-    .querySelectorAll("#panel-rist-experience .rist-option")
-    .forEach((el) => el.classList.remove("selected"));
-  const selectedEl = document.querySelector(
-    `#panel-rist-experience .rist-option[data-value="${niveau}"]`,
-  );
-  if (selectedEl) selectedEl.classList.add("selected");
-  resetHelperExp();
-  calculerPaie();
-};
-
-window.previewHelperRist = function (niveau) {
-  const helperText = document.getElementById("rist-helper-text");
-  if (helperText) {
-    helperText.innerHTML = `<strong>Aperçu :</strong> ${ristDetails[niveau] || ""}`;
-  }
-};
-
-window.resetHelperRist = function () {
-  const niveauActuel = document.getElementById("input-fonction").value;
-  const helperText = document.getElementById("rist-helper-text");
-  if (helperText) {
-    helperText.innerHTML = `<strong>Sélectionné :</strong> ${ristDetails[niveauActuel] || ""}`;
-  }
-};
-
-window.selectRist = function (niveau) {
-  // 1. Mettre à jour le champ caché
-  document.getElementById("input-fonction").value = niveau;
-
-  // 2. Mettre à jour le design visuel de la liste (couleur bleue sur la ligne cliquée)
-  document
-    .querySelectorAll(".rist-option")
-    .forEach((el) => el.classList.remove("selected"));
-  const selectedEl = document.querySelector(
-    `.rist-option[data-value="${niveau}"]`,
-  );
-  if (selectedEl) selectedEl.classList.add("selected");
-
-  // 3. Forcer l'affichage "Sélectionné"
-  resetHelperRist();
-
-  // 4. Lancer le calcul de la paie en arrière-plan
-  calculerPaie();
-};
+// Application de l'usine à tous les menus !
+creerMenuInteractif(
+  "Rist",
+  "input-fonction",
+  "rist-helper-text",
+  "panel-rist-fonctions",
+  ristDetails,
+);
+creerMenuInteractif(
+  "Exp",
+  "input-experience",
+  "exp-helper-text",
+  "panel-rist-experience",
+  expDetails,
+);
+creerMenuInteractif(
+  "IsqLicence",
+  "input-isq-licence",
+  "isq-licence-helper-text",
+  "panel-rist-isq-licence",
+  isqLicenceDetails,
+);
+creerMenuInteractif(
+  "IsqComplement",
+  "input-isq-complement",
+  "isq-complement-helper-text",
+  "panel-rist-isq-complement",
+  isqComplementDetails,
+);
+creerMenuInteractif(
+  "IsqMajoration",
+  "input-isq-majoration",
+  "isq-majoration-helper-text",
+  "panel-rist-isq-majoration",
+  isqMajorationDetails,
+);
 
 function getProfilDepuisInterface() {
-  // On additionne les cases de la Part Fixe cochées + le champ manuel
   let pfTotal = parseFloat(document.getElementById("pf-manuel")?.value) || 0;
   document.querySelectorAll(".pf-checkbox").forEach((cb) => {
     if (cb.checked) pfTotal += parseFloat(cb.value);
@@ -373,8 +249,6 @@ function getProfilDepuisInterface() {
         parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
       geographique:
         parseFloat(document.getElementById("input-geographique")?.value) || 0,
-
-      // Nouvelles variables OTT propres
       ott_pf: pfTotal,
       ott_pv_globale:
         parseFloat(document.getElementById("pv-globale")?.value) || 0,
@@ -423,71 +297,37 @@ function formaterMontant(montant) {
     maximumFractionDigits: 2,
   });
 }
-
 function arrondir(valeur) {
   return Math.round(valeur * 100) / 100;
 }
 
 function ouvrirModal(panelIds, titre) {
   document.getElementById("modal-title").textContent = titre;
-  // On cache tous les tiroirs
   document
     .querySelectorAll(".setting-panel")
     .forEach((p) => p.classList.remove("active"));
 
-  // Si on lui donne un tableau de plusieurs tiroirs, il les affiche tous
   if (Array.isArray(panelIds)) {
     panelIds.forEach((id) =>
       document.getElementById(id).classList.add("active"),
     );
   } else {
-    document.getElementById(panelIds).classList.add("active"); // Un seul tiroir
+    document.getElementById(panelIds).classList.add("active");
   }
 
   document.getElementById("magic-modal").showModal();
 
-  // --- NOUVEAU : AUTO-SCROLL POUR LES 5 MENUS RIST ---
-  const isRistFonctions = Array.isArray(panelIds)
-    ? panelIds.includes("panel-rist-fonctions")
-    : panelIds === "panel-rist-fonctions";
-  const isRistExperience = Array.isArray(panelIds)
-    ? panelIds.includes("panel-rist-experience")
-    : panelIds === "panel-rist-experience";
-  const isIsqLicence = Array.isArray(panelIds)
-    ? panelIds.includes("panel-rist-isq-licence")
-    : panelIds === "panel-rist-isq-licence";
-  const isIsqComplement = Array.isArray(panelIds)
-    ? panelIds.includes("panel-rist-isq-complement")
-    : panelIds === "panel-rist-isq-complement";
-  const isIsqMajoration = Array.isArray(panelIds)
-    ? panelIds.includes("panel-rist-isq-majoration")
-    : panelIds === "panel-rist-isq-majoration";
-
-  if (
-    isRistFonctions ||
-    isRistExperience ||
-    isIsqLicence ||
-    isIsqComplement ||
-    isIsqMajoration
-  ) {
-    setTimeout(() => {
-      let selector = "";
-      if (isRistFonctions) selector = "#panel-rist-fonctions .selected";
-      else if (isRistExperience) selector = "#panel-rist-experience .selected";
-      else if (isIsqLicence) selector = "#panel-rist-isq-licence .selected";
-      else if (isIsqComplement)
-        selector = "#panel-rist-isq-complement .selected";
-      else if (isIsqMajoration)
-        selector = "#panel-rist-isq-majoration .selected";
-
-      const selectedOption = document.querySelector(selector);
+  // Auto-scroll générique
+  setTimeout(() => {
+    const activePanel = document.querySelector(".setting-panel.active");
+    if (activePanel) {
+      const selectedOption = activePanel.querySelector(".rist-option.selected");
       if (selectedOption)
         selectedOption.scrollIntoView({ block: "center", behavior: "instant" });
-    }, 15);
-  }
+    }
+  }, 15);
 }
 
-// Remet les valeurs à zéro quand on clique sur la petite croix
 window.effacerValeurs = function (event, inputIds) {
   event.stopPropagation();
   inputIds.forEach((id) => {
@@ -496,32 +336,27 @@ window.effacerValeurs = function (event, inputIds) {
       if (el.tagName === "SELECT") {
         if (el.querySelector('option[value="none"]')) el.value = "none";
         else el.value = "0";
-      } else if (el.type === "checkbox") el.checked = false;
-      // LA CORRECTION EST ICI : on envoie bien la chaîne de texte '0'
-      else el.value = "0";
+      } else if (el.type === "checkbox") {
+        el.checked = false;
+      } else {
+        el.value = "0";
+      }
     }
   });
   calculerPaie();
 };
 
-// Empêche de saisir plus de 30 jours d'absence au total (Règle du trentième DGFIP)
 window.limiterAbsences = function (el) {
-  // Force la valeur à 0 si l'agent tape un nombre négatif
   if (parseInt(el.value) < 0) el.value = "0";
-
   const greve = parseInt(document.getElementById("input-greve").value) || 0;
   const carence = parseInt(document.getElementById("input-carence").value) || 0;
   const m90 = parseInt(document.getElementById("input-maladie-90").value) || 0;
   const m50 = parseInt(document.getElementById("input-maladie-50").value) || 0;
 
   const total = greve + carence + m90 + m50;
-
-  // Si on dépasse 30, on annule mathématiquement la dernière frappe
   if (total > 30) {
-    const surplus = total - 30;
-    el.value = (parseInt(el.value) || 0) - surplus;
+    el.value = (parseInt(el.value) || 0) - (total - 30);
   }
-  // On met à jour la paie instantanément
   calculerPaie();
 };
 
@@ -550,32 +385,26 @@ function calculerPaie() {
   const nuit = arrondir(
     8.73 * profilAgent.evenements.nuits + 0.97 * profilAgent.evenements.soirees,
   );
-  // Mise à jour de l'aperçu en direct dans le menu des nuits
   const previewNuits = document.getElementById("preview-nuits");
   if (previewNuits) previewNuits.textContent = formaterMontant(nuit);
+
   const joursGreve = profilAgent.evenements.jours_greve;
   const joursCarence = profilAgent.evenements.jours_carence;
   const jours90 = profilAgent.evenements.jours_maladie_90;
   const jours50 = profilAgent.evenements.jours_maladie_50;
-
-  // Pour l'affichage texte sur la fiche (ex: "ABSENCE 5 J")
   const joursAbs = joursGreve + joursCarence + jours90 + jours50;
-
-  // Le "poids" mathématique de la retenue en trentièmes
-  // (1 jour à 90% = retenue de 0.1 jour | 1 jour à 50% = retenue de 0.5 jour)
   const joursRetenus =
     joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
+
   const psc = Math.max(
     0,
     baseDonnees.constantes.participation_psc -
       arrondir((baseDonnees.constantes.participation_psc / 30) * joursRetenus),
   );
 
-  // -- CALCUL DES ABSENCES AVEC LE POIDS RÉEL --
   const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
   const absenceNbi = arrondir((montantNbi / 30) * joursRetenus);
   const absenceResidence = arrondir((indemniteResidence / 30) * joursRetenus);
-
   const absRistFct = arrondir(
     (profilAgent.primes.rist_fonctions / 30) * joursRetenus,
   );
@@ -595,44 +424,20 @@ function calculerPaie() {
     (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
   );
 
-  // -- LIVE FEEDBACK : RISTOURNE PART FONCTIONS --
-  const previewRistFonctions = document.getElementById(
-    "preview-rist-fonctions",
+  // Live Feedback RIST & ISQ
+  const majPreview = (id, montant) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = formaterMontant(montant);
+  };
+  majPreview("preview-rist-fonctions", profilAgent.primes.rist_fonctions);
+  majPreview("preview-rist-experience", profilAgent.primes.rist_exper_prof);
+  majPreview("preview-rist-isq-licence", profilAgent.primes.rist_lic_isq);
+  majPreview(
+    "preview-rist-isq-complement",
+    profilAgent.primes.rist_cplt_lic_isq,
   );
-  if (previewRistFonctions) {
-    previewRistFonctions.textContent = formaterMontant(
-      profilAgent.primes.rist_fonctions,
-    );
-    // -- LIVE FEEDBACK : RISTOURNE PART EXPÉRIENCE --
-    const previewRistExp = document.getElementById("preview-rist-experience");
-    if (previewRistExp)
-      previewRistExp.textContent = formaterMontant(
-        profilAgent.primes.rist_exper_prof,
-      );
-    // -- LIVE FEEDBACK : ISQ --
-    const previewIsqLic = document.getElementById("preview-rist-isq-licence");
-    if (previewIsqLic)
-      previewIsqLic.textContent = formaterMontant(
-        profilAgent.primes.rist_lic_isq,
-      );
+  majPreview("preview-rist-isq-majoration", profilAgent.primes.rist_maj_isq);
 
-    const previewIsqCplt = document.getElementById(
-      "preview-rist-isq-complement",
-    );
-    if (previewIsqCplt)
-      previewIsqCplt.textContent = formaterMontant(
-        profilAgent.primes.rist_cplt_lic_isq,
-      );
-    const previewIsqMaj = document.getElementById(
-      "preview-rist-isq-majoration",
-    );
-    if (previewIsqMaj)
-      previewIsqMaj.textContent = formaterMontant(
-        profilAgent.primes.rist_maj_isq,
-      );
-  }
-
-  // -- BASES RÉELLES --
   const baseTraitementReel = traitementBrut - absenceTraitement;
   const baseNbiReelle = montantNbi - absenceNbi;
   const baseResidenceReelle = indemniteResidence - absenceResidence;
@@ -653,11 +458,10 @@ function calculerPaie() {
     profilAgent.evenements.ott_pf +
     profilAgent.evenements.ott_pv_globale +
     profilAgent.evenements.ott_pv_opt32;
-  // -- 1. CALCUL DU SFT --
+
   let montantSFT = 0;
-  if (profilAgent.enfants === 1) {
-    montantSFT = 2.29;
-  } else if (profilAgent.enfants >= 2) {
+  if (profilAgent.enfants === 1) montantSFT = 2.29;
+  else if (profilAgent.enfants >= 2) {
     const traitementPlancher =
       449 * baseDonnees.constantes.valeur_point_mensuel;
     const traitementPlafond = 717 * baseDonnees.constantes.valeur_point_mensuel;
@@ -678,12 +482,11 @@ function calculerPaie() {
         (profilAgent.enfants - 3) * (4.57 + traitementReference * 0.06);
   }
   montantSFT = arrondir(montantSFT);
-  // Le SFT est également réduit selon les jours d'absence
   montantSFT = Math.max(
     0,
     montantSFT - arrondir((montantSFT / 30) * joursRetenus),
   );
-  // -- 2. SCISSION RETENUE PC --
+
   const retenuePC = arrondir(
     baseTraitementReel * baseDonnees.constantes.taux_retenue_pc,
   );
@@ -691,7 +494,6 @@ function calculerPaie() {
     baseNbiReelle * baseDonnees.constantes.taux_retenue_pc,
   );
 
-  // -- 3. RAFP ET ISQ --
   const baseRafp = Math.min(
     totalPrimesSoumises,
     baseSoumisePC * baseDonnees.constantes.plafond_rafp,
@@ -702,18 +504,16 @@ function calculerPaie() {
   const retenueIsq = arrondir(
     ristIsqReel * baseDonnees.constantes.taux_retenue_isq,
   );
-  // Le Transfert Primes/Points est soumis à la règle du trentième
+
   const transfertPrimesBase = baseDonnees.constantes.transfert_primes_points;
   const transfertPrimes = Math.max(
     0,
     transfertPrimesBase - arrondir((transfertPrimesBase / 30) * joursRetenus),
   );
 
-  // -- 4. CSG / CRDS --
   const elementsSoumisCsg =
     baseSoumisePC + totalPrimesSoumises + psc + montantSFT;
   const deductionsBaseCsg = transfertPrimes + retenueIsq;
-  // La base de la CSG ne peut pas être négative (on la bloque à 0 au minimum)
   const baseCsgCrdsExacte =
     Math.max(0, elementsSoumisCsg - deductionsBaseCsg) *
     baseDonnees.constantes.assiette_csg_crds;
@@ -726,7 +526,6 @@ function calculerPaie() {
   );
   const crds = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_crds);
 
-  // -- 5. CHARGES PATRONALES --
   const patAllocFam = arrondir(
     baseSoumisePC * baseDonnees.taux_patronaux.alloc_familiale,
   );
@@ -756,10 +555,56 @@ function calculerPaie() {
     patAti +
     patMobilite +
     patRafp;
-  document.getElementById("ui-indice").textContent = "0" + (indice || "000");
 
+  document.getElementById("ui-indice").textContent = "0" + (indice || "000");
   const tbody = document.getElementById("lignes-paie");
   tbody.innerHTML = "";
+
+  // Routage Intelligent
+  const routageModal = {
+    102000: { cible: "panel-residence", titre: "Zone de Résidence" },
+    201958: {
+      cible: "panel-rist-fonctions",
+      titre: "Ristourne Part Fonctions",
+    },
+    201959: {
+      cible: "panel-rist-experience",
+      titre: "Ristourne Part Expérience",
+    },
+    201960: {
+      cible: "panel-rist-isq-licence",
+      titre: "Ristourne Part LIC-ISQ",
+    },
+    201961: {
+      cible: "panel-rist-isq-complement",
+      titre: "Ristourne CPLT Part LIC-ISQ",
+    },
+    201962: {
+      cible: "panel-rist-isq-majoration",
+      titre: "Majoration Complément ISQ",
+    },
+    200176: { cible: "panel-nuits", titre: "Travail de Nuit & Soirées" },
+    200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
+    202485: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
+    203001: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
+    203002: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
+    604958: { cible: "panel-absences", titre: "Absences et Carence" },
+    604959: { cible: "panel-absences", titre: "Absences et Carence" },
+    558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
+    202206: { cible: "panel-csg", titre: "Indemnité Compensatrice CSG" },
+    202558: {
+      cible: "panel-ott",
+      titre: "Organisation du Travail (Protocole)",
+    },
+    202559: {
+      cible: "panel-ott",
+      titre: "Organisation du Travail (Protocole)",
+    },
+    202560: {
+      cible: "panel-ott",
+      titre: "Organisation du Travail (Protocole)",
+    },
+  };
 
   function ajouterLigne(
     code,
@@ -781,72 +626,16 @@ function calculerPaie() {
 
     const tr = document.createElement("tr");
 
-    let estCliquable = false;
-    let cibles = null;
-    let titreModal = "";
-
-    // -- ROUTAGE INTELLIGENT VERS LES BONS TIROIRS --
-    if (code === "102000") {
-      estCliquable = true;
-      cibles = "panel-residence";
-      titreModal = "Zone de Résidence";
-    } else if (code === "201958") {
-      estCliquable = true;
-      cibles = "panel-rist-fonctions";
-      titreModal = "Ristourne Part Fonctions";
-    } else if (code === "201959") {
-      estCliquable = true;
-      cibles = "panel-rist-experience";
-      titreModal = "Ristourne Part Expérience";
-    } else if (code === "201960") {
-      estCliquable = true;
-      cibles = "panel-rist-isq-licence";
-      titreModal = "Ristourne Part LIC-ISQ";
-    } else if (code === "201961") {
-      estCliquable = true;
-      cibles = "panel-rist-isq-complement";
-      titreModal = "Ristourne CPLT Part LIC-ISQ";
-    } else if (code === "201962") {
-      estCliquable = true;
-      cibles = "panel-rist-isq-majoration";
-      titreModal = "Majoration Complément ISQ";
-    } else if (code === "200176") {
-      estCliquable = true;
-      cibles = "panel-nuits";
-      titreModal = "Travail de Nuit & Soirées";
-    } else if (code === "200041") {
-      estCliquable = true;
-      cibles = "panel-fmd";
-      titreModal = "Forfait Mobilités";
-    } else if (["202485", "203001", "203002"].includes(code)) {
-      estCliquable = true;
-      cibles = "panel-primes";
-      titreModal = "Primes Exceptionnelles";
-    } else if (code === "604958" || code === "604959") {
-      estCliquable = true;
-      cibles = "panel-absences";
-      titreModal = "Absences et Carence";
-    } else if (code === "558000" || libelle.includes("TAUX PERSONNALISE")) {
-      estCliquable = true;
-      cibles = "panel-impots";
-      titreModal = "Prélèvement à la Source";
-    } else if (code === "202206") {
-      estCliquable = true;
-      cibles = "panel-csg";
-      titreModal = "Indemnité Compensatrice CSG";
-    } else if (["202558", "202559", "202560"].includes(code)) {
-      estCliquable = true;
-      cibles = "panel-ott";
-      titreModal = "Organisation du Travail (Protocole)";
-    }
-
-    if (estCliquable) {
+    if (routageModal[code]) {
       tr.className = "clickable-row";
       tr.title = "Cliquez pour modifier";
-      tr.onclick = () => ouvrirModal(cibles, titreModal);
+      tr.onclick = () =>
+        ouvrirModal(routageModal[code].cible, routageModal[code].titre);
+    } else if (libelle.includes("TAUX PERSONNALISE")) {
+      tr.className = "clickable-row";
+      tr.onclick = () => ouvrirModal("panel-impots", "Prélèvement à la Source");
     }
 
-    // --- LA CROIX MAGIQUE POUR EFFACER ---
     let croixEffacer = "";
     if (inputsAReset) {
       const idsStr = JSON.stringify(inputsAReset).replace(/"/g, "'");
@@ -854,18 +643,16 @@ function calculerPaie() {
     }
 
     tr.innerHTML = `
-            <td class="col-code">${code || ""}</td>
-            <td class="col-libelle label${extraClass}">
-                <span>${libelle}</span>${croixEffacer} ${euroSymbole}
-            </td>
-            <td class="col-amount">${formaterMontant(aPayer)}</td>
-            <td class="col-amount">${formaterMontant(aDeduire)}</td>
-            <td class="col-amount">${formaterMontant(pourInfo)}</td>
-        `;
+        <td class="col-code">${code || ""}</td>
+        <td class="col-libelle label${extraClass}"><span>${libelle}</span>${croixEffacer} ${euroSymbole}</td>
+        <td class="col-amount">${formaterMontant(aPayer)}</td>
+        <td class="col-amount">${formaterMontant(aDeduire)}</td>
+        <td class="col-amount">${formaterMontant(pourInfo)}</td>
+    `;
     tbody.appendChild(tr);
   }
 
-  // -- LIGNE D'INFORMATION ABSENCE (Tout en haut) --
+  // --- DESSIN DES LIGNES ---
   if (joursAbs > 0) {
     const totalAbsenceDeduction =
       absenceTraitement +
@@ -877,8 +664,6 @@ function calculerPaie() {
       absRistCplt +
       absRistMaj +
       absIndCsg;
-
-    // LA CROIX EST MAINTENANT ICI (à la fin de la ligne)
     ajouterLigne(
       "604958",
       `SERVICE NON FAIT / ABSENCE (${joursAbs} J)`,
@@ -890,7 +675,6 @@ function calculerPaie() {
   }
 
   ajouterLigne("101000", "TRAITEMENT BRUT", traitementBrut, null, null);
-
   if (montantNbi > 0) {
     ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", montantNbi, null, null);
     if (joursAbs > 0)
@@ -915,7 +699,6 @@ function calculerPaie() {
   ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
   if (montantNbi > 0)
     ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, retenuePcNbi, null);
-
   ajouterLigne(
     "102000",
     "INDEMNITE DE RESIDENCE",
@@ -924,15 +707,12 @@ function calculerPaie() {
     null,
   );
 
-  // -- LIGNE DES NUITS ET SOIRÉES --
-  if (nuit > 0) {
+  if (nuit > 0)
     ajouterLigne("200176", "IND. TRAVAIL DE NUIT", nuit, null, null, [
       "input-nuit-n",
       "input-nuit-s2",
     ]);
-  }
-
-  if (profilAgent.primes.forfait_mobilites > 0) {
+  if (profilAgent.primes.forfait_mobilites > 0)
     ajouterLigne(
       "200041",
       "FORF. MOBILITES DURABLES",
@@ -941,7 +721,6 @@ function calculerPaie() {
       null,
       ["input-fmd"],
     );
-  }
 
   ajouterLigne(
     "201958",
@@ -1007,7 +786,6 @@ function calculerPaie() {
       null,
     );
 
-  // On affiche toujours la ligne, même si le montant est à 0 (pour pouvoir cliquer dessus !)
   ajouterLigne(
     "201962",
     "MAJORATION CPLT ISQ",
@@ -1015,7 +793,7 @@ function calculerPaie() {
     null,
     null,
   );
-  if (joursAbs > 0) {
+  if (joursAbs > 0)
     ajouterLigne(
       "201962",
       `MAJORATION CPLT ISQ (ABS. ${joursAbs} J)`,
@@ -1023,7 +801,6 @@ function calculerPaie() {
       null,
       null,
     );
-  }
 
   ajouterLigne(
     "202206",
@@ -1043,7 +820,7 @@ function calculerPaie() {
 
   ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
 
-  if (profilAgent.evenements.prime_performance > 0) {
+  if (profilAgent.evenements.prime_performance > 0)
     ajouterLigne(
       "202485",
       "PR. PARTAGE PERFORMANCE",
@@ -1052,11 +829,7 @@ function calculerPaie() {
       null,
       ["input-perf"],
     );
-  }
-
-  // --- NOUVELLES LIGNES OTT (Protocole) ---
-
-  if (profilAgent.evenements.ott_pv_globale > 0) {
+  if (profilAgent.evenements.ott_pv_globale > 0)
     ajouterLigne(
       "202558",
       "RIST ORGA TEMPS TRAVAIL (PV)",
@@ -1065,9 +838,7 @@ function calculerPaie() {
       null,
       ["pv-globale"],
     );
-  }
   if (profilAgent.evenements.ott_pf > 0) {
-    // La liste COMPLÈTE pour que la croix efface bien toutes les cartes
     ajouterLigne(
       "202559",
       "RIST ORGA TEMPS TRAVAIL (PF)",
@@ -1091,18 +862,16 @@ function calculerPaie() {
       ],
     );
   }
-
-  if (profilAgent.evenements.ott_pv_opt32 > 0) {
+  if (profilAgent.evenements.ott_pv_opt32 > 0)
     ajouterLigne(
       "202560",
-      "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", // <-- Le libellé mis à jour ici
+      "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)",
       profilAgent.evenements.ott_pv_opt32,
       null,
       null,
       ["pv-opt32"],
     );
-  }
-  if (profilAgent.evenements.fidelisation > 0) {
+  if (profilAgent.evenements.fidelisation > 0)
     ajouterLigne(
       "203001",
       "PRIME DE FIDELISATION TERR.",
@@ -1111,9 +880,7 @@ function calculerPaie() {
       null,
       ["input-fidelisation"],
     );
-  }
-
-  if (profilAgent.evenements.geographique > 0) {
+  if (profilAgent.evenements.geographique > 0)
     ajouterLigne(
       "203002",
       "PRIME ATTRACTIVITE GEOGRAPHIQUE",
@@ -1122,24 +889,17 @@ function calculerPaie() {
       null,
       ["input-geographique"],
     );
-  }
 
-  // Live feedback du tiroir OTT
-  const previewOttPf = document.getElementById("preview-ott-pf");
-  if (previewOttPf)
-    previewOttPf.textContent = formaterMontant(profilAgent.evenements.ott_pf);
-  const previewOttPv = document.getElementById("preview-ott-pv");
-  if (previewOttPv)
-    previewOttPv.textContent = formaterMontant(
-      profilAgent.evenements.ott_pv_globale +
-        profilAgent.evenements.ott_pv_opt32,
-    );
+  majPreview("preview-ott-pf", profilAgent.evenements.ott_pf);
+  majPreview(
+    "preview-ott-pv",
+    profilAgent.evenements.ott_pv_globale + profilAgent.evenements.ott_pv_opt32,
+  );
 
-  // --- FIN DES PRIMES, DÉBUT DES CHARGES ---
+  // Charges
   ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, csgNonDeductible, null);
   ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, csgDeductible, null);
   ajouterLigne("401501", "C.R.D.S.", null, crds, null);
-
   ajouterLigne("403301", "COTIS PATRON. ALLOC FAMIL", null, null, patAllocFam);
   ajouterLigne("403397", "COT PAT AF MAJORATION", null, null, patAfMajor);
   ajouterLigne("403501", "COT PAT FNAL DEPLAFONNEE", null, null, patFnal);
@@ -1147,7 +907,6 @@ function calculerPaie() {
   ajouterLigne("404001", "COT PAT MALADIE DEPLAFON", null, null, patMaladie);
   ajouterLigne("411050", "CONTRIB.PC", null, null, patPensions);
   ajouterLigne("411058", "CONTRIBUTION ATI", null, null, patAti);
-
   ajouterLigne("501080", "COT SAL RAFP", null, cotisationRafp, null);
   ajouterLigne("501180", "COT PAT RAFP", null, null, patRafp);
   ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
@@ -1201,8 +960,7 @@ function calculerPaie() {
     csgNonDeductible +
     crds -
     profilAgent.primes.forfait_mobilites;
-  // Le salaire net imposable ne peut pas être négatif
-  let netImposableFinal = Math.max(0, netImposable); // (Remplace netImposable par le nom de ta variable si besoin)
+  let netImposableFinal = Math.max(0, netImposable);
   const impotSource = arrondir(netImposableFinal * profilAgent.taux_pas);
 
   ajouterLigne(
@@ -1220,15 +978,15 @@ function calculerPaie() {
     null,
   );
 
-  // BOUTON AJOUTER (Pour ce qui n'apparaît pas encore, ex: Nuits, Heures Sup)
+  // Bouton Ajout
   const trAjout = document.createElement("tr");
   trAjout.className = "add-row";
   trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Nuits, Absences, Mobilité...) </td>`;
-  // Ouvre 3 tiroirs d'un coup pour offrir tous les choix !
   trAjout.onclick = () =>
     ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?");
   tbody.appendChild(trAjout);
 
+  // --- LE FAMEUX RESSORT MAGIQUE EN LIGNE (INTACT) ---
   const trRessort = document.createElement("tr");
   trRessort.style.backgroundColor = "white";
   trRessort.innerHTML = `
@@ -1237,16 +995,14 @@ function calculerPaie() {
         <td style="border-right: 1px solid var(--dgfip-light);"></td>
         <td style="border-right: 1px solid var(--dgfip-light);"></td>
         <td></td>
-    `;
+  `;
   tbody.appendChild(trRessort);
 
-  // On empêche le net d'être négatif
-  // On empêche le net d'être négatif
+  // Totaux finaux
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(
     totalAPayer + totalPatronal - transfertPrimes,
   );
-  const baseSS = baseTraitementReel;
 
   document.getElementById("ui-total-a-payer").textContent = formaterMontant(
     arrondir(totalAPayer),
@@ -1258,16 +1014,14 @@ function calculerPaie() {
     formaterMontant(totalPatronal);
   document.getElementById("ui-cout-employeur").textContent =
     formaterMontant(coutTotalEmployeur);
-
-  // On force l'affichage à "0,00" si le net est à zéro
   document.getElementById("ui-net-a-payer").textContent =
     (netFinal === 0 ? "0,00" : formaterMontant(netFinal)) + " €";
 
-  // On utilise un nouveau nom (netImposableAffichage) pour éviter le conflit avec plus haut !
   const netImposableAffichage = Math.max(0, netImposable);
   document.getElementById("ui-net-imposable").textContent =
     netImposableAffichage === 0
       ? "0,00"
       : formaterMontant(netImposableAffichage);
 }
+
 window.onload = initialiserApplication;
