@@ -29,13 +29,6 @@ async function initialiserApplication() {
       }
     });
 
-    document
-      .getElementById("input-opt-var-type")
-      .addEventListener("input", calculerPartVariableOtt);
-    document
-      .getElementById("input-opt-var-coeff")
-      .addEventListener("input", calculerPartVariableOtt);
-
     calculerPaie();
     mettreAJourHelperRist();
     resetHelperRist();
@@ -82,37 +75,6 @@ function mettreAJourEchelons() {
   } else {
     selectEchelon.value = echelons[0] || "";
   }
-}
-
-function calculerPartVariableOtt() {
-  const type = document.getElementById("input-opt-var-type").value;
-  const coeff =
-    parseFloat(document.getElementById("input-opt-var-coeff").value) || 0;
-  let resultat = 0;
-
-  if (type === "opt1_l1_6")
-    resultat =
-      baseDonnees.rist.flexibilite_options_variables.opt1_l1_6 *
-      Math.max(0, coeff - 4);
-  else if (type === "opt1_cdg")
-    resultat =
-      baseDonnees.rist.flexibilite_options_variables.opt1_cdg *
-      Math.max(0, coeff - 4);
-  else if (type === "opt1_l7_11")
-    resultat =
-      baseDonnees.rist.flexibilite_options_variables.opt1_l7_11 *
-      Math.max(0, coeff - 4);
-  else if (type === "opt1_plus")
-    resultat = baseDonnees.rist.flexibilite_options_variables.opt1_plus * coeff;
-  else if (type === "opt2_2")
-    resultat =
-      baseDonnees.rist.flexibilite_options_variables.opt2_2 *
-      Math.max(0, coeff - 1);
-
-  if (type !== "none")
-    document.getElementById("input-rist-orga").value = resultat.toFixed(2);
-
-  calculerPaie();
 }
 
 function mettreAJourHelperRist() {
@@ -375,6 +337,11 @@ window.selectRist = function (niveau) {
 };
 
 function getProfilDepuisInterface() {
+  // On additionne les cases de la Part Fixe cochées + le champ manuel
+  let pfTotal = parseFloat(document.getElementById("pf-manuel")?.value) || 0;
+  document.querySelectorAll(".pf-checkbox").forEach((cb) => {
+    if (cb.checked) pfTotal += parseFloat(cb.value);
+  });
   return {
     grade:
       document.getElementById("input-grade")?.value || "ING.DIV. CONT.NAV.AE",
@@ -402,21 +369,16 @@ function getProfilDepuisInterface() {
         parseInt(document.getElementById("input-maladie-50")?.value) || 0,
       prime_performance:
         parseFloat(document.getElementById("input-perf")?.value) || 0,
-      rist_orga:
-        parseFloat(document.getElementById("input-rist-orga")?.value) || 0,
       fidelisation:
         parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
       geographique:
         parseFloat(document.getElementById("input-geographique")?.value) || 0,
-      // On additionne le champ manuel et les cases cochées
-      pf_options:
-        (parseFloat(document.getElementById("input-pf-manuel")?.value) || 0) +
-        (document.getElementById("input-pf-opt1")?.checked
-          ? parseFloat(document.getElementById("input-pf-opt1").value)
-          : 0) +
-        (document.getElementById("input-pf-opt2")?.checked
-          ? parseFloat(document.getElementById("input-pf-opt2").value)
-          : 0),
+
+      // Nouvelles variables OTT propres
+      ott_pf: pfTotal,
+      ott_pv_globale:
+        parseFloat(document.getElementById("pv-globale")?.value) || 0,
+      ott_pv_opt32: parseFloat(document.getElementById("pv-opt32")?.value) || 0,
     },
 
     primes: {
@@ -676,7 +638,6 @@ function calculerPaie() {
   const baseResidenceReelle = indemniteResidence - absenceResidence;
   const baseSoumisePC = baseTraitementReel + baseNbiReelle;
 
-  // -- LA LIGNE QUI AVAIT DISPARU : TOTAL DES PRIMES --
   const totalPrimesSoumises =
     baseResidenceReelle +
     nuit +
@@ -687,11 +648,11 @@ function calculerPaie() {
     (profilAgent.primes.rist_maj_isq - absRistMaj) +
     (profilAgent.primes.ind_compensatrice_csg - absIndCsg) +
     profilAgent.evenements.prime_performance +
-    profilAgent.evenements.rist_orga +
     profilAgent.evenements.fidelisation +
-    profilAgent.evenements.geographique;
-  +profilAgent.evenements.pf_options;
-
+    profilAgent.evenements.geographique +
+    profilAgent.evenements.ott_pf +
+    profilAgent.evenements.ott_pv_globale +
+    profilAgent.evenements.ott_pv_opt32;
   // -- 1. CALCUL DU SFT --
   let montantSFT = 0;
   if (profilAgent.enfants === 1) {
@@ -824,6 +785,7 @@ function calculerPaie() {
     let cibles = null;
     let titreModal = "";
 
+    // -- ROUTAGE INTELLIGENT VERS LES BONS TIROIRS --
     if (code === "102000") {
       estCliquable = true;
       cibles = "panel-residence";
@@ -848,17 +810,15 @@ function calculerPaie() {
       estCliquable = true;
       cibles = "panel-rist-isq-majoration";
       titreModal = "Majoration Complément ISQ";
-    } else if (code && code.startsWith("2019")) {
-      estCliquable = true;
-      cibles = "panel-rist";
-      titreModal = "Primes RIST & Qualifications ISQ";
     } else if (code === "200176") {
       estCliquable = true;
       cibles = "panel-nuits";
       titreModal = "Travail de Nuit & Soirées";
-    } else if (
-      ["200041", "202485", "202558", "203001", "203002"].includes(code)
-    ) {
+    } else if (code === "200041") {
+      estCliquable = true;
+      cibles = "panel-fmd";
+      titreModal = "Forfait Mobilités";
+    } else if (["202485", "203001", "203002"].includes(code)) {
       estCliquable = true;
       cibles = "panel-primes";
       titreModal = "Primes Exceptionnelles";
@@ -874,18 +834,10 @@ function calculerPaie() {
       estCliquable = true;
       cibles = "panel-csg";
       titreModal = "Indemnité Compensatrice CSG";
-    } else if (code === "200041") {
-      estCliquable = true;
-      cibles = "panel-fmd";
-      titreModal = "Forfait Mobilités";
-    } else if (code === "202558") {
+    } else if (["202558", "202559", "202560"].includes(code)) {
       estCliquable = true;
       cibles = "panel-ott";
-      titreModal = "Orga Temps Travail";
-    } else if (["202485", "203001", "203002"].includes(code)) {
-      estCliquable = true;
-      cibles = "panel-primes";
-      titreModal = "Primes Exceptionnelles";
+      titreModal = "Organisation du Travail (Protocole)";
     }
 
     if (estCliquable) {
@@ -902,7 +854,7 @@ function calculerPaie() {
     }
 
     tr.innerHTML = `
-            <td class="col-code">${code}</td>
+            <td class="col-code">${code || ""}</td>
             <td class="col-libelle label${extraClass}">
                 <span>${libelle}</span>${croixEffacer} ${euroSymbole}
             </td>
@@ -1091,7 +1043,7 @@ function calculerPaie() {
 
   ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
 
-  if (profilAgent.evenements.prime_performance > 0)
+  if (profilAgent.evenements.prime_performance > 0) {
     ajouterLigne(
       "202485",
       "PR. PARTAGE PERFORMANCE",
@@ -1100,16 +1052,9 @@ function calculerPaie() {
       null,
       ["input-perf"],
     );
-  if (profilAgent.evenements.rist_orga > 0)
-    ajouterLigne(
-      "202558",
-      "RIST ORGA TEMPS TRAVAIL",
-      profilAgent.evenements.rist_orga,
-      null,
-      null,
-      ["input-rist-orga", "input-opt-var-type", "input-opt-var-coeff"],
-    );
-  if (profilAgent.evenements.fidelisation > 0)
+  }
+
+  if (profilAgent.evenements.fidelisation > 0) {
     ajouterLigne(
       "203001",
       "PRIME DE FIDELISATION TERR.",
@@ -1118,7 +1063,9 @@ function calculerPaie() {
       null,
       ["input-fidelisation"],
     );
-  if (profilAgent.evenements.geographique > 0)
+  }
+
+  if (profilAgent.evenements.geographique > 0) {
     ajouterLigne(
       "203002",
       "PRIME ATTRACTIVITE GEOGRAPHIQUE",
@@ -1127,24 +1074,67 @@ function calculerPaie() {
       null,
       ["input-geographique"],
     );
+  }
 
-  // -- LIGNE PF OPTIONS ET LIVE FEEDBACK --
-  const previewPf = document.getElementById("preview-pf");
-  if (previewPf)
-    previewPf.textContent = formaterMontant(profilAgent.evenements.pf_options);
-
-  if (profilAgent.evenements.pf_options > 0) {
-    // La ligne cliquable avec sa petite croix rouge pour tout effacer d'un coup
+  // --- NOUVELLES LIGNES OTT (Protocole) ---
+  if (profilAgent.evenements.ott_pf > 0) {
+    // La liste COMPLÈTE pour que la croix efface bien toutes les cartes
     ajouterLigne(
       "202559",
       "RIST ORGA TEMPS TRAVAIL (PF)",
-      profilAgent.evenements.pf_options,
+      profilAgent.evenements.ott_pf,
       null,
       null,
-      ["input-pf-manuel", "input-pf-opt1", "input-pf-opt2"],
+      [
+        "pf-manuel",
+        "pf-opt1-l16",
+        "pf-opt1-cdg",
+        "pf-opt1-l711",
+        "pf-opt1-l911",
+        "pf-opt1-plus-n1",
+        "pf-opt1-plus-n2",
+        "pf-opt2-1",
+        "pf-opt2-2",
+        "pf-opt2-bis",
+        "pf-opt4",
+        "pf-opt1-enac",
+        "pf-opt1-plus-enac",
+      ],
+    );
+  }
+  if (profilAgent.evenements.ott_pv_globale > 0) {
+    ajouterLigne(
+      "202558",
+      "RIST ORGA TEMPS TRAVAIL (PV)",
+      profilAgent.evenements.ott_pv_globale,
+      null,
+      null,
+      ["pv-globale"],
+    );
+  }
+  if (profilAgent.evenements.ott_pv_opt32 > 0) {
+    ajouterLigne(
+      "202560",
+      "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", // <-- Le libellé mis à jour ici
+      profilAgent.evenements.ott_pv_opt32,
+      null,
+      null,
+      ["pv-opt32"],
     );
   }
 
+  // Live feedback du tiroir OTT
+  const previewOttPf = document.getElementById("preview-ott-pf");
+  if (previewOttPf)
+    previewOttPf.textContent = formaterMontant(profilAgent.evenements.ott_pf);
+  const previewOttPv = document.getElementById("preview-ott-pv");
+  if (previewOttPv)
+    previewOttPv.textContent = formaterMontant(
+      profilAgent.evenements.ott_pv_globale +
+        profilAgent.evenements.ott_pv_opt32,
+    );
+
+  // --- FIN DES PRIMES, DÉBUT DES CHARGES ---
   ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, csgNonDeductible, null);
   ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, csgDeductible, null);
   ajouterLigne("401501", "C.R.D.S.", null, crds, null);

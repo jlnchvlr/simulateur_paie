@@ -779,7 +779,7 @@
           </button>
         </div>
 
-        <div id="panel-pf-options" class="setting-panel">
+        <div id="panel-ott" class="setting-panel">
           <button
             type="button"
             class="back-btn"
@@ -790,44 +790,271 @@
             ⬅ Retour au menu
           </button>
 
-          <label>Options actives dans le centre (Part Fixe)</label>
-          <div
+          <p
             style="
+              font-size: 12px;
+              color: #555;
               margin-bottom: 15px;
-              border: 1px solid #ddd;
+              line-height: 1.5;
+              background-color: #f9f9f9;
               padding: 10px;
-              border-radius: 4px;
+              border-left: 3px solid var(--dgfip-dark);
             "
           >
-            <label style="font-weight: normal; margin-top: 0; cursor: pointer">
-              <input
-                type="checkbox"
-                id="input-pf-opt1"
-                class="pf-checkbox"
-                value="150"
-              />
-              Option 1 (Ex: 150€)
-            </label>
-            <label
-              style="font-weight: normal; margin-top: 8px; cursor: pointer"
+            Configurez ici l'application du protocole dans votre centre.
+          </p>
+
+          <h3
+            style="
+              font-size: 13px;
+              color: var(--dgfip-dark);
+              border-bottom: 1px solid #ccc;
+              padding-bottom: 5px;
+              margin-top: 0;
+            "
+          >
+            1. Ma Part Fixe Mensuelle
+          </h3>
+          <p
+            style="
+              font-size: 11px;
+              color: #666;
+              margin-top: 0;
+              margin-bottom: 10px;
+            "
+          >
+            Cliquez sur les options actives dans votre centre :
+          </p>
+
+          <div class="ott-grid">
+            <input
+              type="checkbox"
+              id="pf-opt1-l16"
+              class="pf-checkbox"
+              value="345"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-l16" class="ott-card"
+              ><span class="ott-card-title">Option 1 (Listes 1 à 6)</span
+              ><span class="ott-card-amount">+ 345,00 €</span></label
             >
-              <input
-                type="checkbox"
-                id="input-pf-opt2"
-                class="pf-checkbox"
-                value="200"
-              />
-              Option 2 (Ex: 200€)
-            </label>
+
+            <input
+              type="checkbox"
+              id="pf-opt1-cdg"
+              class="pf-checkbox"
+              value="379.50"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-cdg" class="ott-card"
+              ><span class="ott-card-title">Option 1 (CDG)</span
+              ><span class="ott-card-amount">+ 379,50 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt1-l711"
+              class="pf-checkbox"
+              value="293.25"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-l711" class="ott-card"
+              ><span class="ott-card-title">Option 1 (Listes 7 à 8)</span
+              ><span class="ott-card-amount">+ 293,25 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt1-l911"
+              class="pf-checkbox"
+              value="241.50"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-l911" class="ott-card"
+              ><span class="ott-card-title">Option 1 (Listes 9 à 11)</span
+              ><span class="ott-card-amount">+ 241,50 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt1-plus-n1"
+              class="pf-checkbox"
+              value="80"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-plus-n1" class="ott-card"
+              ><span class="ott-card-title">Option 1 Plus (N' &le; 2)</span
+              ><span class="ott-card-amount">+ 80,00 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt1-plus-n2"
+              class="pf-checkbox"
+              value="160"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-plus-n2" class="ott-card"
+              ><span class="ott-card-title">Option 1 Plus (N' &gt; 2)</span
+              ><span class="ott-card-amount">+ 160,00 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt2-1"
+              class="pf-checkbox"
+              value="115"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt2-1" class="ott-card"
+              ><span class="ott-card-title">Option 2-1</span
+              ><span class="ott-card-amount">+ 115,00 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt2-2"
+              class="pf-checkbox"
+              value="115"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt2-2" class="ott-card"
+              ><span class="ott-card-title">Option 2-2</span
+              ><span class="ott-card-amount">+ 115,00 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt2-bis"
+              class="pf-checkbox"
+              value="105.05"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt2-bis" class="ott-card"
+              ><span class="ott-card-title">Option 2 bis</span
+              ><span class="ott-card-amount">+ 105,05 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt4"
+              class="pf-checkbox"
+              value="150"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt4" class="ott-card"
+              ><span class="ott-card-title">Option 4</span
+              ><span class="ott-card-amount">+ 150,00 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt1-enac"
+              class="pf-checkbox"
+              value="680"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-enac" class="ott-card"
+              ><span class="ott-card-title">Option 1 ENAC</span
+              ><span class="ott-card-amount">+ 680,00 €</span></label
+            >
+
+            <input
+              type="checkbox"
+              id="pf-opt1-plus-enac"
+              class="pf-checkbox"
+              value="880"
+              onchange="calculerPaie()"
+            />
+            <label for="pf-opt1-plus-enac" class="ott-card"
+              ><span class="ott-card-title">Option 1-Plus ENAC</span
+              ><span class="ott-card-amount">+ 880,00 €</span></label
+            >
           </div>
 
-          <label>Saisie manuelle ou autre option (PF) (€)</label>
-          <input type="number" id="input-pf-manuel" value="0.00" step="10" />
+          <div
+            style="
+              margin-top: 5px;
+              padding-top: 10px;
+              border-top: 1px dashed #ccc;
+            "
+          >
+            <label
+              style="
+                font-weight: normal;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              "
+            >
+              <span>Autre Option / Saisie manuelle (€) :</span>
+              <input
+                type="number"
+                id="pf-manuel"
+                value="0.00"
+                step="10"
+                oninput="calculerPaie()"
+                style="width: 80px; padding: 4px"
+              />
+            </label>
+          </div>
 
           <div
             style="
               background-color: #e8f0fe;
-              padding: 10px;
+              padding: 8px;
+              border-radius: 4px;
+              margin-bottom: 20px;
+              margin-top: 10px;
+              text-align: right;
+              font-family: var(--font-main);
+            "
+          >
+            Total Part Fixe :
+            <strong style="color: var(--dgfip-dark); font-size: 14px"
+              ><span id="preview-ott-pf">0,00</span> €</strong
+            >
+          </div>
+
+          <h3
+            style="
+              font-size: 13px;
+              color: var(--dgfip-dark);
+              border-bottom: 1px solid #ccc;
+              padding-bottom: 5px;
+              margin-top: 0;
+            "
+          >
+            2. Mon Bonus Annuel (Part Variable)
+          </h3>
+          <p style="font-size: 11px; color: #666; margin-top: 0">
+            Remplissez ces champs uniquement les mois où la DGAC vous verse
+            votre bonus.
+          </p>
+
+          <label>Montant Part Variable Globale (€)</label>
+          <input
+            type="number"
+            id="pv-globale"
+            value="0.00"
+            step="10"
+            oninput="calculerPaie()"
+          />
+
+          <label>Montant Part Variable Option 3-1 / 3-2 (€)</label>
+          <input
+            type="number"
+            id="pv-opt32"
+            value="0.00"
+            step="10"
+            oninput="calculerPaie()"
+          />
+
+          <div
+            style="
+              background-color: #e8f0fe;
+              padding: 8px;
               border-radius: 4px;
               margin-top: 15px;
               margin-bottom: 15px;
@@ -835,9 +1062,9 @@
               font-family: var(--font-main);
             "
           >
-            Montant PF estimé :
-            <strong style="color: var(--dgfip-dark); font-size: 16px"
-              ><span id="preview-pf">0,00</span> €</strong
+            Total Part Variable (Ce mois-ci) :
+            <strong style="color: var(--dgfip-dark); font-size: 14px"
+              ><span id="preview-ott-pv">0,00</span> €</strong
             >
           </div>
 
@@ -975,13 +1202,10 @@
               🚲 Forfait Mobilités
             </button>
             <button onclick="ouvrirModal('panel-ott', '📊 PV Options')">
-              📊 PV Options
+              📊 Protocole (OTT)
             </button>
             <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
               💰 Autres Primes
-            </button>
-            <button onclick="ouvrirModal('panel-pf-options', '🛠️ PF Options')">
-              🛠️ PF Options
             </button>
           </div>
         </div>
@@ -1024,34 +1248,6 @@
           >
             Valider & Fermer ↵
           </button>
-        </div>
-
-        <div id="panel-ott" class="setting-panel">
-          <button
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-          <label>Calculateur de Part Variable OTT</label>
-          <select id="input-opt-var-type">
-            <option value="none" selected>-- Saisie manuelle --</option>
-            <option value="opt1_l1_6">
-              Option 1 (Listes 1-6) : 1035€ × (N-4)
-            </option>
-            <option value="opt1_cdg">Option 1 (CDG) : 1138,50€ × (N-4)</option>
-            <option value="opt1_l7_11">
-              Option 1 (Listes 7-11) : 879,75€ × (N-4)
-            </option>
-            <option value="opt1_plus">Option 1 Plus : 1794€ × N'</option>
-            <option value="opt2_2">Option 2-2 : 1380€ × (M'-1)</option>
-          </select>
-          <label>Coefficient (N, N' ou M')</label>
-          <input type="number" id="input-opt-var-coeff" value="0" step="1" />
-          <label>Montant RIST Orga Temps Travail (€)</label>
-          <input type="number" id="input-rist-orga" value="0.00" step="10" />
         </div>
 
         <div id="panel-primes" class="setting-panel">
