@@ -19,51 +19,6 @@ body {
   overflow-x: auto;
 }
 
-/* BARRE LATÉRALE */
-.sidebar {
-  background-color: #f8f9fa;
-  width: 320px;
-  min-width: 320px;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  font-size: 13px;
-  border-top: 5px solid var(--dgfip-dark);
-  position: sticky;
-  top: 20px;
-  max-height: 90vh;
-  overflow-y: auto;
-  color: black;
-}
-.sidebar h2,
-.sidebar h3 {
-  color: var(--dgfip-dark);
-  border-bottom: 2px solid var(--dgfip-light);
-  padding-bottom: 5px;
-  margin-top: 20px;
-  font-size: 14px;
-}
-.sidebar label {
-  display: block;
-  font-weight: bold;
-  margin-top: 10px;
-  margin-bottom: 4px;
-  color: #444;
-  font-size: 11px;
-}
-.sidebar select,
-.sidebar input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-family: var(--font-main);
-}
-.sidebar input:focus,
-.sidebar select:focus {
-  outline: 2px solid var(--dgfip-medium);
-}
-
 /* FEUILLE A4 */
 .page-a4 {
   background-color: white !important;
@@ -173,7 +128,7 @@ body {
   padding: 1px 4px !important;
   height: 18px !important;
   font-family: var(--font-numbers);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   border-right: 1px solid var(--dgfip-light);
   color: black !important;
@@ -182,7 +137,7 @@ body {
 .pay-table td.label {
   font-family: var(--font-main);
   font-weight: bold;
-  font-size: 9.5px;
+  font-size: 10px;
 }
 .pay-table td.label.font-large {
   font-size: 12px !important;

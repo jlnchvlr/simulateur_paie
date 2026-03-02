@@ -17,6 +17,7 @@
           ✖
         </button>
       </div>
+
       <div class="modal-body">
         <div id="panel-residence" class="setting-panel">
           <button
@@ -1087,8 +1088,10 @@
           >
             ⬅ Retour au menu
           </button>
+
           <label>Nombre de Nuits complètes (N)</label>
           <input type="number" id="input-nuit-n" value="0" step="1" />
+
           <label>Nombre de Soirées (S2)</label>
           <input type="number" id="input-nuit-s2" value="0" step="1" />
 
@@ -1201,7 +1204,7 @@
             <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">
               🚲 Forfait Mobilités
             </button>
-            <button onclick="ouvrirModal('panel-ott', '📊 PV Options')">
+            <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">
               📊 Protocole (OTT)
             </button>
             <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
@@ -1259,12 +1262,16 @@
           >
             ⬅ Retour au menu
           </button>
+
           <label>Prime Partage Performance (€)</label>
           <input type="number" id="input-perf" value="0.00" step="10" />
+
           <label>Prime de fidélisation territoriale (€)</label>
           <input type="number" id="input-fidelisation" value="0.00" step="10" />
+
           <label>Prime d'attractivité géographique (€)</label>
           <input type="number" id="input-geographique" value="0.00" step="10" />
+
           <button
             type="button"
             class="validate-btn"
@@ -1342,12 +1349,12 @@
                 title="Cliquez pour changer de grade"
               >
                 <option value="ING. EN CHEF CONT.NAV.AE">
-                  ING. EN CHEF CONT.NAV.AE
+                  ING. CHEF CONT.NAV.AE
                 </option>
                 <option value="ING.DIV. CONT.NAV.AE" selected>
-                  ING.DIV. CONT.NAV.AE
+                  ING. DIV. CONT.NAV.AE
                 </option>
-                <option value="ING. CONT.NAV.AE">ING. CONT.NAV.AE</option>
+                <option value="ING. CONT.NAV.AE">ING. NORM. CONT.NAV.AE</option>
                 <option value="ELEVE / STAGIAIRE ICNA">
                   ELEVE / STAGIAIRE ICNA
                 </option>
@@ -1368,12 +1375,12 @@
                 "
                 title="Nombre d'enfants à charge"
               >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
+                <option value="0">00</option>
+                <option value="1">01</option>
+                <option value="2">02</option>
+                <option value="3">03</option>
+                <option value="4">04</option>
+                <option value="5">05</option>
               </select>
             </td>
             <td>
