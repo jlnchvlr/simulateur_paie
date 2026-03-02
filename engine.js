@@ -37,6 +37,8 @@ async function initialiserApplication() {
       .addEventListener("input", calculerPartVariableOtt);
 
     calculerPaie();
+    mettreAJourHelperRist();
+    resetHelperRist();
   } catch (erreur) {
     console.error("Erreur:", erreur);
   }
@@ -108,6 +110,113 @@ function calculerPartVariableOtt() {
 
   calculerPaie();
 }
+
+function mettreAJourHelperRist() {
+  const niveau = document.getElementById("input-fonction").value;
+  const helperText = document.getElementById("rist-helper-text");
+
+  const details = {
+    "Niveau 1":
+      "ICNA en formation sans mention, IESSA 1ère affectation, TSEEAC en qualification...",
+    "Niveau 2":
+      "ICNA formation 1 mention (sauf Cayenne appro/CR), IESSA stagiaires > 9 mois...",
+    "Niveau 3": "ICNA formation 2 mentions, Contrôleurs Listes 9 à 11...",
+    "Niveau 4":
+      "PC examinateurs / évaluateurs / facilitateurs FH Listes 9 à 11...",
+    "Niveau 5":
+      "PC Liste 8, ICNA formation 3 mentions, Chefs CA Listes 9-11...",
+    "Niveau 6":
+      "Chefs de tour/quart Liste 8, PC exam/éval/FH Liste 8, PC Liste 7...",
+    "Niveau 7":
+      "Chefs de tour/quart Liste 7, Chefs CA Liste 8, PC exam/éval/FH Liste 7...",
+    "Niveau 8": "PC Listes 5 et 6, Chefs CA Liste 7, Spécialistes...",
+    "Niveau 9":
+      "PC Listes 1 à 4, Chefs de quart Listes 5-6, PC exam/éval/FH Listes 5-6...",
+    "Niveau 10":
+      "Chefs d'équipe CRNA, Adjoints chefs de salle ATFCM (ACDS), Chefs de tour L5-6, PC exam/éval/FH Listes 1 à 4, Assistants subdivision...",
+    "Niveau 11":
+      "Chefs de salle CRNA, Chefs d'approche CDG, Chefs de tour L1-3, Chargés de projet, Chefs de subdivision...",
+    "Niveau 12":
+      "Chefs de programmes, Chefs de projet, Chefs d'organismes L7-8, Chefs de division...",
+    "Niveau 13":
+      "Chefs de division, Chefs de pôle, Chefs d'organismes L4-6, Adjoints chefs de département...",
+    "Niveau 14":
+      "Chefs SNA, Chefs de département (DSNA, ENAC...), Chefs de pôles majeurs DO/DTI...",
+    "Niveau 15":
+      "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
+  };
+
+  if (helperText) {
+    helperText.textContent =
+      "Exemples de postes : " + (details[niveau] || "Fonctions non définies.");
+  }
+}
+
+// --- LOGIQUE RIST INTERACTIVE ---
+const ristDetails = {
+  "Niveau 1":
+    "ICNA en formation sans mention, IESSA 1ère affectation, TSEEAC en qualif...",
+  "Niveau 2": "ICNA formation 1 mention, IESSA stagiaires > 9 mois...",
+  "Niveau 3":
+    "ICNA formation 2 mentions, Agents bureaux d'information, Contrôleurs Listes 9 à 11...",
+  "Niveau 4":
+    "PC examinateurs / évaluateurs / facilitateurs FH Listes 9 à 11...",
+  "Niveau 5": "PC Liste 8, ICNA formation 3 mentions, Chefs CA Listes 9-11...",
+  "Niveau 6":
+    "Chefs de tour/quart Liste 8, PC exam/éval/FH Liste 8, PC Liste 7...",
+  "Niveau 7":
+    "Chefs de tour/quart Liste 7, Chefs CA Liste 8, PC exam/éval/FH Liste 7...",
+  "Niveau 8": "PC Listes 5 et 6, Chefs CA Liste 7, Spécialistes...",
+  "Niveau 9":
+    "PC Listes 1 à 4, Chefs de quart Listes 5-6, PC exam/éval/FH Listes 5-6...",
+  "Niveau 10":
+    "Chefs d'équipe CRNA, Adjoints chefs de salle ATFCM (ACDS), Chefs de tour L5-6, PC exam/éval/FH Listes 1 à 4, Assistants subdivision...",
+  "Niveau 11":
+    "Chefs de salle CRNA, Chefs d'approche CDG, Chefs de tour L1-3, Chargés de projet, Chefs de subdivision...",
+  "Niveau 12":
+    "Chefs de programmes, Chefs de projet, Chefs organismes L7-8, Chefs de division...",
+  "Niveau 13":
+    "Chefs de division, Chefs de pôle, Chefs organismes L4-6, Adjoints chefs département...",
+  "Niveau 14":
+    "Chefs SNA, Chefs département (DSNA, ENAC...), Chefs de pôles majeurs DO/DTI...",
+  "Niveau 15":
+    "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
+};
+
+window.previewHelperRist = function (niveau) {
+  const helperText = document.getElementById("rist-helper-text");
+  if (helperText) {
+    helperText.innerHTML = `<strong>Aperçu :</strong> ${ristDetails[niveau] || ""}`;
+  }
+};
+
+window.resetHelperRist = function () {
+  const niveauActuel = document.getElementById("input-fonction").value;
+  const helperText = document.getElementById("rist-helper-text");
+  if (helperText) {
+    helperText.innerHTML = `<strong>Sélectionné :</strong> ${ristDetails[niveauActuel] || ""}`;
+  }
+};
+
+window.selectRist = function (niveau) {
+  // 1. Mettre à jour le champ caché
+  document.getElementById("input-fonction").value = niveau;
+
+  // 2. Mettre à jour le design visuel de la liste (couleur bleue sur la ligne cliquée)
+  document
+    .querySelectorAll(".rist-option")
+    .forEach((el) => el.classList.remove("selected"));
+  const selectedEl = document.querySelector(
+    `.rist-option[data-value="${niveau}"]`,
+  );
+  if (selectedEl) selectedEl.classList.add("selected");
+
+  // 3. Forcer l'affichage "Sélectionné"
+  resetHelperRist();
+
+  // 4. Lancer le calcul de la paie en arrière-plan
+  calculerPaie();
+};
 
 function getProfilDepuisInterface() {
   return {
@@ -218,6 +327,25 @@ function ouvrirModal(panelIds, titre) {
   }
 
   document.getElementById("magic-modal").showModal();
+
+  // --- NOUVEAU : AUTO-SCROLL POUR LE MENU RIST ---
+  // On vérifie si on vient d'ouvrir le tiroir de la part fonctions
+  const isRistFonctions = Array.isArray(panelIds)
+    ? panelIds.includes("panel-rist-fonctions")
+    : panelIds === "panel-rist-fonctions";
+
+  if (isRistFonctions) {
+    // On laisse 15 millisecondes au navigateur pour bien dessiner la fenêtre
+    setTimeout(() => {
+      const selectedOption = document.querySelector(
+        ".rist-list-container .selected",
+      );
+      if (selectedOption) {
+        // La méthode native et parfaite pour centrer automatiquement !
+        selectedOption.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+    }, 15);
+  }
 }
 
 // Remet les valeurs à zéro quand on clique sur la petite croix
@@ -328,6 +456,16 @@ function calculerPaie() {
   const absIndCsg = arrondir(
     (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
   );
+
+  // -- LIVE FEEDBACK : RISTOURNE PART FONCTIONS --
+  const previewRistFonctions = document.getElementById(
+    "preview-rist-fonctions",
+  );
+  if (previewRistFonctions) {
+    previewRistFonctions.textContent = formaterMontant(
+      profilAgent.primes.rist_fonctions,
+    );
+  }
 
   // -- BASES RÉELLES --
   const baseTraitementReel = traitementBrut - absenceTraitement;
@@ -487,6 +625,10 @@ function calculerPaie() {
       estCliquable = true;
       cibles = "panel-residence";
       titreModal = "Zone de Résidence";
+    } else if (code === "201958") {
+      estCliquable = true;
+      cibles = "panel-rist-fonctions";
+      titreModal = "Ristourne Part Fonctions";
     } else if (code && code.startsWith("2019")) {
       estCliquable = true;
       cibles = "panel-rist";

@@ -1,133 +1,160 @@
 {
-    "constantes": {
-        "valeur_point_mensuel": 4.92278,
-        "taux_retenue_pc": 0.1110,
-        "taux_csg_deductible": 0.068,
-        "taux_csg_non_deductible": 0.024,
-        "taux_crds": 0.005,
-        "assiette_csg_crds": 0.9825,
-        "taux_rafp": 0.05,
-        "plafond_rafp": 0.20,
-        "taux_retenue_isq": 0.246,
-        "transfert_primes_points": 32.42,
-        "participation_psc": 15.00
+  "constantes": {
+    "valeur_point_mensuel": 4.92278,
+    "taux_retenue_pc": 0.111,
+    "taux_csg_deductible": 0.068,
+    "taux_csg_non_deductible": 0.024,
+    "taux_crds": 0.005,
+    "assiette_csg_crds": 0.9825,
+    "taux_rafp": 0.05,
+    "plafond_rafp": 0.2,
+    "taux_retenue_isq": 0.246,
+    "transfert_primes_points": 32.42,
+    "participation_psc": 15.0
+  },
+  "taux_patronaux": {
+    "alloc_familiale": 0.0345,
+    "af_majoration": 0.018,
+    "fnal": 0.005,
+    "csa": 0.003,
+    "maladie": 0.097,
+    "pensions_civiles": 0.8228,
+    "ati": 0.0032,
+    "versement_mobilite": 0.02
+  },
+  "grilles_icna": {
+    "ING. EN CHEF CONT.NAV.AE": {
+      "01": { "indice": 650 },
+      "02": { "indice": 690 },
+      "03": { "indice": 730 },
+      "04": { "indice": 773 },
+      "05": { "indice": 811 },
+      "06": { "indice": 835 },
+      "HEA1": { "indice": 895 },
+      "HEA2": { "indice": 930 },
+      "HEA3": { "indice": 977 }
     },
-    "taux_patronaux": {
-        "alloc_familiale": 0.0345,
-        "af_majoration": 0.0180,
-        "fnal": 0.0050,
-        "csa": 0.0030,
-        "maladie": 0.0970,
-        "pensions_civiles": 0.8228,
-        "ati": 0.0032,
-        "versement_mobilite": 0.0200
+    "ING.DIV. CONT.NAV.AE": {
+      "01": { "indice": 416 },
+      "02": { "indice": 437 },
+      "03": { "indice": 462 },
+      "04": { "indice": 489 },
+      "05": { "indice": 521 },
+      "06": { "indice": 557 },
+      "07": { "indice": 585 },
+      "08": { "indice": 617 },
+      "09": { "indice": 650 },
+      "10": { "indice": 690 },
+      "11": { "indice": 730 },
+      "12": { "indice": 773 },
+      "13": { "indice": 811 },
+      "14": { "indice": 835 },
+      "HEA1": { "indice": 895 },
+      "HEA2": { "indice": 930 },
+      "HEA3": { "indice": 977 }
     },
-    "grilles_icna": {
-        "ING. EN CHEF CONT.NAV.AE": {
-            "01": { "indice": 650 }, "02": { "indice": 690 }, "03": { "indice": 730 },
-            "04": { "indice": 773 }, "05": { "indice": 811 }, "06": { "indice": 835 },
-            "HEA1": { "indice": 895 }, "HEA2": { "indice": 930 }, "HEA3": { "indice": 977 }
-        },
-        "ING.DIV. CONT.NAV.AE": {
-            "01": { "indice": 416 }, "02": { "indice": 437 }, "03": { "indice": 462 },
-            "04": { "indice": 489 }, "05": { "indice": 521 }, "06": { "indice": 557 },
-            "07": { "indice": 585 }, "08": { "indice": 617 }, "09": { "indice": 650 },
-            "10": { "indice": 690 }, "11": { "indice": 730 }, "12": { "indice": 773 },
-            "13": { "indice": 811 }, "14": { "indice": 835 },
-            "HEA1": { "indice": 895 }, "HEA2": { "indice": 930 }, "HEA3": { "indice": 977 }
-        },
-        "ING. CONT.NAV.AE": {
-            "01": { "indice": 395 }, "02": { "indice": 415 }, "03": { "indice": 436 },
-            "04": { "indice": 461 }, "05": { "indice": 488 }, "06": { "indice": 523 },
-            "07": { "indice": 537 }, "08": { "indice": 557 }, "09": { "indice": 577 }
-        },
-        "ELEVE / STAGIAIRE ICNA": {
-            "Eleve 1A": { "indice": 326 }, "Eleve 2A": { "indice": 340 }, "Stagiaire": { "indice": 340 }
-        }
+    "ING. CONT.NAV.AE": {
+      "01": { "indice": 395 },
+      "02": { "indice": 415 },
+      "03": { "indice": 436 },
+      "04": { "indice": 461 },
+      "05": { "indice": 488 },
+      "06": { "indice": 523 },
+      "07": { "indice": 537 },
+      "08": { "indice": 557 },
+      "09": { "indice": 577 }
     },
-    "zones_residence": {
-        "Zone 1": 0.03, "Zone 2": 0.01, "Zone 3": 0.00
-    },
-    "rist": {
-        "fonctions": {
-            "Niveau 1 (440,74€) - Formation sans mention": 440.74,
-            "Niveau 2 (550,93€) - Formation 1 mention": 550.93,
-            "Niveau 3 (637,87€) - Formation 2 mentions": 637.87,
-            "Niveau 4 (711,40€) - PC Évaluateurs Listes 9-11": 711.40,
-            "Niveau 5 (1 156,99€) - PC Liste 8 / Formation 3 mentions": 1156.99,
-            "Niveau 6 (1 242,67€) - Chefs Tour Liste 8 / PC Liste 7": 1242.67,
-            "Niveau 7 (1 322,26€) - Chefs Tour Liste 7": 1322.26,
-            "Niveau 8 (1 432,44€) - PC Listes 5-6": 1432.44,
-            "Niveau 9 (1 518,16€) - PC Listes 1-4": 1518.16,
-            "Niveau 10 (1 591,62€) - Chefs Équipe CRNA / Chefs Tour Listes 5-6": 1591.62,
-            "Niveau 11 (1 701,81€) - Chefs Salle CRNA / Chefs Appro Listes 1-3": 1701.81,
-            "Niveau 12 (1 775,28€) - Chefs de Programmes / Chefs de Projet": 1775.28,
-            "Niveau 13 (1 878,50€) - Chefs de Division / Chefs de Pôle": 1878.50,
-            "Niveau 14 (1 936,41€) - Chefs SNA / Chefs Département": 1936.41,
-            "Niveau 15 (1 994,32€) - Chefs CRNA / Roissy / Orly": 1994.32
-        },
-        "experience": {
-            "Niveau 1 (271,50€) - Personnels stagiaires": 271.50,
-            "Niveau 2 (325,49€) - TSEEAC Normal": 325.49,
-            "Niveau 3 (379,72€) - ICNA Normal / TSEEAC Principal": 379.72,
-            "Niveau 4 (454,72€) - ICNA Divisionnaire / IEEAC Normal": 454.72,
-            "Niveau 5 (559,69€) - ICNA en Chef / IESSA Div.": 559.69
-        },
-        "isq_licence": {
-            "0.00€ - Perdue ou Suspendue": 0.00,
-            "Niveau 1 (932,04€) - Formation LFPG/LFPO/CRNA": 932.04,
-            "Niveau 2 (1 258,42€) - Liste 11": 1258.42,
-            "Niveau 3 (1 376,85€) - Liste 10": 1376.85,
-            "Niveau 4 (377,53€) - PC Listes 7-8": 377.53,
-            "Niveau 5 (1 976,11€) - PC Listes 1-3 / Stagiaires L1-3": 1976.11,
-            "Niveau 6 (576,11€) - PC Listes 4-6": 576.11,
-            "Niveau 7 (1 526,85€) - PC Liste 9": 1526.85,
-            "Niveau 8 (1 077,53€) - Formation LOC CDG/ORY": 1077.53,
-            "Niveau 9 (1 276,11€) - Stagiaires Listes 4-11": 1276.11
-        },
-        "isq_complement": {
-            "0.00€ - Aucun ou Suspendu": 0.00,
-            "Niveau 1 (1 679,36€) - PC Liste 8": 1679.36,
-            "Niveau 2 (1 751,15€) - PC Liste 7": 1751.15,
-            "Niveau 3 (2 136,88€) - PC Listes 5-6": 2136.88,
-            "Niveau 4 (2 202,45€) - PC Liste 4": 2202.45,
-            "Niveau 5 (1 969,09€) - PC Liste 3": 1969.09,
-            "Niveau 6 (2 037,51€) - PC Liste 2": 2037.51,
-            "Niveau 7 (2 281,78€) - PC Liste 1": 2281.78,
-            "Niveau 8 (396,01€) - PC Listes 9-11": 396.01
-        },
-        "isq_majoration": {
-            "0.00€ - Aucune / Non éligible": 0.00,
-            "Niveau 1 (215,00€) - Listes 9 à 11": 215.00,
-            "Niveau 2 (284,98€) - Liste 8": 284.98,
-            "Niveau 3 (319,39€) - Liste 7": 319.39,
-            "Niveau 4 (376,19€) - Listes 5 et 6": 376.19,
-            "Niveau 5 (421,12€) - Liste 4": 421.12,
-            "Niveau 6 (191,60€) - Liste 3": 191.60,
-            "Niveau 7 (217,60€) - Liste 2": 217.60,
-            "Niveau 8 (405,32€) - Liste 1": 405.32
-        },
-        "flexibilite_options_fixes": {
-            "0.00€ - Aucune / Standard": 0.00,
-            "Option 1 - Listes 1 à 6 (345,00€)": 345.00,
-            "Option 1 - CDG (379,50€)": 379.50,
-            "Option 1 - Listes 7-8 (293,25€)": 293.25,
-            "Option 1 - Listes 9-11 (241,50€)": 241.50,
-            "Option 1 Plus (N' <= 2) (80,00€)": 80.00,
-            "Option 1 Plus (N' > 2) (160,00€)": 160.00,
-            "Option 2-1 / 2-2 (115,00€)": 115.00,
-            "Option 2 bis (105,05€)": 105.05,
-            "Option 4 (150,00€)": 150.00,
-            "Option 1 ENAC (680,00€)": 680.00,
-            "Option 1-Plus ENAC (880,00€)": 880.00
-        },
-        "flexibilite_options_variables": {
-            "opt1_l1_6": 1035.00,
-            "opt1_cdg": 1138.50,
-            "opt1_l7_11": 879.75,
-            "opt1_plus": 1794.00,
-            "opt2_2": 1380.00
-        },
-        "ind_csg_default": 115.18
+    "ELEVE / STAGIAIRE ICNA": {
+      "Eleve 1A": { "indice": 326 },
+      "Eleve 2A": { "indice": 340 },
+      "Stagiaire": { "indice": 340 }
     }
+  },
+  "zones_residence": {
+    "Zone 1": 0.03,
+    "Zone 2": 0.01,
+    "Zone 3": 0.0
+  },
+  "rist": {
+    "fonctions": {
+      "Niveau 1": 440.74,
+      "Niveau 2": 550.93,
+      "Niveau 3": 637.87,
+      "Niveau 4": 711.4,
+      "Niveau 5": 1156.99,
+      "Niveau 6": 1242.67,
+      "Niveau 7": 1322.26,
+      "Niveau 8": 1432.44,
+      "Niveau 9": 1518.16,
+      "Niveau 10": 1591.62,
+      "Niveau 11": 1701.81,
+      "Niveau 12": 1775.28,
+      "Niveau 13": 1878.5,
+      "Niveau 14": 1936.41,
+      "Niveau 15": 1994.32
+    },
+    "experience": {
+      "Niveau 1 (271,50€) - Personnels stagiaires": 271.5,
+      "Niveau 2 (325,49€) - TSEEAC Normal": 325.49,
+      "Niveau 3 (379,72€) - ICNA Normal / TSEEAC Principal": 379.72,
+      "Niveau 4 (454,72€) - ICNA Divisionnaire / IEEAC Normal": 454.72,
+      "Niveau 5 (559,69€) - ICNA en Chef / IESSA Div.": 559.69
+    },
+    "isq_licence": {
+      "0.00€ - Perdue ou Suspendue": 0.0,
+      "Niveau 1 (932,04€) - Formation LFPG/LFPO/CRNA": 932.04,
+      "Niveau 2 (1 258,42€) - Liste 11": 1258.42,
+      "Niveau 3 (1 376,85€) - Liste 10": 1376.85,
+      "Niveau 4 (377,53€) - PC Listes 7-8": 377.53,
+      "Niveau 5 (1 976,11€) - PC Listes 1-3 / Stagiaires L1-3": 1976.11,
+      "Niveau 6 (576,11€) - PC Listes 4-6": 576.11,
+      "Niveau 7 (1 526,85€) - PC Liste 9": 1526.85,
+      "Niveau 8 (1 077,53€) - Formation LOC CDG/ORY": 1077.53,
+      "Niveau 9 (1 276,11€) - Stagiaires Listes 4-11": 1276.11
+    },
+    "isq_complement": {
+      "0.00€ - Aucun ou Suspendu": 0.0,
+      "Niveau 1 (1 679,36€) - PC Liste 8": 1679.36,
+      "Niveau 2 (1 751,15€) - PC Liste 7": 1751.15,
+      "Niveau 3 (2 136,88€) - PC Listes 5-6": 2136.88,
+      "Niveau 4 (2 202,45€) - PC Liste 4": 2202.45,
+      "Niveau 5 (1 969,09€) - PC Liste 3": 1969.09,
+      "Niveau 6 (2 037,51€) - PC Liste 2": 2037.51,
+      "Niveau 7 (2 281,78€) - PC Liste 1": 2281.78,
+      "Niveau 8 (396,01€) - PC Listes 9-11": 396.01
+    },
+    "isq_majoration": {
+      "0.00€ - Aucune / Non éligible": 0.0,
+      "Niveau 1 (215,00€) - Listes 9 à 11": 215.0,
+      "Niveau 2 (284,98€) - Liste 8": 284.98,
+      "Niveau 3 (319,39€) - Liste 7": 319.39,
+      "Niveau 4 (376,19€) - Listes 5 et 6": 376.19,
+      "Niveau 5 (421,12€) - Liste 4": 421.12,
+      "Niveau 6 (191,60€) - Liste 3": 191.6,
+      "Niveau 7 (217,60€) - Liste 2": 217.6,
+      "Niveau 8 (405,32€) - Liste 1": 405.32
+    },
+    "flexibilite_options_fixes": {
+      "0.00€ - Aucune / Standard": 0.0,
+      "Option 1 - Listes 1 à 6 (345,00€)": 345.0,
+      "Option 1 - CDG (379,50€)": 379.5,
+      "Option 1 - Listes 7-8 (293,25€)": 293.25,
+      "Option 1 - Listes 9-11 (241,50€)": 241.5,
+      "Option 1 Plus (N' <= 2) (80,00€)": 80.0,
+      "Option 1 Plus (N' > 2) (160,00€)": 160.0,
+      "Option 2-1 / 2-2 (115,00€)": 115.0,
+      "Option 2 bis (105,05€)": 105.05,
+      "Option 4 (150,00€)": 150.0,
+      "Option 1 ENAC (680,00€)": 680.0,
+      "Option 1-Plus ENAC (880,00€)": 880.0
+    },
+    "flexibilite_options_variables": {
+      "opt1_l1_6": 1035.0,
+      "opt1_cdg": 1138.5,
+      "opt1_l7_11": 879.75,
+      "opt1_plus": 1794.0,
+      "opt2_2": 1380.0
+    },
+    "ind_csg_default": 115.18
+  }
 }

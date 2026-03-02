@@ -508,3 +508,31 @@ body {
 .ir-tabs input[type="radio"]:checked + label small {
   color: #e0e0e0;
 }
+/* --- Liste RIST interactive sur-mesure --- */
+.rist-list-container {
+  max-height: 180px; /* Hauteur fixe avec ascenseur */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  background: #fff;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.rist-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.1s;
+}
+.rist-option:last-child {
+  border-bottom: none;
+}
+.rist-option:hover {
+  background-color: #f1f3f4; /* Gris clair au survol */
+}
+.rist-option.selected {
+  background-color: var(--dgfip-dark);
+  color: white;
+  font-weight: bold;
+}
