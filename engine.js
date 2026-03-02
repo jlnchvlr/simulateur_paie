@@ -327,6 +327,25 @@ function ouvrirModal(panelIds, titre) {
   }
 
   document.getElementById("magic-modal").showModal();
+
+  // --- NOUVEAU : AUTO-SCROLL POUR LE MENU RIST ---
+  // On vérifie si on vient d'ouvrir le tiroir de la part fonctions
+  const isRistFonctions = Array.isArray(panelIds)
+    ? panelIds.includes("panel-rist-fonctions")
+    : panelIds === "panel-rist-fonctions";
+
+  if (isRistFonctions) {
+    // On laisse 15 millisecondes au navigateur pour bien dessiner la fenêtre
+    setTimeout(() => {
+      const selectedOption = document.querySelector(
+        ".rist-list-container .selected",
+      );
+      if (selectedOption) {
+        // La méthode native et parfaite pour centrer automatiquement !
+        selectedOption.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+    }, 15);
+  }
 }
 
 // Remet les valeurs à zéro quand on clique sur la petite croix
