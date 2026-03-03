@@ -1,157 +1,101 @@
+// =============================================================================
+// SIMULATEUR DE PAIE ICNA
+// Moteur de calcul principal
+//
+// Architecture :
+//   1.  État & configuration globale
+//   2.  Index de recherche
+//   3.  Utilitaires génériques
+//   4.  Moteur de recherche
+//   5.  Menus interactifs RIST / ISQ (dictionnaires + factory)
+//   6.  Interface utilisateur (modales, échelons, absences)
+//   7.  Extraction du profil depuis le formulaire
+//   8.  Calcul de la paie (pur, sans DOM)
+//   9.  Rendu de la fiche de paie (DOM)
+//  10.  Point d'entrée du calcul
+//  11.  Initialisation de l'application
+//  12.  Visite guidée (Driver.js)
+// =============================================================================
+
+// =============================================================================
+// 1. ÉTAT & CONFIGURATION GLOBALE
+// =============================================================================
+
+/** @type {Object} Base de données chargée depuis data.json */
 let baseDonnees = {};
+
+/** @type {boolean} Vrai si la visite guidée est en cours d'exécution */
 window.isTourActive = false;
+
+/** @type {number|undefined} Étape de la visite sauvegardée lors de l'ouverture d'une modale */
 window.tourSavedStep = undefined;
 
-// =========================================
-// MOTEUR DE RECHERCHE GLOBAL (Le Cerveau)
-// =========================================
-const indexRecherche = [
-  {
-    titre: "🌙 Nuits & Soirées",
-    motsCles: ["nuit", "soirée", "soiree", "majoration", "horaire"],
-    cible: "panel-nuits",
-  },
-  {
-    titre: "📍 Attractivité Géographique",
-    motsCles: [
-      "attractivite",
-      "majo",
-      "geo",
-      "201987",
-      "201986",
-      "nord",
-      "cdg",
-    ],
-    cible: "panel-attractivite",
-  },
-  {
-    titre: "⏳ Prime de Fidélisation",
-    motsCles: ["fidelisation", "pft", "palier", "engagement", "duree"],
-    cible: "panel-fidelisation",
-  },
-  {
-    titre: "🤒 Jours d'absence (Grève, Maladie)",
-    motsCles: [
-      "grève",
-      "greve",
-      "maladie",
-      "carence",
-      "absence",
-      "arrêt",
-      "arret",
-      "snf",
-      "1/30",
-      "jour",
-    ],
-    cible: "panel-absences",
-  },
-  {
-    titre: "🚲 Forfait Mobilités Durables",
-    motsCles: [
-      "vélo",
-      "velo",
-      "fmd",
-      "mobilité",
-      "mobilite",
-      "covoiturage",
-      "voiture",
-      "transport",
-    ],
-    cible: "panel-fmd",
-  },
-  {
-    titre: "📊 Protocole (OTT)",
-    motsCles: [
-      "ott",
-      "protocole",
-      "part fixe",
-      "part variable",
-      "pf",
-      "pv",
-      "option",
-      "enac",
-      "cdg",
-      "liste",
-    ],
-    cible: "panel-ott",
-  },
+/**
+ * Constantes de calcul "figées" par textes réglementaires.
+ * Séparées de data.json car elles ne sont pas configurables par l'utilisateur.
+ * @constant {Object}
+ */
+const CALC = {
+  // Indemnités horaires de travail de nuit (décret n°2002-828)
+  TAUX_NUIT: 8.73, // €/nuit travaillée (code 200176)
+  TAUX_SOIREE: 0.97, // €/soirée travaillée S2 (code 200176)
 
-  {
-    titre: "🛡️ Participation PSC (Mutuelle)",
-    motsCles: [
-      "psc",
-      "mutuelle",
-      "santé",
-      "sante",
-      "prévoyance",
-      "prevoyance",
-      "alan",
-      "mgas",
-      "aide",
-    ],
-    cible: "panel-psc",
-  },
-  {
-    titre: "💰 Partage Performance (PPP)",
-    motsCles: ["prime", "ppp", "performance", "partage", "exceptionnelle"],
-    cible: "panel-primes",
-  },
-  {
-    titre: "📈 Indemnité Inflation",
-    motsCles: ["inflation", "pouvoir", "achat", "gpa", "indemnité"],
-    cible: "panel-inflation",
-  },
-  {
-    titre: "Impôt sur le Revenu (PAS)",
-    motsCles: [
-      "impôt",
-      "impot",
-      "pas",
-      "source",
-      "taux",
-      "prélèvement",
-      "prelevement",
-      "personnalisé",
-    ],
-    cible: "panel-impots",
-  },
-  {
-    titre: "Indemnité Compensatrice CSG",
-    motsCles: ["csg", "indemnité", "indemnite", "compensatrice"],
-    cible: "panel-csg",
-  },
-  {
-    titre: "Zone de Résidence (IR)",
-    motsCles: ["ir", "résidence", "residence", "zone", "indemnité"],
-    cible: "panel-residence",
-  },
-  {
-    titre: "RIST - Part Fonctions",
-    motsCles: ["rist", "fonctions", "part", "prime", "niveau"],
-    cible: "panel-rist-fonctions",
-  },
-  {
-    titre: "RIST - Part Expérience",
-    motsCles: ["rist", "expérience", "experience", "exp"],
-    cible: "panel-rist-experience",
-  },
-  {
-    titre: "Licence ISQ",
-    motsCles: ["isq", "licence", "icna"],
-    cible: "panel-rist-isq-licence",
-  },
-  {
-    titre: "Complément ISQ",
-    motsCles: ["isq", "complément", "complement", "cplt"],
-    cible: "panel-rist-isq-complement",
-  },
-  {
-    titre: "Majoration ISQ",
-    motsCles: ["majoration", "isq"],
-    cible: "panel-rist-isq-majoration",
-  },
+  // Nouvelle Bonification Indiciaire
+  POINTS_NBI: 55, // Points d'indice accordés si NBI cochée
+
+  // Supplément Familial de Traitement (SFT) — barème fonctionnaire public
+  SFT_1_ENF_FIXE: 2.29, // Montant fixe pour 1 enfant (€)
+  SFT_2_BASE: 10.67, // Part fixe pour 2 enfants (€)
+  SFT_2_TAUX: 0.03, // Part proportionnelle au traitement pour 2 enfants
+  SFT_3_BASE: 15.24, // Part fixe pour 3 enfants (€)
+  SFT_3_TAUX: 0.08, // Part proportionnelle au traitement pour 3 enfants
+  SFT_SUP_BASE: 4.57, // Part fixe par enfant supplémentaire (€)
+  SFT_SUP_TAUX: 0.06, // Part proportionnelle par enfant supplémentaire
+  SFT_IND_PLANCHER: 449, // Indice plancher pour le traitement de référence SFT
+  SFT_IND_PLAFOND: 717, // Indice plafond pour le traitement de référence SFT
+};
+
+// =============================================================================
+// 2. INDEX DE RECHERCHE
+// =============================================================================
+
+/**
+ * @typedef {Object} EntreeIndex
+ * @property {string}   titre    - Libellé affiché dans les résultats
+ * @property {string[]} motsCles - Mots-clés associés (recherche inclusive)
+ * @property {string}   cible    - ID du panneau à activer dans la modale
+ */
+
+/** @type {EntreeIndex[]} */
+const INDEX_RECHERCHE = [
+  { titre: "🌙 Nuits & Soirées", motsCles: ["nuit", "soirée", "soiree", "majoration", "horaire"], cible: "panel-nuits" },
+  { titre: "📍 Attractivité Géographique", motsCles: ["attractivite", "majo", "geo", "201987", "201986", "nord", "cdg"], cible: "panel-attractivite" },
+  { titre: "⏳ Prime de Fidélisation", motsCles: ["fidelisation", "pft", "palier", "engagement", "duree"], cible: "panel-fidelisation" },
+  { titre: "🤒 Jours d'absence (Grève, Maladie)", motsCles: ["grève", "greve", "maladie", "carence", "absence", "arrêt", "arret", "snf", "1/30", "jour"], cible: "panel-absences" },
+  { titre: "🚲 Forfait Mobilités Durables", motsCles: ["vélo", "velo", "fmd", "mobilité", "mobilite", "covoiturage", "voiture", "transport"], cible: "panel-fmd" },
+  { titre: "📊 Protocole (OTT)", motsCles: ["ott", "protocole", "part fixe", "part variable", "pf", "pv", "option", "enac", "cdg", "liste"], cible: "panel-ott" },
+  { titre: "🛡️ Participation PSC (Mutuelle)", motsCles: ["psc", "mutuelle", "santé", "sante", "prévoyance", "prevoyance", "alan", "mgas", "aide"], cible: "panel-psc" },
+  { titre: "💰 Partage Performance (PPP)", motsCles: ["prime", "ppp", "performance", "partage", "exceptionnelle"], cible: "panel-primes" },
+  { titre: "📈 Indemnité Inflation", motsCles: ["inflation", "pouvoir", "achat", "gpa", "indemnité"], cible: "panel-inflation" },
+  { titre: "Impôt sur le Revenu (PAS)", motsCles: ["impôt", "impot", "pas", "source", "taux", "prélèvement", "prelevement", "personnalisé"], cible: "panel-impots" },
+  { titre: "Indemnité Compensatrice CSG", motsCles: ["csg", "indemnité", "indemnite", "compensatrice"], cible: "panel-csg" },
+  { titre: "Zone de Résidence (IR)", motsCles: ["ir", "résidence", "residence", "zone", "indemnité"], cible: "panel-residence" },
+  { titre: "RIST - Part Fonctions", motsCles: ["rist", "fonctions", "part", "prime", "niveau"], cible: "panel-rist-fonctions" },
+  { titre: "RIST - Part Expérience", motsCles: ["rist", "expérience", "experience", "exp"], cible: "panel-rist-experience" },
+  { titre: "Licence ISQ", motsCles: ["isq", "licence", "icna"], cible: "panel-rist-isq-licence" },
+  { titre: "Complément ISQ", motsCles: ["isq", "complément", "complement", "cplt"], cible: "panel-rist-isq-complement" },
+  { titre: "Majoration ISQ", motsCles: ["majoration", "isq"], cible: "panel-rist-isq-majoration" },
 ];
 
+// =============================================================================
+// 3. UTILITAIRES GÉNÉRIQUES
+// =============================================================================
+
+/**
+ * Normalise un texte pour la recherche : passage en minuscules et suppression des diacritiques.
+ * @param {string} texte
+ * @returns {string}
+ */
 function normaliserTexte(texte) {
   return texte
     .toLowerCase()
@@ -159,395 +103,135 @@ function normaliserTexte(texte) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+/**
+ * Formate un montant en euros au format français (ex. : "1 234,56").
+ * Retourne une chaîne vide pour les valeurs absentes, nulles ou NaN.
+ * @param {number|null|undefined} montant
+ * @returns {string}
+ */
+function formaterMontant(montant) {
+  if (montant === null || montant === undefined || montant === 0 || isNaN(montant)) return "";
+  return montant.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Arrondit à 2 décimales (règle du demi supérieur).
+ * @param {number} valeur
+ * @returns {number}
+ */
+function arrondir(valeur) {
+  return Math.round(valeur * 100) / 100;
+}
+
+/**
+ * Lit la valeur d'un champ DOM en `float`. Retourne 0 si l'élément est absent ou vide.
+ * @param {string} id
+ * @returns {number}
+ */
+function lireFloat(id) {
+  return parseFloat(document.getElementById(id)?.value) || 0;
+}
+
+/**
+ * Lit la valeur d'un champ DOM en `int`. Retourne 0 si l'élément est absent ou vide.
+ * @param {string} id
+ * @returns {number}
+ */
+function lireInt(id) {
+  return parseInt(document.getElementById(id)?.value) || 0;
+}
+
+/**
+ * Injecte un montant formaté dans un élément d'aperçu ("preview").
+ * Sans effet si l'élément est introuvable.
+ * @param {string} id
+ * @param {number} montant
+ */
+function majPreview(id, montant) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = formaterMontant(montant);
+}
+
+// =============================================================================
+// 4. MOTEUR DE RECHERCHE
+// =============================================================================
+
+/**
+ * Recherche dans l'index les entrées dont le titre ou les mots-clés contiennent la requête.
+ * La comparaison ignore la casse et les accents.
+ * Exposée sur `window` car appelée depuis le spotlight (Ctrl+K).
+ *
+ * @param {string} requete - Texte saisi par l'utilisateur
+ * @returns {EntreeIndex[]}
+ */
 window.rechercherElement = function (requete) {
   if (!requete || requete.trim() === "") return [];
-  const requeteNormalisee = normaliserTexte(requete.trim());
-  return indexRecherche.filter((item) => {
-    if (normaliserTexte(item.titre).includes(requeteNormalisee)) return true;
-    return item.motsCles.some((mot) =>
-      normaliserTexte(mot).includes(requeteNormalisee),
-    );
-  });
+  const q = normaliserTexte(requete.trim());
+  return INDEX_RECHERCHE.filter((item) => normaliserTexte(item.titre).includes(q) || item.motsCles.some((mot) => normaliserTexte(mot).includes(q)));
 };
 
-// =========================================
-// INITIALISATION ET LOGIQUE PRINCIPALE
-// =========================================
-async function initialiserApplication() {
-  try {
-    const reponse = await fetch("data.json");
-    if (!reponse.ok) throw new Error("Fichier introuvable.");
-    baseDonnees = await reponse.json();
-
-    mettreAJourEchelons();
-
-    // Remplissage des Selects Attractivité et Fidélisation
-    if (baseDonnees.attractivite) {
-      const selectAttr = document.getElementById("input-attractivite");
-      if (selectAttr) {
-        baseDonnees.attractivite.forEach((opt) => {
-          selectAttr.add(new Option(opt.label, opt.valeur));
-        });
-      }
-    }
-
-    if (baseDonnees.fidelisation) {
-      const selectFid = document.getElementById("input-fidelisation");
-      if (selectFid) {
-        baseDonnees.fidelisation.forEach((opt) => {
-          selectFid.add(new Option(opt.label, opt.valeur));
-        });
-      }
-    }
-
-    document.getElementById("input-grade").addEventListener("input", () => {
-      mettreAJourEchelons();
-      calculerPaie();
-    });
-
-    const inputs = document.querySelectorAll(
-      ".magic-modal select, .magic-modal input, .info-table select, .info-table input",
-    );
-    inputs.forEach((input) => input.addEventListener("input", calculerPaie));
-
-    const modal = document.getElementById("magic-modal");
-
-    modal.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        // Si le focus est sur un résultat de recherche, on clique dessus !
-        if (
-          document.activeElement &&
-          document.activeElement.classList.contains("resultat-item")
-        ) {
-          document.activeElement.click();
-        } else {
-          modal.close(); // Comportement normal sinon
-        }
-      }
-    });
-
-    modal.addEventListener("close", () => {
-      if (window.tourSavedStep !== undefined) {
-        setTimeout(() => {
-          const etapeSuivante = window.tourSavedStep + 1;
-          if (etapeSuivante <= 5) {
-            window.lancerVisiteGuidee(etapeSuivante);
-          } else {
-            window.isTourActive = false;
-          }
-          window.tourSavedStep = undefined;
-        }, 150);
-      }
-    });
-
-    // --- NOUVEAU : FULL KEYBOARD MODE (Menu Ajout) ---
-    modal.addEventListener("keydown", (e) => {
-      const champRecherche = document.getElementById("recherche-ajout");
-      // Si on est en mode recherche, qu'on n'est pas dans l'input, et qu'on tape un truc
-      if (
-        modal.classList.contains("search-mode") &&
-        document.activeElement !== champRecherche
-      ) {
-        if (e.key === "Backspace") {
-          e.preventDefault(); // Empêche le comportement par défaut
-          champRecherche.focus();
-          champRecherche.value = champRecherche.value.slice(0, -1); // Efface la dernière lettre
-          champRecherche.dispatchEvent(new Event("input")); // Met à jour la liste
-        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-          // Si on tape une lettre normale, on refocus direct l'input
-          champRecherche.focus();
-        }
-      }
-    });
-
-    // ---------------------------------------------------------
-    // --- SÉCURITÉ ET LOGIQUE DES CHAMPS NUMÉRIQUES ---
-    // ---------------------------------------------------------
-    const champsNumeriques = document.querySelectorAll(
-      '.magic-modal input[type="number"]',
-    );
-
-    champsNumeriques.forEach((champ) => {
-      champ.addEventListener("input", function () {
-        if (this.value === "") return;
-
-        let valeur = parseFloat(this.value);
-        let valeurCorrigee = false;
-
-        if (valeur < 0) {
-          this.value = "0";
-          valeurCorrigee = true;
-        }
-
-        if (this.id === "input-pas" && valeur > 100) {
-          this.value = "100";
-          valeurCorrigee = true;
-        }
-
-        if (
-          (this.id === "input-nuit-n" || this.id === "input-nuit-s2") &&
-          valeur > 30
-        ) {
-          this.value = "30";
-          valeurCorrigee = true;
-        }
-
-        if (valeurCorrigee) {
-          calculerPaie();
-        }
-      });
-
-      champ.addEventListener("blur", function () {
-        if (this.value === "") {
-          if (this.step && this.step.includes(".")) {
-            this.value = "0.00";
-          } else {
-            this.value = "0";
-          }
-          calculerPaie();
-        }
-      });
-    });
-
-    // ---------------------------------------------------------
-    // --- LOGIQUE DE LA BARRE DE RECHERCHE (MENU AJOUT) ---
-    // ---------------------------------------------------------
-    const champRecherche = document.getElementById("recherche-ajout");
-    const conteneurResultats = document.getElementById("resultats-recherche");
-    const conteneurBoutonsDefaut = document.getElementById(
-      "boutons-ajout-defaut",
-    );
-
-    if (champRecherche) {
-      champRecherche.addEventListener("input", (e) => {
-        const requete = e.target.value;
-
-        if (requete.trim() === "") {
-          conteneurResultats.style.display = "none";
-          conteneurBoutonsDefaut.style.display = "grid";
-          return;
-        }
-
-        const resultats = window.rechercherElement(requete);
-
-        conteneurBoutonsDefaut.style.display = "none";
-        conteneurResultats.style.display = "flex";
-        conteneurResultats.innerHTML = "";
-
-        if (resultats.length === 0) {
-          conteneurResultats.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
-        } else {
-          resultats.forEach((res) => {
-            const btn = document.createElement("button"); // Utilisation de BUTTON pour l'accessibilité
-            btn.className = "resultat-item";
-            btn.innerHTML = `<span>${res.titre}</span> <span style="color: #aaa; font-size: 12px;">➔</span>`;
-            btn.onclick = () => {
-              ouvrirModal(res.cible, res.titre);
-            };
-            conteneurResultats.appendChild(btn);
-          });
-        }
-      });
-    }
-
-    // ---------------------------------------------------------
-    // --- LOGIQUE DU SPOTLIGHT (Ctrl + K) ---
-    // ---------------------------------------------------------
-    const spotlightModal = document.getElementById("spotlight-modal");
-    const spotlightInput = document.getElementById("spotlight-input");
-    const spotlightResults = document.getElementById("spotlight-results");
-
-    if (spotlightModal && spotlightInput) {
-      document.addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-          e.preventDefault();
-          if (!spotlightModal.open) {
-            spotlightModal.showModal();
-            spotlightInput.value = "";
-            spotlightResults.innerHTML = "";
-            spotlightInput.focus();
-          } else {
-            spotlightModal.close();
-          }
-        }
-      });
-
-      spotlightModal.addEventListener("click", (e) => {
-        const rect = spotlightModal.getBoundingClientRect();
-        const inDialog =
-          e.clientX >= rect.left &&
-          e.clientX <= rect.right &&
-          e.clientY >= rect.top &&
-          e.clientY <= rect.bottom;
-        if (!inDialog) {
-          spotlightModal.close();
-        }
-      });
-
-      spotlightInput.addEventListener("input", (e) => {
-        const requete = e.target.value;
-        spotlightResults.innerHTML = "";
-
-        if (requete.trim() === "") return;
-
-        const resultats = window.rechercherElement(requete);
-
-        if (resultats.length === 0) {
-          spotlightResults.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
-        } else {
-          resultats.forEach((res) => {
-            const btn = document.createElement("button"); // Utilisation de BUTTON pour l'accessibilité
-            btn.className = "resultat-item";
-            btn.innerHTML = `<span>${res.titre}</span> <span style="color: #aaa; font-size: 12px;">➔</span>`;
-            btn.onclick = () => {
-              spotlightModal.close();
-              ouvrirModal(res.cible, res.titre);
-            };
-            spotlightResults.appendChild(btn);
-          });
-        }
-      });
-
-      // --- NOUVEAU : FULL KEYBOARD MODE (Spotlight) ---
-      spotlightModal.addEventListener("keydown", (e) => {
-        if (document.activeElement !== spotlightInput) {
-          if (e.key === "Backspace") {
-            e.preventDefault();
-            spotlightInput.focus();
-            spotlightInput.value = spotlightInput.value.slice(0, -1);
-            spotlightInput.dispatchEvent(new Event("input"));
-          } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-            spotlightInput.focus();
-          }
-        }
-      });
-    }
-
-    // --- NOUVEAU : DÉTECTION SOURIS VS CLAVIER (Pour éviter les doubles sélections) ---
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Tab" || e.key.startsWith("Arrow")) {
-        document.body.classList.add("navigation-clavier");
-      }
-    });
-    document.addEventListener("mousemove", () => {
-      document.body.classList.remove("navigation-clavier");
-    });
-
-    calculerPaie();
-    resetHelperRist();
-    resetHelperExp();
-    resetHelperIsqLicence();
-    resetHelperIsqComplement();
-    resetHelperIsqMajoration();
-  } catch (erreur) {
-    console.error("Erreur:", erreur);
+/**
+ * Génère et injecte les boutons de résultats dans un conteneur DOM.
+ * Factorisé pour être partagé entre le menu d'ajout et le spotlight (Ctrl+K).
+ *
+ * @param {HTMLElement}              conteneur - Élément cible pour l'injection
+ * @param {EntreeIndex[]}            resultats - Entrées à afficher
+ * @param {string}                   requete   - Texte saisi (pour le message "aucun résultat")
+ * @param {function(EntreeIndex):void} onSelect - Callback déclenché au clic sur un résultat
+ */
+function afficherResultatsRecherche(conteneur, resultats, requete, onSelect) {
+  conteneur.innerHTML = "";
+  if (resultats.length === 0) {
+    conteneur.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
+    return;
   }
-}
-
-function mettreAJourEchelons() {
-  const grade = document.getElementById("input-grade").value;
-  const selectEchelon = document.getElementById("input-echelon");
-  const echelonActuel = selectEchelon.value;
-  selectEchelon.innerHTML = "";
-
-  const echelons = Object.keys(baseDonnees.grilles_icna[grade] || {});
-
-  echelons.sort((a, b) => {
-    const numA = parseInt(a),
-      numB = parseInt(b);
-    const isNumA = !isNaN(numA),
-      isNumB = !isNaN(numB);
-    if (isNumA && isNumB) return numA - numB;
-    if (isNumA && !isNumB) return -1;
-    if (!isNumA && isNumB) return 1;
-    return a.localeCompare(b);
+  resultats.forEach((res) => {
+    const btn = document.createElement("button");
+    btn.className = "resultat-item";
+    btn.innerHTML = `<span>${res.titre}</span> <span style="color:#aaa;font-size:12px;">➔</span>`;
+    btn.onclick = () => onSelect(res);
+    conteneur.appendChild(btn);
   });
-
-  echelons.forEach((ech) => {
-    const option = document.createElement("option");
-    option.value = ech;
-    option.textContent = ech;
-    selectEchelon.appendChild(option);
-  });
-
-  selectEchelon.value = echelons.includes(echelonActuel)
-    ? echelonActuel
-    : echelons[0] || "";
 }
 
-function creerMenuInteractif(
-  nomGlobal,
-  inputId,
-  helperId,
-  panelId,
-  dictDetails,
-) {
-  window[`previewHelper${nomGlobal}`] = (nv) => {
-    const el = document.getElementById(helperId);
-    if (el) el.innerHTML = `<strong>Aperçu :</strong> ${dictDetails[nv] || ""}`;
-  };
-  window[`resetHelper${nomGlobal}`] = () => {
-    const nv = document.getElementById(inputId).value;
-    const el = document.getElementById(helperId);
-    if (el)
-      el.innerHTML = `<strong>Sélectionné :</strong> ${dictDetails[nv] || ""}`;
-  };
-  window[`select${nomGlobal}`] = (nv) => {
-    document.getElementById(inputId).value = nv;
-    document
-      .querySelectorAll(`#${panelId} .rist-option`)
-      .forEach((e) => e.classList.remove("selected"));
-    document
-      .querySelector(`#${panelId} .rist-option[data-value="${nv}"]`)
-      ?.classList.add("selected");
-    window[`resetHelper${nomGlobal}`]();
-    calculerPaie();
-  };
-}
+// =============================================================================
+// 5. MENUS INTERACTIFS RIST / ISQ
+// =============================================================================
 
-const ristDetails = {
-  "Niveau 1":
-    "ICNA en formation sans mention, IESSA 1ère affectation, TSEEAC en qualif...",
+/**
+ * Descriptions contextuelles de chaque niveau de la part Fonctions RIST.
+ * Affichées dans le panneau de sélection au survol et à la sélection.
+ * @type {Object.<string, string>}
+ */
+const DETAILS_RIST = {
+  "Niveau 1": "ICNA en formation sans mention, IESSA 1ère affectation, TSEEAC en qualif...",
   "Niveau 2": "ICNA formation 1 mention, IESSA stagiaires > 9 mois...",
-  "Niveau 3":
-    "ICNA formation 2 mentions, Agents bureaux d'information, Contrôleurs Listes 9 à 11...",
-  "Niveau 4":
-    "PC examinateurs / évaluateurs / facilitateurs FH Listes 9 à 11...",
+  "Niveau 3": "ICNA formation 2 mentions, Agents bureaux d'information, Contrôleurs Listes 9 à 11...",
+  "Niveau 4": "PC examinateurs / évaluateurs / facilitateurs FH Listes 9 à 11...",
   "Niveau 5": "PC Liste 8, ICNA formation 3 mentions, Chefs CA Listes 9-11...",
-  "Niveau 6":
-    "Chefs de tour/quart Liste 8, PC exam/éval/FH Liste 8, PC Liste 7...",
-  "Niveau 7":
-    "Chefs de tour/quart Liste 7, Chefs CA Liste 8, PC exam/éval/FH Liste 7...",
+  "Niveau 6": "Chefs de tour/quart Liste 8, PC exam/éval/FH Liste 8, PC Liste 7...",
+  "Niveau 7": "Chefs de tour/quart Liste 7, Chefs CA Liste 8, PC exam/éval/FH Liste 7...",
   "Niveau 8": "PC Listes 5 et 6, Chefs CA Liste 7, Spécialistes...",
-  "Niveau 9":
-    "PC Listes 1 à 4, Chefs de quart Listes 5-6, PC exam/éval/FH Listes 5-6...",
-  "Niveau 10":
-    "Chefs d'équipe CRNA, Adjoints chefs de salle ATFCM (ACDS), Chefs de tour L5-6, PC exam/éval/FH Listes 1 à 4, Assistants subdivision...",
-  "Niveau 11":
-    "Chefs de salle CRNA, Chefs d'approche CDG, Chefs de tour L1-3, Chargés de projet, Chefs de subdivision...",
-  "Niveau 12":
-    "Chefs de programmes, Chefs de projet, Chefs organismes L7-8, Chefs de division...",
-  "Niveau 13":
-    "Chefs de division, Chefs de pôle, Chefs organismes L4-6, Adjoints chefs département...",
-  "Niveau 14":
-    "Chefs SNA, Chefs département (DSNA, ENAC...), Chefs de pôles majeurs DO/DTI...",
-  "Niveau 15":
-    "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
+  "Niveau 9": "PC Listes 1 à 4, Chefs de quart Listes 5-6, PC exam/éval/FH Listes 5-6...",
+  "Niveau 10": "Chefs d'équipe CRNA, Adjoints chefs de salle ATFCM (ACDS), Chefs de tour L5-6, PC exam/éval/FH Listes 1 à 4, Assistants subdivision...",
+  "Niveau 11": "Chefs de salle CRNA, Chefs d'approche CDG, Chefs de tour L1-3, Chargés de projet, Chefs de subdivision...",
+  "Niveau 12": "Chefs de programmes, Chefs de projet, Chefs organismes L7-8, Chefs de division...",
+  "Niveau 13": "Chefs de division, Chefs de pôle, Chefs organismes L4-6, Adjoints chefs département...",
+  "Niveau 14": "Chefs SNA, Chefs département (DSNA, ENAC...), Chefs de pôles majeurs DO/DTI...",
+  "Niveau 15": "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
 };
 
-const expDetails = {
+/** @type {Object.<string, string>} Descriptions de la part Expérience Professionnelle */
+const DETAILS_EXP = {
   "Niveau 1": "Personnels stagiaires",
   "Niveau 2": "TSEEAC Normal",
-  "Niveau 3":
-    "TSEEAC Principal / TSEEAC Normal (1e qualif + 1 an) / IESSA Normal / ICNA Normal",
-  "Niveau 4":
-    "ICNA Divisionnaire / TSEEAC Exceptionnel / TSEEAC Principal (2e qualif + 1 an) / IEEAC Normal / IESSA Principal",
-  "Niveau 5":
-    "ICNA en Chef / IESSA Div ou Chef / IEEAC Principal ou HC / RTAC, CTAC, CSTAC",
+  "Niveau 3": "TSEEAC Principal / TSEEAC Normal (1e qualif + 1 an) / IESSA Normal / ICNA Normal",
+  "Niveau 4": "ICNA Divisionnaire / TSEEAC Exceptionnel / TSEEAC Principal (2e qualif + 1 an) / IEEAC Normal / IESSA Principal",
+  "Niveau 5": "ICNA en Chef / IESSA Div ou Chef / IEEAC Principal ou HC / RTAC, CTAC, CSTAC",
 };
 
-const isqLicenceDetails = {
+/** @type {Object.<string, string>} Descriptions de la Licence ISQ */
+const DETAILS_ISQ_LICENCE = {
   Aucune: "Licence non détenue, perdue ou suspendue.",
   "Niveau 1": "Formation LFPG/LFPO/CRNA (détenteur LOC ou CR).",
   "Niveau 2": "Personnels d'un organisme classé en liste 11.",
@@ -560,7 +244,8 @@ const isqLicenceDetails = {
   "Niveau 9": "ICNA stagiaires affectés Listes 4 à 11 (max 30 mois).",
 };
 
-const isqComplementDetails = {
+/** @type {Object.<string, string>} Descriptions du Complément ISQ */
+const DETAILS_ISQ_COMPLEMENT = {
   Aucun: "Aucun complément, non éligible ou suspendu.",
   "Niveau 1": "PC d'un organisme classé en liste 8.",
   "Niveau 2": "PC d'un organisme classé en liste 7.",
@@ -572,7 +257,8 @@ const isqComplementDetails = {
   "Niveau 8": "PC d'un organisme classé en listes 9 à 11.",
 };
 
-const isqMajorationDetails = {
+/** @type {Object.<string, string>} Descriptions de la Majoration ISQ */
+const DETAILS_ISQ_MAJORATION = {
   Aucune: "Aucune majoration / Non éligible.",
   "Niveau 1": "Personnels d'un organisme classé en listes 9 à 11.",
   "Niveau 2": "Personnels d'un organisme classé en liste 8.",
@@ -584,150 +270,100 @@ const isqMajorationDetails = {
   "Niveau 8": "Personnels d'un organisme classé en liste 1.",
 };
 
-creerMenuInteractif(
-  "Rist",
-  "input-fonction",
-  "rist-helper-text",
-  "panel-rist-fonctions",
-  ristDetails,
-);
-creerMenuInteractif(
-  "Exp",
-  "input-experience",
-  "exp-helper-text",
-  "panel-rist-experience",
-  expDetails,
-);
-creerMenuInteractif(
-  "IsqLicence",
-  "input-isq-licence",
-  "isq-licence-helper-text",
-  "panel-rist-isq-licence",
-  isqLicenceDetails,
-);
-creerMenuInteractif(
-  "IsqComplement",
-  "input-isq-complement",
-  "isq-complement-helper-text",
-  "panel-rist-isq-complement",
-  isqComplementDetails,
-);
-creerMenuInteractif(
-  "IsqMajoration",
-  "input-isq-majoration",
-  "isq-majoration-helper-text",
-  "panel-rist-isq-majoration",
-  isqMajorationDetails,
-);
+/**
+ * Factory : crée et enregistre sur `window` les 3 fonctions nécessaires à un menu interactif.
+ * Ces fonctions DOIVENT être sur `window` car appelées via `onclick="..."` dans le HTML.
+ *
+ * Fonctions générées :
+ * - `window.previewHelper{nom}(valeur)` → aperçu au survol d'une option
+ * - `window.resetHelper{nom}()`         → affiche la valeur actuellement sélectionnée
+ * - `window.select{nom}(valeur)`        → sélectionne une valeur, met à jour l'input et recalcule
+ *
+ * @param {string}                  nom      - Suffixe identifiant le menu (ex. "Rist", "IsqLicence")
+ * @param {string}                  inputId  - ID de l'`<input>` ou `<select>` portant la valeur sélectionnée
+ * @param {string}                  helperId - ID de l'élément affichant la description contextuelle
+ * @param {string}                  panelId  - ID du panneau contenant les `.rist-option`
+ * @param {Object.<string, string>} details  - Dictionnaire valeur → description textuelle
+ */
+function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
+  const getInput = () => document.getElementById(inputId);
+  const getHelper = () => document.getElementById(helperId);
+  const setHelper = (html) => {
+    const el = getHelper();
+    if (el) el.innerHTML = html;
+  };
 
-function getProfilDepuisInterface() {
-  let pfTotal = parseFloat(document.getElementById("pf-manuel")?.value) || 0;
-  document.querySelectorAll(".pf-checkbox").forEach((cb) => {
-    if (cb.checked) pfTotal += parseFloat(cb.value);
-  });
+  window[`previewHelper${nom}`] = (valeur) => setHelper(`<strong>Aperçu :</strong> ${details[valeur] || ""}`);
 
-  let pscTotal = 0;
-  document.querySelectorAll(".psc-checkbox").forEach((cb) => {
-    if (cb.checked) pscTotal += parseFloat(cb.value);
-  });
+  window[`resetHelper${nom}`] = () => setHelper(`<strong>Sélectionné :</strong> ${details[getInput()?.value] || ""}`);
 
-  return {
-    grade:
-      document.getElementById("input-grade")?.value || "ING.DIV. CONT.NAV.AE",
-    echelon: document.getElementById("input-echelon")?.value || "",
-    residence:
-      parseFloat(
-        document.querySelector('input[name="ir-taux"]:checked')?.value,
-      ) || 0,
-    zone:
-      document.querySelector('input[name="ir-zone"]:checked')?.value ||
-      "Zone 1",
-    taux_pas:
-      parseFloat(document.getElementById("input-pas")?.value) / 100 || 0,
-    points_nbi: document.getElementById("input-nbi-checkbox")?.checked ? 55 : 0,
-
-    evenements: {
-      nuits: parseInt(document.getElementById("input-nuit-n")?.value) || 0,
-      soirees: parseInt(document.getElementById("input-nuit-s2")?.value) || 0,
-      jours_greve: parseInt(document.getElementById("input-greve")?.value) || 0,
-      jours_carence:
-        parseInt(document.getElementById("input-carence")?.value) || 0,
-      jours_maladie_90:
-        parseInt(document.getElementById("input-maladie-90")?.value) || 0,
-      jours_maladie_50:
-        parseInt(document.getElementById("input-maladie-50")?.value) || 0,
-      prime_performance:
-        parseFloat(document.getElementById("input-perf")?.value) || 0,
-      ott_pf: pfTotal,
-      ott_pv_globale:
-        parseFloat(document.getElementById("pv-globale")?.value) || 0,
-      ott_pv_opt32: parseFloat(document.getElementById("pv-opt32")?.value) || 0,
-    },
-
-    primes: {
-      forfait_mobilites:
-        parseFloat(document.getElementById("input-fmd")?.value) || 0,
-      rist_fonctions:
-        baseDonnees.rist?.fonctions[
-          document.getElementById("input-fonction")?.value
-        ] || 0,
-      rist_exper_prof:
-        baseDonnees.rist?.experience[
-          document.getElementById("input-experience")?.value
-        ] || 0,
-      rist_lic_isq:
-        baseDonnees.rist?.isq_licence[
-          document.getElementById("input-isq-licence")?.value
-        ] || 0,
-      rist_cplt_lic_isq:
-        baseDonnees.rist?.isq_complement[
-          document.getElementById("input-isq-complement")?.value
-        ] || 0,
-      rist_maj_isq:
-        baseDonnees.rist?.isq_majoration[
-          document.getElementById("input-isq-majoration")?.value
-        ] || 0,
-      attractivite:
-        parseFloat(document.getElementById("input-attractivite")?.value) || 0,
-      fidelisation:
-        parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
-      inflation:
-        parseFloat(document.getElementById("input-inflation")?.value) || 0,
-      ind_compensatrice_csg:
-        parseFloat(document.getElementById("input-ind-csg")?.value) || 0,
-      psc: pscTotal,
-    },
+  window[`select${nom}`] = (valeur) => {
+    getInput().value = valeur;
+    document.querySelectorAll(`#${panelId} .rist-option`).forEach((el) => el.classList.remove("selected"));
+    document.querySelector(`#${panelId} .rist-option[data-value="${valeur}"]`)?.classList.add("selected");
+    window[`resetHelper${nom}`]();
+    calculerPaie();
   };
 }
 
-function formaterMontant(montant) {
-  if (
-    montant === null ||
-    montant === undefined ||
-    montant === 0 ||
-    isNaN(montant)
-  )
-    return "";
-  return montant.toLocaleString("fr-FR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+// Enregistrement des 5 menus interactifs RIST / ISQ
+creerMenuInteractif("Rist", "input-fonction", "rist-helper-text", "panel-rist-fonctions", DETAILS_RIST);
+creerMenuInteractif("Exp", "input-experience", "exp-helper-text", "panel-rist-experience", DETAILS_EXP);
+creerMenuInteractif("IsqLicence", "input-isq-licence", "isq-licence-helper-text", "panel-rist-isq-licence", DETAILS_ISQ_LICENCE);
+creerMenuInteractif("IsqComplement", "input-isq-complement", "isq-complement-helper-text", "panel-rist-isq-complement", DETAILS_ISQ_COMPLEMENT);
+creerMenuInteractif("IsqMajoration", "input-isq-majoration", "isq-majoration-helper-text", "panel-rist-isq-majoration", DETAILS_ISQ_MAJORATION);
+
+// =============================================================================
+// 6. INTERFACE UTILISATEUR
+// =============================================================================
+
+/**
+ * Peuple le `<select>` des échelons selon le grade sélectionné.
+ * Trie les échelons numériques avant les échelons alphanumériques (HEA1, HEA2...).
+ * Conserve l'échelon actif si celui-ci existe dans le nouveau grade.
+ */
+function mettreAJourEchelons() {
+  const grade = document.getElementById("input-grade").value;
+  const selectEchelon = document.getElementById("input-echelon");
+  const echelonActuel = selectEchelon.value;
+
+  const echelons = Object.keys(baseDonnees.grilles_icna[grade] || {}).sort((a, b) => {
+    const [nA, nB] = [parseInt(a), parseInt(b)];
+    const [isA, isB] = [!isNaN(nA), !isNaN(nB)];
+    if (isA && isB) return nA - nB;
+    if (isA) return -1;
+    if (isB) return 1;
+    return a.localeCompare(b);
   });
+
+  selectEchelon.innerHTML = "";
+  echelons.forEach((ech) => {
+    const opt = document.createElement("option");
+    opt.value = ech;
+    opt.textContent = ech;
+    selectEchelon.appendChild(opt);
+  });
+
+  selectEchelon.value = echelons.includes(echelonActuel) ? echelonActuel : echelons[0] || "";
 }
 
-function arrondir(valeur) {
-  return Math.round(valeur * 100) / 100;
-}
-
+/**
+ * Ouvre la modale principale sur le panneau spécifié.
+ * Si la visite guidée est active, elle est mise en pause et reprendra à la fermeture.
+ *
+ * @param {string|string[]} panelIds - ID du panneau cible, ou tableau d'IDs pour affichage multi-panneaux
+ * @param {string}          titre    - Titre affiché dans l'en-tête de la modale
+ */
 function ouvrirModal(panelIds, titre) {
+  // Pause de la visite guidée en cours
   if (window.isTourActive && window.tourObj) {
-    const state = window.tourObj.getState();
-    window.tourSavedStep = state ? state.activeIndex : 0;
+    window.tourSavedStep = window.tourObj.getState()?.activeIndex ?? 0;
     window.tourObj.destroy();
   }
 
   const modal = document.getElementById("magic-modal");
 
-  // --- GESTION DU MODE DE LA MODALE ---
+  // Mode "menu d'ajout" (recherche) vs. mode panneau standard
   if (panelIds === "panel-menu-ajout") {
     modal.classList.add("search-mode");
     const champRecherche = document.getElementById("recherche-ajout");
@@ -741,918 +377,873 @@ function ouvrirModal(panelIds, titre) {
     modal.classList.remove("search-mode");
   }
 
+  // Activation du panneau cible
   document.getElementById("modal-title").textContent = titre;
-  document
-    .querySelectorAll(".setting-panel")
-    .forEach((p) => p.classList.remove("active"));
-
-  if (Array.isArray(panelIds)) {
-    panelIds.forEach((id) =>
-      document.getElementById(id).classList.add("active"),
-    );
-  } else {
-    document.getElementById(panelIds).classList.add("active");
-  }
+  document.querySelectorAll(".setting-panel").forEach((p) => p.classList.remove("active"));
+  (Array.isArray(panelIds) ? panelIds : [panelIds]).forEach((id) => document.getElementById(id)?.classList.add("active"));
 
   modal.showModal();
 
+  // Scroll automatique sur la sélection active
   setTimeout(() => {
-    const activePanel = document.querySelector(".setting-panel.active");
-    if (activePanel) {
-      const selectedOption = activePanel.querySelector(".rist-option.selected");
-      if (selectedOption)
-        selectedOption.scrollIntoView({ block: "center", behavior: "instant" });
-    }
+    document.querySelector(".setting-panel.active .rist-option.selected")?.scrollIntoView({ block: "center", behavior: "instant" });
   }, 15);
 }
 
+/**
+ * Réinitialise les champs spécifiés et relance le calcul.
+ * Exposée sur `window` : appelée via `onclick` dans les boutons ✖ du HTML.
+ *
+ * @param {Event}    event    - Événement clic (propagation stoppée)
+ * @param {string[]} inputIds - IDs des champs à remettre à zéro
+ */
 window.effacerValeurs = function (event, inputIds) {
   event.stopPropagation();
   inputIds.forEach((id) => {
     const el = document.getElementById(id);
-    if (el) {
-      if (el.tagName === "SELECT") {
-        if (el.querySelector('option[value="none"]')) el.value = "none";
-        else el.value = "0";
-      } else if (el.type === "checkbox") {
-        el.checked = false;
-      } else {
-        el.value = "0";
-      }
-    }
+    if (!el) return;
+    if (el.tagName === "SELECT") el.value = el.querySelector('option[value="none"]') ? "none" : "0";
+    else if (el.type === "checkbox") el.checked = false;
+    else el.value = "0";
   });
   calculerPaie();
 };
 
+/**
+ * Valide un champ d'absence et s'assure que le total (grève + carence + maladie) ≤ 30 jours.
+ * Exposée sur `window` : appelée via `oninput` dans le HTML.
+ *
+ * @param {HTMLInputElement} el - Champ d'absence modifié
+ */
 window.limiterAbsences = function (el) {
   if (parseInt(el.value) < 0) el.value = "0";
-  const greve = parseInt(document.getElementById("input-greve").value) || 0;
-  const carence = parseInt(document.getElementById("input-carence").value) || 0;
-  const m90 = parseInt(document.getElementById("input-maladie-90").value) || 0;
-  const m50 = parseInt(document.getElementById("input-maladie-50").value) || 0;
-
-  const total = greve + carence + m90 + m50;
-  if (total > 30) el.value = (parseInt(el.value) || 0) - (total - 30);
+  const total = lireInt("input-greve") + lireInt("input-carence") + lireInt("input-maladie-90") + lireInt("input-maladie-50");
+  if (total > 30) el.value = Math.max(0, (parseInt(el.value) || 0) - (total - 30));
   calculerPaie();
 };
 
-function calculerPaie() {
-  const profilAgent = getProfilDepuisInterface();
-  let totalAPayer = 0;
-  let totalADeduire = 0;
+// =============================================================================
+// 7. EXTRACTION DU PROFIL DEPUIS LE FORMULAIRE
+// =============================================================================
 
-  const indice =
-    baseDonnees.grilles_icna[profilAgent.grade][profilAgent.echelon]?.indice ||
-    0;
-  const traitementBrut = arrondir(
-    indice * baseDonnees.constantes.valeur_point_mensuel,
-  );
-  const montantNbi = arrondir(
-    profilAgent.points_nbi * baseDonnees.constantes.valeur_point_mensuel,
-  );
+/**
+ * @typedef {Object} ProfilAgent
+ * @property {string} grade
+ * @property {string} echelon
+ * @property {string} zone           - "Zone 1" | "Zone 2" | "Zone 3"
+ * @property {number} taux_pas       - Taux PAS en décimal (ex. 0.08 pour 8 %)
+ * @property {number} points_nbi     - 55 si NBI cochée, 0 sinon
+ * @property {number} enfants        - Nombre d'enfants à charge (pour le SFT)
+ * @property {Object} evenements     - Éléments variables du mois (nuits, absences, OTT...)
+ * @property {Object} primes         - Primes et indemnités mensuelles fixes
+ */
 
-  const indemniteResidence =
-    Math.floor(
-      (traitementBrut + montantNbi) *
-        baseDonnees.zones_residence[profilAgent.zone] *
-        100,
-    ) / 100;
+/**
+ * Lit l'intégralité du formulaire et retourne le profil structuré de l'agent.
+ * C'est le seul point de contact entre le DOM du formulaire et le moteur de calcul.
+ *
+ * @returns {ProfilAgent}
+ */
+function getProfilDepuisInterface() {
+  // Part Fixe OTT : saisie manuelle + cumul des cases cochées
+  let pfTotal = lireFloat("pf-manuel");
+  document.querySelectorAll(".pf-checkbox").forEach((cb) => {
+    if (cb.checked) pfTotal += parseFloat(cb.value);
+  });
 
-  const nuit = arrondir(
-    8.73 * profilAgent.evenements.nuits + 0.97 * profilAgent.evenements.soirees,
-  );
-  const previewNuits = document.getElementById("preview-nuits");
-  if (previewNuits) previewNuits.textContent = formaterMontant(nuit);
+  // Participation PSC : cumul des cases cochées
+  let pscTotal = 0;
+  document.querySelectorAll(".psc-checkbox").forEach((cb) => {
+    if (cb.checked) pscTotal += parseFloat(cb.value);
+  });
 
-  const joursGreve = profilAgent.evenements.jours_greve;
-  const joursCarence = profilAgent.evenements.jours_carence;
-  const jours90 = profilAgent.evenements.jours_maladie_90;
-  const jours50 = profilAgent.evenements.jours_maladie_50;
-  const joursAbs = joursGreve + joursCarence + jours90 + jours50;
-  const joursRetenus =
-    joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
+  // Lecture des montants RIST depuis data.json via les valeurs des selects
+  const ristKey = document.getElementById("input-fonction")?.value;
+  const expKey = document.getElementById("input-experience")?.value;
+  const licKey = document.getElementById("input-isq-licence")?.value;
+  const cpltKey = document.getElementById("input-isq-complement")?.value;
+  const majKey = document.getElementById("input-isq-majoration")?.value;
 
-  const psc = profilAgent.primes.psc;
+  return {
+    grade: document.getElementById("input-grade")?.value || "ING.DIV. CONT.NAV.AE",
+    echelon: document.getElementById("input-echelon")?.value || "",
+    zone: document.querySelector('input[name="ir-zone"]:checked')?.value || "Zone 1",
+    taux_pas: lireFloat("input-pas") / 100,
+    points_nbi: document.getElementById("input-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
+    enfants: lireInt("input-enfants"),
 
-  const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
-  const absenceNbi = arrondir((montantNbi / 30) * joursRetenus);
-  const absenceResidence = arrondir((indemniteResidence / 30) * joursRetenus);
-  const absRistFct = arrondir(
-    (profilAgent.primes.rist_fonctions / 30) * joursRetenus,
-  );
-  const absRistExp = arrondir(
-    (profilAgent.primes.rist_exper_prof / 30) * joursRetenus,
-  );
-  const absRistIsq = arrondir(
-    (profilAgent.primes.rist_lic_isq / 30) * joursRetenus,
-  );
-  const absRistCplt = arrondir(
-    (profilAgent.primes.rist_cplt_lic_isq / 30) * joursRetenus,
-  );
-  const absRistMaj = arrondir(
-    (profilAgent.primes.rist_maj_isq / 30) * joursRetenus,
-  );
-  const absIndCsg = arrondir(
-    (profilAgent.primes.ind_compensatrice_csg / 30) * joursRetenus,
-  );
+    evenements: {
+      nuits: lireInt("input-nuit-n"),
+      soirees: lireInt("input-nuit-s2"),
+      jours_greve: lireInt("input-greve"),
+      jours_carence: lireInt("input-carence"),
+      jours_maladie_90: lireInt("input-maladie-90"),
+      jours_maladie_50: lireInt("input-maladie-50"),
+      prime_performance: lireFloat("input-perf"),
+      ott_pf: pfTotal,
+      ott_pv_globale: lireFloat("pv-globale"),
+      ott_pv_opt32: lireFloat("pv-opt32"),
+    },
 
-  function genererTooltipAbsence(montantDeBase) {
-    let details = [];
-    const parJour = montantDeBase / 30;
-    if (joursGreve > 0)
-      details.push(
-        `Grève (${joursGreve}J) : -${formaterMontant(arrondir(parJour * joursGreve))} €`,
-      );
-    if (joursCarence > 0)
-      details.push(
-        `Carence (${joursCarence}J) : -${formaterMontant(arrondir(parJour * joursCarence))} €`,
-      );
-    if (jours90 > 0)
-      details.push(
-        `Maladie 90% (${jours90}J) : -${formaterMontant(arrondir(parJour * jours90 * 0.1))} €`,
-      );
-    if (jours50 > 0)
-      details.push(
-        `Maladie 50% (${jours50}J) : -${formaterMontant(arrondir(parJour * jours50 * 0.5))} €`,
-      );
-    return details.join("\n");
-  }
-
-  let detailsLigneTexte = [];
-  if (joursGreve > 0) detailsLigneTexte.push(`GREVE ${joursGreve}J`);
-  if (joursCarence > 0) detailsLigneTexte.push(`CAR ${joursCarence}J`);
-  if (jours90 > 0) detailsLigneTexte.push(`MAL 90% ${jours90}J`);
-  if (jours50 > 0) detailsLigneTexte.push(`MAL 50% ${jours50}J`);
-  const ligneDetailAbsence = detailsLigneTexte.join(" // ");
-
-  const majPreview = (id, montant) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = formaterMontant(montant);
+    primes: {
+      forfait_mobilites: lireFloat("input-fmd"),
+      rist_fonctions: baseDonnees.rist?.fonctions?.[ristKey] || 0,
+      rist_exper_prof: baseDonnees.rist?.experience?.[expKey] || 0,
+      rist_lic_isq: baseDonnees.rist?.isq_licence?.[licKey] || 0,
+      rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.[cpltKey] || 0,
+      rist_maj_isq: baseDonnees.rist?.isq_majoration?.[majKey] || 0,
+      attractivite: lireFloat("input-attractivite"),
+      fidelisation: lireFloat("input-fidelisation"),
+      inflation: lireFloat("input-inflation"),
+      ind_compensatrice_csg: lireFloat("input-ind-csg"),
+      psc: pscTotal,
+    },
   };
-  majPreview("preview-rist-fonctions", profilAgent.primes.rist_fonctions);
-  majPreview("preview-rist-experience", profilAgent.primes.rist_exper_prof);
-  majPreview("preview-rist-isq-licence", profilAgent.primes.rist_lic_isq);
-  majPreview(
-    "preview-rist-isq-complement",
-    profilAgent.primes.rist_cplt_lic_isq,
-  );
-  majPreview("preview-rist-isq-majoration", profilAgent.primes.rist_maj_isq);
+}
 
-  const baseTraitementReel = traitementBrut - absenceTraitement;
-  const baseNbiReelle = montantNbi - absenceNbi;
-  const baseResidenceReelle = indemniteResidence - absenceResidence;
+// =============================================================================
+// 8. CALCUL DE LA PAIE (pur — zéro accès au DOM)
+// =============================================================================
+
+/**
+ * Calcule le Supplément Familial de Traitement selon le barème fonctionnaire.
+ * Le traitement de référence est borné entre SFT_IND_PLANCHER et SFT_IND_PLAFOND (en valeur €).
+ *
+ * @param {number} nbEnfants      - Nombre d'enfants à charge
+ * @param {number} traitementBrut - Traitement brut mensuel (€)
+ * @param {number} valeurPoint    - Valeur du point d'indice mensuel (€)
+ * @returns {number} Montant SFT brut avant déduction pour absence
+ */
+function calculerSFT(nbEnfants, traitementBrut, valeurPoint) {
+  if (nbEnfants < 1) return 0;
+  const plancher = CALC.SFT_IND_PLANCHER * valeurPoint;
+  const plafond = CALC.SFT_IND_PLAFOND * valeurPoint;
+  const ref = Math.min(Math.max(traitementBrut, plancher), plafond);
+
+  if (nbEnfants === 1) return CALC.SFT_1_ENF_FIXE;
+  if (nbEnfants === 2) return arrondir(CALC.SFT_2_BASE + ref * CALC.SFT_2_TAUX);
+  if (nbEnfants === 3) return arrondir(CALC.SFT_3_BASE + ref * CALC.SFT_3_TAUX);
+  // 4 enfants et plus : part de base 3 enfants + part par enfant supplémentaire
+  return arrondir(CALC.SFT_3_BASE + ref * CALC.SFT_3_TAUX + (nbEnfants - 3) * (CALC.SFT_SUP_BASE + ref * CALC.SFT_SUP_TAUX));
+}
+
+/**
+ * Génère le texte de tooltip détaillant la déduction d'absence sur un élément de paie.
+ * Chaque type d'absence y est listé avec son impact financier.
+ *
+ * @param {number} montantDeBase  - Montant mensuel complet de l'élément (avant toute absence)
+ * @param {number} joursGreve     - Jours de grève (retenue 100%)
+ * @param {number} joursCarence   - Jours de carence (retenue 100%)
+ * @param {number} jours90        - Jours de maladie à 90% (retenue effective : 10%)
+ * @param {number} jours50        - Jours de maladie à 50% (retenue effective : 50%)
+ * @returns {string} Chaîne multi-lignes pour l'attribut `title` HTML
+ */
+function genererTooltipAbsence(montantDeBase, joursGreve, joursCarence, jours90, jours50) {
+  const parJour = montantDeBase / 30;
+  return [
+    joursGreve > 0 && `Grève (${joursGreve}J) : -${formaterMontant(arrondir(parJour * joursGreve))} €`,
+    joursCarence > 0 && `Carence (${joursCarence}J) : -${formaterMontant(arrondir(parJour * joursCarence))} €`,
+    jours90 > 0 && `Maladie 90% (${jours90}J) : -${formaterMontant(arrondir(parJour * jours90 * 0.1))} €`,
+    jours50 > 0 && `Maladie 50% (${jours50}J) : -${formaterMontant(arrondir(parJour * jours50 * 0.5))} €`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/**
+ * @typedef {Object} MontantsCalcules
+ * Résultat complet du calcul de paie, prêt à être injecté dans le DOM.
+ */
+
+/**
+ * Calcule l'ensemble des montants de la fiche de paie à partir du profil agent.
+ * Cette fonction est pure : elle ne touche pas au DOM.
+ *
+ * @param {ProfilAgent} p - Profil complet de l'agent
+ * @returns {MontantsCalcules}
+ */
+function calculerMontants(p) {
+  const cst = baseDonnees.constantes;
+  const pat = baseDonnees.taux_patronaux;
+
+  // ── Base indiciaire ──────────────────────────────────────────────────────────
+  const indice = baseDonnees.grilles_icna[p.grade]?.[p.echelon]?.indice || 0;
+  const traitementBrut = arrondir(indice * cst.valeur_point_mensuel);
+  const montantNbi = arrondir(p.points_nbi * cst.valeur_point_mensuel);
+  const indemniteResidence = Math.floor((traitementBrut + montantNbi) * baseDonnees.zones_residence[p.zone] * 100) / 100;
+
+  // ── Indemnité de nuit (S1 = nuit, S2 = soirée) ──────────────────────────────
+  const nuit = arrondir(CALC.TAUX_NUIT * p.evenements.nuits + CALC.TAUX_SOIREE * p.evenements.soirees);
+
+  // ── Absences ─────────────────────────────────────────────────────────────────
+  const { jours_greve: joursGreve, jours_carence: joursCarence, jours_maladie_90: jours90, jours_maladie_50: jours50 } = p.evenements;
+
+  const joursAbs = joursGreve + joursCarence + jours90 + jours50;
+  // Grève/carence : retenue 100% | Maladie 90% : retenue 10% | Maladie 50% : retenue 50%
+  const joursRetenus = joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
+
+  /** @param {number} base - Calcule la retenue d'absence sur la règle du 1/30e */
+  const abs = (base) => arrondir((base / 30) * joursRetenus);
+
+  const absTraitement = abs(traitementBrut);
+  const absNbi = abs(montantNbi);
+  const absResidence = abs(indemniteResidence);
+  const absRistFct = abs(p.primes.rist_fonctions);
+  const absRistExp = abs(p.primes.rist_exper_prof);
+  const absRistIsq = abs(p.primes.rist_lic_isq);
+  const absRistCplt = abs(p.primes.rist_cplt_lic_isq);
+  const absRistMaj = abs(p.primes.rist_maj_isq);
+  const absIndCsg = abs(p.primes.ind_compensatrice_csg);
+
+  // ── Bases nettes après absences ──────────────────────────────────────────────
+  const baseTraitementReel = traitementBrut - absTraitement;
+  const baseNbiReelle = montantNbi - absNbi;
+  const baseResidenceReelle = indemniteResidence - absResidence;
   const baseSoumisePC = baseTraitementReel + baseNbiReelle;
 
+  // ── Total des primes soumises à cotisations ───────────────────────────────────
+  // BUG CORRIGÉ : l'inflation était une instruction orpheline (+inflation;) → non comptabilisée
   const totalPrimesSoumises =
     baseResidenceReelle +
     nuit +
-    (profilAgent.primes.rist_fonctions - absRistFct) +
-    (profilAgent.primes.rist_exper_prof - absRistExp) +
-    (profilAgent.primes.rist_lic_isq - absRistIsq) +
-    (profilAgent.primes.rist_cplt_lic_isq - absRistCplt) +
-    (profilAgent.primes.rist_maj_isq - absRistMaj) +
-    (profilAgent.primes.ind_compensatrice_csg - absIndCsg) +
-    profilAgent.evenements.prime_performance +
-    profilAgent.evenements.ott_pf +
-    profilAgent.evenements.ott_pv_globale +
-    profilAgent.evenements.ott_pv_opt32 +
-    profilAgent.primes.attractivite +
-    profilAgent.primes.fidelisation;
-  +profilAgent.primes.inflation;
+    (p.primes.rist_fonctions - absRistFct) +
+    (p.primes.rist_exper_prof - absRistExp) +
+    (p.primes.rist_lic_isq - absRistIsq) +
+    (p.primes.rist_cplt_lic_isq - absRistCplt) +
+    (p.primes.rist_maj_isq - absRistMaj) +
+    (p.primes.ind_compensatrice_csg - absIndCsg) +
+    p.evenements.prime_performance +
+    p.evenements.ott_pf +
+    p.evenements.ott_pv_globale +
+    p.evenements.ott_pv_opt32 +
+    p.primes.attractivite +
+    p.primes.fidelisation +
+    p.primes.inflation;
 
-  let montantSFT = 0;
-  if (profilAgent.enfants === 1) montantSFT = 2.29;
-  else if (profilAgent.enfants >= 2) {
-    const traitementPlancher =
-      449 * baseDonnees.constantes.valeur_point_mensuel;
-    const traitementPlafond = 717 * baseDonnees.constantes.valeur_point_mensuel;
-    let traitementReference = traitementBrut;
-    if (traitementReference < traitementPlancher)
-      traitementReference = traitementPlancher;
-    if (traitementReference > traitementPlafond)
-      traitementReference = traitementPlafond;
+  // ── SFT ──────────────────────────────────────────────────────────────────────
+  const sftBrut = calculerSFT(p.enfants, traitementBrut, cst.valeur_point_mensuel);
+  const montantSFT = Math.max(0, sftBrut - abs(sftBrut));
 
-    if (profilAgent.enfants === 2)
-      montantSFT = 10.67 + traitementReference * 0.03;
-    else if (profilAgent.enfants === 3)
-      montantSFT = 15.24 + traitementReference * 0.08;
-    else
-      montantSFT =
-        15.24 +
-        traitementReference * 0.08 +
-        (profilAgent.enfants - 3) * (4.57 + traitementReference * 0.06);
-  }
-  montantSFT = arrondir(montantSFT);
-  montantSFT = Math.max(
-    0,
-    montantSFT - arrondir((montantSFT / 30) * joursRetenus),
-  );
+  // ── Cotisations salariales ───────────────────────────────────────────────────
+  const retenuePC = arrondir(baseTraitementReel * cst.taux_retenue_pc);
+  const retenuePcNbi = arrondir(baseNbiReelle * cst.taux_retenue_pc);
 
-  const retenuePC = arrondir(
-    baseTraitementReel * baseDonnees.constantes.taux_retenue_pc,
-  );
-  const retenuePcNbi = arrondir(
-    baseNbiReelle * baseDonnees.constantes.taux_retenue_pc,
-  );
+  const baseRafp = Math.min(totalPrimesSoumises, baseSoumisePC * cst.plafond_rafp);
+  const cotisationRafp = arrondir(baseRafp * cst.taux_rafp);
 
-  const baseRafp = Math.min(
+  const ristIsqReel = p.primes.rist_lic_isq - absRistIsq;
+  const retenueIsq = arrondir(ristIsqReel * cst.taux_retenue_isq);
+
+  const transfertPrimesBase = cst.transfert_primes_points;
+  const transfertPrimes = Math.max(0, transfertPrimesBase - abs(transfertPrimesBase));
+
+  // ── CSG / CRDS ───────────────────────────────────────────────────────────────
+  const baseCsgCrds = Math.max(0, (baseSoumisePC + totalPrimesSoumises + p.primes.psc + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds);
+  const csgDeductible = arrondir(baseCsgCrds * cst.taux_csg_deductible);
+  const csgNonDeductible = arrondir(baseCsgCrds * cst.taux_csg_non_deductible);
+  const crds = arrondir(baseCsgCrds * cst.taux_crds);
+
+  // ── Charges patronales ───────────────────────────────────────────────────────
+  const charges = {
+    patAllocFam: arrondir(baseSoumisePC * pat.alloc_familiale),
+    patAfMajor: arrondir(baseSoumisePC * pat.af_majoration),
+    patFnal: arrondir(baseSoumisePC * pat.fnal),
+    patCsa: arrondir(baseSoumisePC * pat.csa),
+    patMaladie: arrondir(baseSoumisePC * pat.maladie),
+    patPensions: arrondir(baseSoumisePC * pat.pensions_civiles),
+    patAti: arrondir(baseSoumisePC * pat.ati),
+    patMobilite: arrondir(baseSoumisePC * pat.versement_mobilite),
+    patRafp: cotisationRafp, // RAFP patronal = RAFP salarial (taux identique)
+  };
+  const totalPatronal = Object.values(charges).reduce((s, v) => s + v, 0);
+
+  return {
+    indice,
+    traitementBrut,
+    montantNbi,
+    indemniteResidence,
+    nuit,
+    joursGreve,
+    joursCarence,
+    jours90,
+    jours50,
+    joursAbs,
+    joursRetenus,
+    absTraitement,
+    absNbi,
+    absResidence,
+    absRistFct,
+    absRistExp,
+    absRistIsq,
+    absRistCplt,
+    absRistMaj,
+    absIndCsg,
+    baseTraitementReel,
+    baseNbiReelle,
+    baseSoumisePC,
     totalPrimesSoumises,
-    baseSoumisePC * baseDonnees.constantes.plafond_rafp,
-  );
-  const cotisationRafp = arrondir(baseRafp * baseDonnees.constantes.taux_rafp);
+    montantSFT,
+    retenuePC,
+    retenuePcNbi,
+    cotisationRafp,
+    retenueIsq,
+    transfertPrimes,
+    csgDeductible,
+    csgNonDeductible,
+    crds,
+    charges,
+    totalPatronal,
+    psc: p.primes.psc,
+  };
+}
 
-  const ristIsqReel = profilAgent.primes.rist_lic_isq - absRistIsq;
-  const retenueIsq = arrondir(
-    ristIsqReel * baseDonnees.constantes.taux_retenue_isq,
-  );
+// =============================================================================
+// 9. RENDU DE LA FICHE DE PAIE
+// =============================================================================
 
-  const transfertPrimesBase = baseDonnees.constantes.transfert_primes_points;
-  const transfertPrimes = Math.max(
-    0,
-    transfertPrimesBase - arrondir((transfertPrimesBase / 30) * joursRetenus),
-  );
+/**
+ * Table de routage : code de ligne → panneau à ouvrir au clic.
+ * Permet de rendre les lignes de la fiche interactives sans duplication de logique.
+ * @type {Object.<string, {cible: string, titre: string}>}
+ */
+const ROUTAGE_MODAL = {
+  102000: { cible: "panel-residence", titre: "Zone de Résidence" },
+  201958: { cible: "panel-rist-fonctions", titre: "Ristourne Part Fonctions" },
+  201959: { cible: "panel-rist-experience", titre: "Ristourne Part Expérience" },
+  201960: { cible: "panel-rist-isq-licence", titre: "Ristourne Part LIC-ISQ" },
+  201961: { cible: "panel-rist-isq-complement", titre: "Ristourne CPLT Part LIC-ISQ" },
+  201962: { cible: "panel-rist-isq-majoration", titre: "Majoration Complément ISQ" },
+  200176: { cible: "panel-nuits", titre: "Travail de Nuit & Soirées" },
+  200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
+  202485: { cible: "panel-primes", titre: "Prime Partage Performance" },
+  201000: { cible: "panel-inflation", titre: "Indemnité Pouvoir d'Achat" },
+  203001: { cible: "panel-fidelisation", titre: "Prime de Fidélisation" },
+  203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
+  604958: { cible: "panel-absences", titre: "Absences et Carence" },
+  604959: { cible: "panel-absences", titre: "Absences et Carence" },
+  558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
+  202206: { cible: "panel-csg", titre: "Indemnité Compensatrice CSG" },
+  202354: { cible: "panel-psc", titre: "Participation à la PSC" },
+  202558: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
+  202559: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
+  202560: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
+};
 
-  const elementsSoumisCsg =
-    baseSoumisePC + totalPrimesSoumises + psc + montantSFT;
-  const deductionsBaseCsg = transfertPrimes + retenueIsq;
-  const baseCsgCrdsExacte =
-    Math.max(0, elementsSoumisCsg - deductionsBaseCsg) *
-    baseDonnees.constantes.assiette_csg_crds;
-
-  const csgDeductible = arrondir(
-    baseCsgCrdsExacte * baseDonnees.constantes.taux_csg_deductible,
-  );
-  const csgNonDeductible = arrondir(
-    baseCsgCrdsExacte * baseDonnees.constantes.taux_csg_non_deductible,
-  );
-  const crds = arrondir(baseCsgCrdsExacte * baseDonnees.constantes.taux_crds);
-
-  const patAllocFam = arrondir(
-    baseSoumisePC * baseDonnees.taux_patronaux.alloc_familiale,
-  );
-  const patAfMajor = arrondir(
-    baseSoumisePC * baseDonnees.taux_patronaux.af_majoration,
-  );
-  const patFnal = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.fnal);
-  const patCsa = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.csa);
-  const patMaladie = arrondir(
-    baseSoumisePC * baseDonnees.taux_patronaux.maladie,
-  );
-  const patPensions = arrondir(
-    baseSoumisePC * baseDonnees.taux_patronaux.pensions_civiles,
-  );
-  const patAti = arrondir(baseSoumisePC * baseDonnees.taux_patronaux.ati);
-  const patMobilite = arrondir(
-    baseSoumisePC * baseDonnees.taux_patronaux.versement_mobilite,
-  );
-  const patRafp = cotisationRafp;
-  const totalPatronal =
-    patAllocFam +
-    patAfMajor +
-    patFnal +
-    patCsa +
-    patMaladie +
-    patPensions +
-    patAti +
-    patMobilite +
-    patRafp;
-
-  document.getElementById("ui-indice").textContent = "0" + (indice || "000");
+/**
+ * Reconstruit et affiche la fiche de paie complète dans le tableau DOM.
+ * Met également à jour les totaux dans le pied de page.
+ *
+ * @param {ProfilAgent}      p - Profil de l'agent
+ * @param {MontantsCalcules} m - Résultat de `calculerMontants(p)`
+ */
+function dessinerFiche(p, m) {
   const tbody = document.getElementById("lignes-paie");
   tbody.innerHTML = "";
+  let totalAPayer = 0;
+  let totalADeduire = 0;
 
-  const routageModal = {
-    102000: { cible: "panel-residence", titre: "Zone de Résidence" },
-    201958: {
-      cible: "panel-rist-fonctions",
-      titre: "Ristourne Part Fonctions",
-    },
-    201959: {
-      cible: "panel-rist-experience",
-      titre: "Ristourne Part Expérience",
-    },
-    201960: {
-      cible: "panel-rist-isq-licence",
-      titre: "Ristourne Part LIC-ISQ",
-    },
-    201961: {
-      cible: "panel-rist-isq-complement",
-      titre: "Ristourne CPLT Part LIC-ISQ",
-    },
-    201962: {
-      cible: "panel-rist-isq-majoration",
-      titre: "Majoration Complément ISQ",
-    },
-    200176: { cible: "panel-nuits", titre: "Travail de Nuit & Soirées" },
-    200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
-    202485: { cible: "panel-primes", titre: "Prime Partage Performance" },
-    201000: { cible: "panel-inflation", titre: "Indemnité Pouvoir d'Achat" },
-    203001: { cible: "panel-fidelisation", titre: "Prime de Fidélisation" },
-    203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
-    604958: { cible: "panel-absences", titre: "Absences et Carence" },
-    604959: { cible: "panel-absences", titre: "Absences et Carence" },
-    558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
-    202206: { cible: "panel-csg", titre: "Indemnité Compensatrice CSG" },
-    202354: { cible: "panel-psc", titre: "Participation à la PSC" },
-    202558: {
-      cible: "panel-ott",
-      titre: "Organisation du Travail (Protocole)",
-    },
-    202559: {
-      cible: "panel-ott",
-      titre: "Organisation du Travail (Protocole)",
-    },
-    202560: {
-      cible: "panel-ott",
-      titre: "Organisation du Travail (Protocole)",
-    },
-  };
+  // Label de détail des absences (ex. "GREVE 2J // MAL 90% 3J")
+  const detailAbs = [m.joursGreve > 0 && `GREVE ${m.joursGreve}J`, m.joursCarence > 0 && `CAR ${m.joursCarence}J`, m.jours90 > 0 && `MAL 90% ${m.jours90}J`, m.jours50 > 0 && `MAL 50% ${m.jours50}J`]
+    .filter(Boolean)
+    .join(" // ");
 
-  function ajouterLigne(
-    code,
-    libelle,
-    aPayer,
-    aDeduire,
-    pourInfo,
-    inputsAReset = null,
-    tooltipMontant = null,
-    customId = null,
-  ) {
+  /** Raccourci : génère le tooltip d'absence pour un montant de base donné */
+  const tip = (base) => genererTooltipAbsence(base, m.joursGreve, m.joursCarence, m.jours90, m.jours50);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  /**
+   * Ajoute une ligne `<tr>` dans le tableau de la fiche de paie.
+   * Si un routage est défini pour le code, la ligne devient cliquable.
+   *
+   * @param {string}      code             - Code comptable (ex. "101000"). Vide pour les lignes de détail.
+   * @param {string}      libelle          - Libellé de la ligne
+   * @param {number|null} aPayer           - Montant créditeur (colonne "À payer")
+   * @param {number|null} aDeduire         - Montant débiteur (colonne "À déduire")
+   * @param {number|null} pourInfo         - Montant indicatif (colonne "Pour info")
+   * @param {string[]}    [inputsAReset]   - IDs à remettre à zéro (affiche ✖)
+   * @param {string}      [tooltipMontant] - Texte tooltip affiché sur le montant
+   * @param {string}      [customId]       - ID `<tr>` personnalisé (outrepasse `row-{code}`)
+   */
+  function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo, inputsAReset = null, tooltipMontant = null, customId = null) {
     if (aPayer) totalAPayer += aPayer;
     if (aDeduire) totalADeduire += aDeduire;
 
-    let extraClass =
-      code === "011100" || code === "011300" ? " font-large" : "";
-    let euroSymbole =
-      aPayer || aDeduire || pourInfo
-        ? `<span style="float: right; font-weight: normal; color: #555;">€</span>`
-        : "";
-
     const tr = document.createElement("tr");
+    if (customId) tr.id = customId;
+    else if (code) tr.id = `row-${code}`;
 
-    if (customId) {
-      tr.id = customId;
-    } else if (code) {
-      tr.id = `row-${code}`;
-    }
-
-    if (routageModal[code]) {
+    const route = ROUTAGE_MODAL[code];
+    if (route) {
       tr.className = "clickable-row";
       tr.title = "Cliquez pour modifier";
-      tr.onclick = () =>
-        ouvrirModal(routageModal[code].cible, routageModal[code].titre);
+      tr.onclick = () => ouvrirModal(route.cible, route.titre);
     } else if (libelle.includes("TAUX PERSONNALISE")) {
       tr.className = "clickable-row";
       tr.onclick = () => ouvrirModal("panel-impots", "Prélèvement à la Source");
     }
 
-    let croixEffacer = "";
-    if (inputsAReset) {
-      const idsStr = JSON.stringify(inputsAReset).replace(/"/g, "'");
-      croixEffacer = `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${idsStr})">✖</span>`;
-    }
-
-    const formatMontantCellule = (valeur) => {
-      if (valeur === null || valeur === undefined || valeur === 0) return "";
-      const texteFormate = formaterMontant(valeur);
-      if (tooltipMontant) {
-        return `<span title="${tooltipMontant}" style="cursor: help; border-bottom: 1px dotted var(--dgfip-medium);">${texteFormate}</span>`;
-      }
-      return texteFormate;
+    const isBold = code === "011100" || code === "011300";
+    const euroSymbol = aPayer || aDeduire || pourInfo ? `<span style="float:right;font-weight:normal;color:#555;">€</span>` : "";
+    const croix = inputsAReset ? `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${JSON.stringify(inputsAReset).replace(/"/g, "'")})">✖</span>` : "";
+    const fmtCell = (val) => {
+      if (!val) return "";
+      const txt = formaterMontant(val);
+      return tooltipMontant ? `<span title="${tooltipMontant}" style="cursor:help;border-bottom:1px dotted var(--dgfip-medium);">${txt}</span>` : txt;
     };
 
     tr.innerHTML = `
-        <td class="col-code">${code || ""}</td>
-        <td class="col-libelle label${extraClass}"><span>${libelle}</span>${croixEffacer} ${euroSymbole}</td>
-        <td class="col-amount">${formatMontantCellule(aPayer)}</td>
-        <td class="col-amount">${formatMontantCellule(aDeduire)}</td>
-        <td class="col-amount">${formatMontantCellule(pourInfo)}</td>
+      <td class="col-code">${code || ""}</td>
+      <td class="col-libelle label${isBold ? " font-large" : ""}"><span>${libelle}</span>${croix} ${euroSymbol}</td>
+      <td class="col-amount">${fmtCell(aPayer)}</td>
+      <td class="col-amount">${fmtCell(aDeduire)}</td>
+      <td class="col-amount">${fmtCell(pourInfo)}</td>
     `;
     tbody.appendChild(tr);
   }
 
-  // --- DESSIN DES LIGNES ---
-  if (joursAbs > 0) {
-    const totalAbsenceDeduction =
-      absenceTraitement +
-      absenceNbi +
-      absenceResidence +
-      absRistFct +
-      absRistExp +
-      absRistIsq +
-      absRistCplt +
-      absRistMaj +
-      absIndCsg;
-    const baseTotaleDeduction =
-      traitementBrut +
-      montantNbi +
-      indemniteResidence +
-      profilAgent.primes.rist_fonctions +
-      profilAgent.primes.rist_exper_prof +
-      profilAgent.primes.rist_lic_isq +
-      profilAgent.primes.rist_cplt_lic_isq +
-      profilAgent.primes.rist_maj_isq +
-      profilAgent.primes.ind_compensatrice_csg;
-    ajouterLigne(
-      "604958",
-      `SERVICE NON FAIT / ABSENCE (${joursAbs} J)`,
-      null,
-      null,
-      totalAbsenceDeduction,
-      ["input-greve", "input-carence", "input-maladie-90", "input-maladie-50"],
-      genererTooltipAbsence(baseTotaleDeduction),
-    );
+  /**
+   * Ajoute une ligne de prime RIST et, si des absences existent,
+   * les deux lignes de détail associées (retenue calculée + description).
+   *
+   * @param {string} code     - Code comptable de la prime
+   * @param {string} libelle  - Libellé
+   * @param {number} montant  - Montant mensuel brut de la prime
+   * @param {number} absence  - Retenue d'absence précalculée
+   */
+  function ajouterLigneRist(code, libelle, montant, absence) {
+    ajouterLigne(code, libelle, montant, null, null);
+    if (m.joursAbs > 0) {
+      ajouterLigne(code, libelle, -absence, null, null, null, tip(montant));
+      ajouterLigne("", `&nbsp;&nbsp;&nbsp;&nbsp;${detailAbs}`, null, null, null);
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // ── Synthèse des absences (en tête, avant le traitement brut) ────────────────
+  if (m.joursAbs > 0) {
+    const totalAbsDed = m.absTraitement + m.absNbi + m.absResidence + m.absRistFct + m.absRistExp + m.absRistIsq + m.absRistCplt + m.absRistMaj + m.absIndCsg;
+    const baseTotale =
+      m.traitementBrut +
+      m.montantNbi +
+      m.indemniteResidence +
+      p.primes.rist_fonctions +
+      p.primes.rist_exper_prof +
+      p.primes.rist_lic_isq +
+      p.primes.rist_cplt_lic_isq +
+      p.primes.rist_maj_isq +
+      p.primes.ind_compensatrice_csg;
+
+    ajouterLigne("604958", `SERVICE NON FAIT / ABSENCE (${m.joursAbs} J)`, null, null, totalAbsDed, ["input-greve", "input-carence", "input-maladie-90", "input-maladie-50"], tip(baseTotale));
   }
 
-  ajouterLigne("101000", "TRAITEMENT BRUT", traitementBrut, null, null);
+  // ── Traitement brut & NBI ─────────────────────────────────────────────────────
+  ajouterLigne("101000", "TRAITEMENT BRUT", m.traitementBrut, null, null);
 
-  if (montantNbi > 0) {
-    ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", montantNbi, null, null);
-    if (joursAbs > 0) {
-      ajouterLigne(
-        "101070",
-        "TRAITEMENT BRUT N.B.I.",
-        -absenceNbi,
-        null,
-        null,
-        null,
-        genererTooltipAbsence(montantNbi),
-      );
-      ajouterLigne(
-        "",
-        `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-        null,
-        null,
-        null,
-      );
+  if (m.montantNbi > 0) {
+    ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", m.montantNbi, null, null);
+    if (m.joursAbs > 0) {
+      ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", -m.absNbi, null, null, null, tip(m.montantNbi));
+      ajouterLigne("", `&nbsp;&nbsp;&nbsp;&nbsp;${detailAbs}`, null, null, null);
     }
   }
 
-  if (montantSFT > 0)
-    ajouterLigne(
-      "200200",
-      "SUPPLEMENT FAMILIAL DE TRAITEMENT",
-      montantSFT,
-      null,
-      null,
-    );
+  if (m.montantSFT > 0) ajouterLigne("200200", "SUPPLEMENT FAMILIAL DE TRAITEMENT", m.montantSFT, null, null);
 
-  ajouterLigne("101050", "RETENUE PC", null, retenuePC, null);
-  if (montantNbi > 0)
-    ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, retenuePcNbi, null);
-  ajouterLigne(
-    "102000",
-    "INDEMNITE DE RESIDENCE",
-    indemniteResidence,
-    null,
-    null,
-  );
+  // ── Retenues PC ──────────────────────────────────────────────────────────────
+  ajouterLigne("101050", "RETENUE PC", null, m.retenuePC, null);
+  if (m.montantNbi > 0) ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, m.retenuePcNbi, null);
 
-  if (nuit > 0)
-    ajouterLigne("200176", "IND. TRAVAIL DE NUIT", nuit, null, null, [
-      "input-nuit-n",
-      "input-nuit-s2",
+  // ── Indemnité de résidence ───────────────────────────────────────────────────
+  ajouterLigne("102000", "INDEMNITE DE RESIDENCE", m.indemniteResidence, null, null);
+
+  // ── Éléments variables (affichés uniquement si non nuls) ─────────────────────
+  if (m.nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", m.nuit, null, null, ["input-nuit-n", "input-nuit-s2"]);
+
+  if (p.primes.forfait_mobilites > 0) ajouterLigne("200041", "FORF. MOBILITES DURABLES", p.primes.forfait_mobilites, null, null, ["input-fmd"]);
+
+  if (p.primes.inflation > 0) ajouterLigne("201000", "INDEM. GARANTIE POUVOIR D'ACHAT", p.primes.inflation, null, null, ["input-inflation"]);
+
+  // ── RIST (5 composantes, chacune avec déduction absence intégrée) ─────────────
+  ajouterLigneRist("201958", "RIST PART FONCTIONS", p.primes.rist_fonctions, m.absRistFct);
+  ajouterLigneRist("201959", "RIST PART EXPER. PROF.", p.primes.rist_exper_prof, m.absRistExp);
+  ajouterLigneRist("201960", "RIST PART LIC-ISQ (ICNA)", p.primes.rist_lic_isq, m.absRistIsq);
+  ajouterLigneRist("201961", "RIST CPLT PART LIC-ISQ", p.primes.rist_cplt_lic_isq, m.absRistCplt);
+  ajouterLigneRist("201962", "MAJORATION CPLT ISQ", p.primes.rist_maj_isq, m.absRistMaj);
+  ajouterLigneRist("202206", "IND. COMPENSATRICE CSG", p.primes.ind_compensatrice_csg, m.absIndCsg);
+
+  // ── PSC, PPP, OTT, Fidélisation, Attractivité ─────────────────────────────────
+  if (m.psc > 0) ajouterLigne("202354", "PARTICIPATION A LA PSC", m.psc, null, null, ["psc-15", "psc-7", "psc-5"]);
+
+  if (p.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", p.evenements.prime_performance, null, null, ["input-perf"]);
+
+  if (p.evenements.ott_pv_globale > 0) ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PV)", p.evenements.ott_pv_globale, null, null, ["pv-globale"]);
+
+  if (p.evenements.ott_pf > 0)
+    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", p.evenements.ott_pf, null, null, [
+      "pf-manuel",
+      "pf-opt1-l16",
+      "pf-opt1-cdg",
+      "pf-opt1-l711",
+      "pf-opt1-l911",
+      "pf-opt1-plus-n1",
+      "pf-opt1-plus-n2",
+      "pf-opt2-1",
+      "pf-opt2-2",
+      "pf-opt2-bis",
+      "pf-opt4",
+      "pf-opt1-enac",
+      "pf-opt1-plus-enac",
     ]);
-  if (profilAgent.primes.forfait_mobilites > 0)
-    ajouterLigne(
-      "200041",
-      "FORF. MOBILITES DURABLES",
-      profilAgent.primes.forfait_mobilites,
-      null,
-      null,
-      ["input-fmd"],
-    );
 
-  if (profilAgent.primes.inflation > 0) {
-    ajouterLigne(
-      "201000",
-      "INDEM. GARANTIE POUVOIR D'ACHAT",
-      profilAgent.primes.inflation,
-      null,
-      null,
-      ["input-inflation"],
-    );
+  if (p.evenements.ott_pv_opt32 > 0) ajouterLigne("202560", "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", p.evenements.ott_pv_opt32, null, null, ["pv-opt32"]);
+
+  if (p.primes.fidelisation > 0) ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", p.primes.fidelisation, null, null, ["input-fidelisation"]);
+
+  if (p.primes.attractivite > 0) ajouterLigne("203002", "ATTRACTIVITE GEOGRAPHIQUE", p.primes.attractivite, null, null, ["input-attractivite"]);
+
+  // Previews des totaux OTT dans le panneau de configuration
+  majPreview("preview-ott-pf", p.evenements.ott_pf);
+  majPreview("preview-ott-pv", p.evenements.ott_pv_globale + p.evenements.ott_pv_opt32);
+
+  // ── Cotisations (CSG/CRDS + charges patronales) ───────────────────────────────
+  ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, m.csgNonDeductible, null);
+  ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, m.csgDeductible, null);
+  ajouterLigne("401501", "C.R.D.S.", null, m.crds, null);
+  ajouterLigne("403301", "COTIS PATRON. ALLOC FAMIL", null, null, m.charges.patAllocFam);
+  ajouterLigne("403397", "COT PAT AF MAJORATION", null, null, m.charges.patAfMajor);
+  ajouterLigne("403501", "COT PAT FNAL DEPLAFONNEE", null, null, m.charges.patFnal);
+  ajouterLigne("403801", "CONT SOLIDARITE AUTONOMIE", null, null, m.charges.patCsa);
+  ajouterLigne("404001", "COT PAT MALADIE DEPLAFON", null, null, m.charges.patMaladie);
+  ajouterLigne("411050", "CONTRIB.PC", null, null, m.charges.patPensions);
+  ajouterLigne("411058", "CONTRIBUTION ATI", null, null, m.charges.patAti);
+  ajouterLigne("501080", "COT SAL RAFP", null, m.cotisationRafp, null);
+  ajouterLigne("501180", "COT PAT RAFP", null, null, m.charges.patRafp);
+  ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, m.charges.patMobilite);
+
+  if (m.joursAbs > 0) {
+    ajouterLigne("604958", "PREC. CARENCE REM. PR.", null, m.absTraitement, null, null, tip(m.traitementBrut));
+    ajouterLigne("604959", "PREC. CARENCE IND. RESID.", null, m.absResidence, null, null, tip(m.indemniteResidence));
   }
 
-  ajouterLigne(
-    "201958",
-    "RIST PART FONCTIONS",
-    profilAgent.primes.rist_fonctions,
-    null,
-    null,
-  );
-  if (joursAbs > 0) {
-    ajouterLigne(
-      "201958",
-      "RIST PART FONCTIONS",
-      -absRistFct,
-      null,
-      null,
-      null,
-      genererTooltipAbsence(profilAgent.primes.rist_fonctions),
-    );
-    ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
-    );
-  }
+  ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, m.transfertPrimes, null);
+  ajouterLigne("751095", "24,6% ISQ", null, m.retenueIsq, null);
 
-  ajouterLigne(
-    "201959",
-    "RIST PART EXPER. PROF.",
-    profilAgent.primes.rist_exper_prof,
-    null,
-    null,
-  );
-  if (joursAbs > 0) {
-    ajouterLigne(
-      "201959",
-      "RIST PART EXPER. PROF.",
-      -absRistExp,
-      null,
-      null,
-      null,
-      genererTooltipAbsence(profilAgent.primes.rist_exper_prof),
-    );
-    ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
-    );
-  }
-
-  ajouterLigne(
-    "201960",
-    "RIST PART LIC-ISQ (ICNA)",
-    profilAgent.primes.rist_lic_isq,
-    null,
-    null,
-  );
-  if (joursAbs > 0) {
-    ajouterLigne(
-      "201960",
-      "RIST PART LIC-ISQ (ICNA)",
-      -absRistIsq,
-      null,
-      null,
-      null,
-      genererTooltipAbsence(profilAgent.primes.rist_lic_isq),
-    );
-    ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
-    );
-  }
-
-  ajouterLigne(
-    "201961",
-    "RIST CPLT PART LIC-ISQ",
-    profilAgent.primes.rist_cplt_lic_isq,
-    null,
-    null,
-  );
-  if (joursAbs > 0) {
-    ajouterLigne(
-      "201961",
-      "RIST CPLT PART LIC-ISQ",
-      -absRistCplt,
-      null,
-      null,
-      null,
-      genererTooltipAbsence(profilAgent.primes.rist_cplt_lic_isq),
-    );
-    ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
-    );
-  }
-
-  ajouterLigne(
-    "201962",
-    "MAJORATION CPLT ISQ",
-    profilAgent.primes.rist_maj_isq,
-    null,
-    null,
-  );
-  if (joursAbs > 0) {
-    ajouterLigne(
-      "201962",
-      "MAJORATION CPLT ISQ",
-      -absRistMaj,
-      null,
-      null,
-      null,
-      genererTooltipAbsence(profilAgent.primes.rist_maj_isq),
-    );
-    ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
-    );
-  }
-
-  ajouterLigne(
-    "202206",
-    "IND. COMPENSATRICE CSG",
-    profilAgent.primes.ind_compensatrice_csg,
-    null,
-    null,
-  );
-  if (joursAbs > 0) {
-    ajouterLigne(
-      "202206",
-      "IND. COMPENSATRICE CSG",
-      -absIndCsg,
-      null,
-      null,
-      null,
-      genererTooltipAbsence(profilAgent.primes.ind_compensatrice_csg),
-    );
-    ajouterLigne(
-      "",
-      `&nbsp;&nbsp;&nbsp;&nbsp;${ligneDetailAbsence}`,
-      null,
-      null,
-      null,
-    );
-  }
-
-  if (psc > 0) {
-    ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null, [
-      "psc-15",
-      "psc-7",
-      "psc-5",
-    ]);
-  }
-
-  if (profilAgent.evenements.prime_performance > 0)
-    ajouterLigne(
-      "202485",
-      "PR. PARTAGE PERFORMANCE",
-      profilAgent.evenements.prime_performance,
-      null,
-      null,
-      ["input-perf"],
-    );
-  if (profilAgent.evenements.ott_pv_globale > 0)
-    ajouterLigne(
-      "202558",
-      "RIST ORGA TEMPS TRAVAIL (PV)",
-      profilAgent.evenements.ott_pv_globale,
-      null,
-      null,
-      ["pv-globale"],
-    );
-  if (profilAgent.evenements.ott_pf > 0) {
-    ajouterLigne(
-      "202559",
-      "RIST ORGA TEMPS TRAVAIL (PF)",
-      profilAgent.evenements.ott_pf,
-      null,
-      null,
-      [
-        "pf-manuel",
-        "pf-opt1-l16",
-        "pf-opt1-cdg",
-        "pf-opt1-l711",
-        "pf-opt1-l911",
-        "pf-opt1-plus-n1",
-        "pf-opt1-plus-n2",
-        "pf-opt2-1",
-        "pf-opt2-2",
-        "pf-opt2-bis",
-        "pf-opt4",
-        "pf-opt1-enac",
-        "pf-opt1-plus-enac",
-      ],
-    );
-  }
-  if (profilAgent.evenements.ott_pv_opt32 > 0)
-    ajouterLigne(
-      "202560",
-      "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)",
-      profilAgent.evenements.ott_pv_opt32,
-      null,
-      null,
-      ["pv-opt32"],
-    );
-  if (profilAgent.primes.fidelisation > 0)
-    ajouterLigne(
-      "203001",
-      "PRIME DE FIDELISATION TERR.",
-      profilAgent.primes.fidelisation,
-      null,
-      null,
-      ["input-fidelisation"],
-    );
-  if (profilAgent.primes.attractivite > 0)
-    ajouterLigne(
-      "203002",
-      "ATTRACTIVITE GEOGRAPHIQUE",
-      profilAgent.primes.attractivite,
-      null,
-      null,
-      ["input-attractivite"],
-    );
-
-  majPreview("preview-ott-pf", profilAgent.evenements.ott_pf);
-  majPreview(
-    "preview-ott-pv",
-    profilAgent.evenements.ott_pv_globale + profilAgent.evenements.ott_pv_opt32,
-  );
-
-  // Charges
-  ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, csgNonDeductible, null);
-  ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, csgDeductible, null);
-  ajouterLigne("401501", "C.R.D.S.", null, crds, null);
-  ajouterLigne("403301", "COTIS PATRON. ALLOC FAMIL", null, null, patAllocFam);
-  ajouterLigne("403397", "COT PAT AF MAJORATION", null, null, patAfMajor);
-  ajouterLigne("403501", "COT PAT FNAL DEPLAFONNEE", null, null, patFnal);
-  ajouterLigne("403801", "CONT SOLIDARITE AUTONOMIE", null, null, patCsa);
-  ajouterLigne("404001", "COT PAT MALADIE DEPLAFON", null, null, patMaladie);
-  ajouterLigne("411050", "CONTRIB.PC", null, null, patPensions);
-  ajouterLigne("411058", "CONTRIBUTION ATI", null, null, patAti);
-  ajouterLigne("501080", "COT SAL RAFP", null, cotisationRafp, null);
-  ajouterLigne("501180", "COT PAT RAFP", null, null, patRafp);
-  ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, patMobilite);
-
-  if (joursAbs > 0) {
-    ajouterLigne(
-      "604958",
-      `PREC. CARENCE REM. PR.`,
-      null,
-      absenceTraitement,
-      null,
-      null,
-      genererTooltipAbsence(traitementBrut),
-    );
-    ajouterLigne(
-      "604959",
-      `PREC. CARENCE IND. RESID.`,
-      null,
-      absenceResidence,
-      null,
-      null,
-      genererTooltipAbsence(indemniteResidence),
-    );
-  }
-
-  ajouterLigne(
-    "604970",
-    "TRANSFERT PRIMES / POINTS",
-    null,
-    transfertPrimes,
-    null,
-  );
-  ajouterLigne("751095", "24,6% ISQ", null, retenueIsq, null);
-
+  // ── Nets ─────────────────────────────────────────────────────────────────────
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   ajouterLigne("", "", null, null, null);
-  ajouterLigne(
-    "011100",
-    "NET A PAYER AVANT IMPOT SUR LE REVENU",
-    null,
-    null,
-    netAPayerAvantImpot,
-  );
+  ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, netAPayerAvantImpot);
 
-  const netSocial = arrondir(
-    netAPayerAvantImpot -
-      profilAgent.primes.forfait_mobilites -
-      psc +
-      retenueIsq,
-  );
+  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - m.psc + m.retenueIsq);
   ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, netSocial);
 
-  const netImposable =
-    netAPayerAvantImpot +
-    csgNonDeductible +
-    crds -
-    profilAgent.primes.forfait_mobilites;
-  let netImposableFinal = Math.max(0, netImposable);
-  const impotSource = arrondir(netImposableFinal * profilAgent.taux_pas);
+  const netImposable = netAPayerAvantImpot + m.csgNonDeductible + m.crds - p.primes.forfait_mobilites;
+  const netImposableFinal = Math.max(0, netImposable);
+  const impotSource = arrondir(netImposableFinal * p.taux_pas);
 
-  ajouterLigne(
-    "558000",
-    `IMPOT SUR LE REVENU PRELEVE A LA SOURCE`,
-    null,
-    impotSource,
-    null,
-  );
-  ajouterLigne(
-    "",
-    `(TAUX PERSONNALISE ${formaterMontant(profilAgent.taux_pas * 100)}%)`,
-    null,
-    null,
-    null,
-    null,
-    null,
-    "row-taux-impot",
-  );
+  ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, impotSource, null);
+  ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(p.taux_pas * 100)}%)`, null, null, null, null, null, "row-taux-impot");
 
+  // ── Ligne d'ajout d'éléments variables ──────────────────────────────────────
   const trAjout = document.createElement("tr");
   trAjout.className = "add-row";
   trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Options protocolaires, Absences, Indemnité de Nuit...) </td>`;
-  trAjout.onclick = () =>
-    ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?");
+  trAjout.onclick = () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?");
   tbody.appendChild(trAjout);
 
+  // ── Ressort magique (lignes fantômes pour combler l'espace vide du tableau) ──
   const trRessort = document.createElement("tr");
-  trRessort.style.backgroundColor = "white";
   trRessort.id = "ressort-magique";
+  trRessort.style.backgroundColor = "white";
   trRessort.innerHTML = `
-        <td style="border-right: 1px solid var(--dgfip-light); height: 100%;"></td>
-        <td style="border-right: 1px solid var(--dgfip-light);"></td>
-        <td style="border-right: 1px solid var(--dgfip-light);"></td>
-        <td style="border-right: 1px solid var(--dgfip-light);"></td>
-        <td></td>
+    <td style="border-right:1px solid var(--dgfip-light);height:100%;"></td>
+    <td style="border-right:1px solid var(--dgfip-light);"></td>
+    <td style="border-right:1px solid var(--dgfip-light);"></td>
+    <td style="border-right:1px solid var(--dgfip-light);"></td>
+    <td></td>
   `;
   tbody.appendChild(trRessort);
 
+  // ── Totaux dans le pied de page ───────────────────────────────────────────────
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
-  const coutTotalEmployeur = arrondir(
-    totalAPayer + totalPatronal - transfertPrimes,
-  );
+  const coutTotalEmployeur = arrondir(totalAPayer + m.totalPatronal - m.transfertPrimes);
 
-  document.getElementById("ui-total-a-payer").textContent = formaterMontant(
-    arrondir(totalAPayer),
-  );
-  document.getElementById("ui-total-a-deduire").textContent = formaterMontant(
-    arrondir(totalADeduire),
-  );
-  document.getElementById("ui-charges-patronales").textContent =
-    formaterMontant(totalPatronal);
-  document.getElementById("ui-cout-employeur").textContent =
-    formaterMontant(coutTotalEmployeur);
-  document.getElementById("ui-net-a-payer").textContent =
-    (netFinal === 0 ? "0,00" : formaterMontant(netFinal)) + " €";
+  document.getElementById("ui-indice").textContent = "0" + (m.indice || "000");
+  document.getElementById("ui-total-a-payer").textContent = formaterMontant(arrondir(totalAPayer));
+  document.getElementById("ui-total-a-deduire").textContent = formaterMontant(arrondir(totalADeduire));
+  document.getElementById("ui-charges-patronales").textContent = formaterMontant(m.totalPatronal);
+  document.getElementById("ui-cout-employeur").textContent = formaterMontant(coutTotalEmployeur);
+  document.getElementById("ui-net-a-payer").textContent = (netFinal === 0 ? "0,00" : formaterMontant(netFinal)) + " €";
+  document.getElementById("ui-net-imposable").textContent = netImposableFinal === 0 ? "0,00" : formaterMontant(netImposableFinal);
 
-  const netImposableAffichage = Math.max(0, netImposable);
-  document.getElementById("ui-net-imposable").textContent =
-    netImposableAffichage === 0
-      ? "0,00"
-      : formaterMontant(netImposableAffichage);
-
+  // ── Injection des lignes fantômes après repaint (requestAnimationFrame) ───────
   requestAnimationFrame(() => {
     document.querySelectorAll(".ligne-fantome").forEach((el) => el.remove());
-
     const ressort = document.getElementById("ressort-magique");
     if (ressort) {
-      const espaceVide = ressort.getBoundingClientRect().height;
+      const hauteurDisponible = ressort.getBoundingClientRect().height;
       const hauteurLigne = 18;
-
-      if (espaceVide > hauteurLigne) {
-        const nbLignes = Math.floor(espaceVide / hauteurLigne);
+      if (hauteurDisponible > hauteurLigne) {
+        const nbLignes = Math.floor(hauteurDisponible / hauteurLigne);
         for (let i = 0; i < nbLignes; i++) {
           const tr = document.createElement("tr");
           tr.className = "ligne-fantome";
           tr.innerHTML = `
-                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
-                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
-                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
-                  <td style="border-right: 1px solid var(--dgfip-light);">&nbsp;</td>
-                  <td>&nbsp;</td>
-              `;
+            <td style="border-right:1px solid var(--dgfip-light);">&nbsp;</td>
+            <td style="border-right:1px solid var(--dgfip-light);">&nbsp;</td>
+            <td style="border-right:1px solid var(--dgfip-light);">&nbsp;</td>
+            <td style="border-right:1px solid var(--dgfip-light);">&nbsp;</td>
+            <td>&nbsp;</td>
+          `;
           tbody.insertBefore(tr, ressort);
         }
       }
     }
 
+    // Si la visite guidée est active, on la relance sur la même étape après le repaint du DOM
     if (window.isTourActive && window.tourObj) {
-      const state = window.tourObj.getState();
-      const currentStep = state ? state.activeIndex : 0;
+      const etape = window.tourObj.getState()?.activeIndex ?? 0;
       window.tourObj.destroy();
-
-      setTimeout(() => {
-        window.lancerVisiteGuidee(currentStep);
-      }, 50);
+      setTimeout(() => window.lancerVisiteGuidee(etape), 50);
     }
   });
 }
 
+// =============================================================================
+// 10. POINT D'ENTRÉE DU CALCUL
+// =============================================================================
+
+/**
+ * Orchestre le cycle complet : lecture profil → calcul → mise à jour previews → rendu fiche.
+ * Appelée à chaque modification d'un champ du formulaire.
+ */
+function calculerPaie() {
+  const profilAgent = getProfilDepuisInterface();
+  const m = calculerMontants(profilAgent);
+
+  // Mise à jour des aperçus dans les panneaux de configuration
+  majPreview("preview-nuits", m.nuit);
+  majPreview("preview-rist-fonctions", profilAgent.primes.rist_fonctions);
+  majPreview("preview-rist-experience", profilAgent.primes.rist_exper_prof);
+  majPreview("preview-rist-isq-licence", profilAgent.primes.rist_lic_isq);
+  majPreview("preview-rist-isq-complement", profilAgent.primes.rist_cplt_lic_isq);
+  majPreview("preview-rist-isq-majoration", profilAgent.primes.rist_maj_isq);
+
+  dessinerFiche(profilAgent, m);
+}
+
+// =============================================================================
+// 11. INITIALISATION DE L'APPLICATION
+// =============================================================================
+
+/**
+ * Attache le comportement "full keyboard mode" à une modale de recherche :
+ * toute frappe hors de l'input est redirigée vers lui automatiquement.
+ *
+ * @param {HTMLDialogElement} modal
+ * @param {HTMLInputElement}  input
+ */
+function attacherNavigationClavier(modal, input) {
+  modal.addEventListener("keydown", (e) => {
+    if (document.activeElement === input) return;
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      input.focus();
+      input.value = input.value.slice(0, -1);
+      input.dispatchEvent(new Event("input"));
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      input.focus();
+    }
+  });
+}
+
+/**
+ * Point d'entrée unique de l'application, déclenché au chargement de la page.
+ *
+ * Séquence d'initialisation :
+ * 1. Chargement asynchrone de `data.json`
+ * 2. Peuplement des `<select>` dynamiques (attractivité, fidélisation)
+ * 3. Attachement de tous les écouteurs d'événements (inputs, keyboard, modales)
+ * 4. Premier calcul et affichage de la fiche
+ */
+async function initialiserApplication() {
+  try {
+    const reponse = await fetch("data.json");
+    if (!reponse.ok) throw new Error("Impossible de charger data.json.");
+    baseDonnees = await reponse.json();
+
+    mettreAJourEchelons();
+
+    // Peuplement des selects depuis data.json (attractivité & fidélisation)
+    ["attractivite", "fidelisation"].forEach((cle) => {
+      const select = document.getElementById(`input-${cle}`);
+      if (select && baseDonnees[cle]) {
+        baseDonnees[cle].forEach((opt) => select.add(new Option(opt.label, opt.valeur)));
+      }
+    });
+
+    // Changement de grade → échelons + recalcul
+    document.getElementById("input-grade").addEventListener("input", () => {
+      mettreAJourEchelons();
+      calculerPaie();
+    });
+
+    // Tous les champs du formulaire principal déclenchent un recalcul
+    document.querySelectorAll(".magic-modal select, .magic-modal input, .info-table select, .info-table input").forEach((input) => input.addEventListener("input", calculerPaie));
+
+    // Validation des champs numériques (bornes min/max spécifiques par champ)
+    document.querySelectorAll('.magic-modal input[type="number"]').forEach((champ) => {
+      champ.addEventListener("input", function () {
+        if (this.value === "") return;
+        const val = parseFloat(this.value);
+        let corrige = false;
+        if (val < 0) {
+          this.value = "0";
+          corrige = true;
+        }
+        if (this.id === "input-pas" && val > 100) {
+          this.value = "100";
+          corrige = true;
+        }
+        if ((this.id === "input-nuit-n" || this.id === "input-nuit-s2") && val > 30) {
+          this.value = "30";
+          corrige = true;
+        }
+        if (corrige) calculerPaie();
+      });
+
+      champ.addEventListener("blur", function () {
+        if (this.value === "") {
+          this.value = this.step?.includes(".") ? "0.00" : "0";
+          calculerPaie();
+        }
+      });
+    });
+
+    // ── Modale principale ─────────────────────────────────────────────────────
+    const modal = document.getElementById("magic-modal");
+
+    // Entrée sur un résultat de recherche → clic ; sinon → fermeture
+    modal.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      if (document.activeElement?.classList.contains("resultat-item")) {
+        document.activeElement.click();
+      } else {
+        modal.close();
+      }
+    });
+
+    // Fermeture de la modale → reprise de la visite guidée à l'étape suivante
+    modal.addEventListener("close", () => {
+      if (window.tourSavedStep === undefined) return;
+      setTimeout(() => {
+        const etape = window.tourSavedStep + 1;
+        if (etape <= 5) window.lancerVisiteGuidee(etape);
+        else window.isTourActive = false;
+        window.tourSavedStep = undefined;
+      }, 150);
+    });
+
+    // Navigation clavier full-keyboard pour le menu d'ajout
+    const champRecherche = document.getElementById("recherche-ajout");
+    if (champRecherche) attacherNavigationClavier(modal, champRecherche);
+
+    // ── Barre de recherche du menu d'ajout ───────────────────────────────────
+    const conteneurResultats = document.getElementById("resultats-recherche");
+    const conteneurDefaut = document.getElementById("boutons-ajout-defaut");
+
+    if (champRecherche) {
+      champRecherche.addEventListener("input", (e) => {
+        const requete = e.target.value.trim();
+        if (!requete) {
+          conteneurResultats.style.display = "none";
+          conteneurDefaut.style.display = "grid";
+          return;
+        }
+        conteneurDefaut.style.display = "none";
+        conteneurResultats.style.display = "flex";
+        afficherResultatsRecherche(conteneurResultats, window.rechercherElement(requete), requete, (res) => ouvrirModal(res.cible, res.titre));
+      });
+    }
+
+    // ── Spotlight (Ctrl + K) ─────────────────────────────────────────────────
+    const spotlightModal = document.getElementById("spotlight-modal");
+    const spotlightInput = document.getElementById("spotlight-input");
+    const spotlightResults = document.getElementById("spotlight-results");
+
+    if (spotlightModal && spotlightInput) {
+      document.addEventListener("keydown", (e) => {
+        if (!(e.ctrlKey || e.metaKey) || e.key !== "k") return;
+        e.preventDefault();
+        if (spotlightModal.open) {
+          spotlightModal.close();
+        } else {
+          spotlightModal.showModal();
+          spotlightInput.value = "";
+          spotlightResults.innerHTML = "";
+          spotlightInput.focus();
+        }
+      });
+
+      // Fermeture au clic en dehors de la boîte de dialogue
+      spotlightModal.addEventListener("click", (e) => {
+        const r = spotlightModal.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+          spotlightModal.close();
+        }
+      });
+
+      // Recherche dans le spotlight — même moteur que le menu d'ajout
+      spotlightInput.addEventListener("input", (e) => {
+        const requete = e.target.value.trim();
+        if (!requete) {
+          spotlightResults.innerHTML = "";
+          return;
+        }
+        afficherResultatsRecherche(spotlightResults, window.rechercherElement(requete), requete, (res) => {
+          spotlightModal.close();
+          ouvrirModal(res.cible, res.titre);
+        });
+      });
+
+      attacherNavigationClavier(spotlightModal, spotlightInput);
+    }
+
+    // ── Détection souris vs. clavier (gestion des styles de focus) ───────────
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab" || e.key.startsWith("Arrow")) document.body.classList.add("navigation-clavier");
+    });
+    document.addEventListener("mousemove", () => document.body.classList.remove("navigation-clavier"));
+
+    // Premier affichage
+    calculerPaie();
+    resetHelperRist();
+    resetHelperExp();
+    resetHelperIsqLicence();
+    resetHelperIsqComplement();
+    resetHelperIsqMajoration();
+  } catch (erreur) {
+    console.error("Erreur d'initialisation :", erreur);
+  }
+}
+
 window.onload = initialiserApplication;
 
-// =========================================
-// VISITE GUIDÉE (Driver.js)
-// =========================================
+// =============================================================================
+// 12. VISITE GUIDÉE (Driver.js)
+// =============================================================================
+
+/**
+ * Démarre ou reprend la visite guidée interactive (propulsée par Driver.js).
+ * Gère la reprise automatique après une pause causée par l'ouverture d'une modale.
+ * Exposée sur `window` car appelée depuis le bouton flottant du HTML.
+ *
+ * @param {number} [startStep=0] - Index de l'étape de départ (0-indexé)
+ */
 window.lancerVisiteGuidee = function (startStep = 0) {
   window.isTourActive = true;
-  const driver = window.driver.js.driver;
 
-  window.tourObj = driver({
+  window.tourObj = window.driver.js.driver({
     showProgress: true,
     nextBtnText: "Suivant ➔",
     prevBtnText: "⬅ Précédent",
@@ -1667,60 +1258,54 @@ window.lancerVisiteGuidee = function (startStep = 0) {
         element: ".info-table",
         popover: {
           title: "1. Votre Profil",
-          description:
-            "Bienvenue ! Commencez par définir votre grade, votre échelon, vos enfants à charge et la NBI pour initialiser votre base de traitement.",
           side: "bottom",
           align: "start",
+          description: "Bienvenue ! Commencez par définir votre grade, votre échelon, vos enfants à charge et la NBI pour initialiser votre base de traitement.",
         },
       },
       {
         element: "#row-201958",
         popover: {
           title: "2. Une paie sur-mesure",
-          description:
-            "Le tableau est interactif ! Cliquez sur n'importe quelle ligne de prime (comme la RIST ou l'ISQ) pour ajuster les valeurs selon votre centre.",
           side: "bottom",
           align: "start",
+          description: "Le tableau est interactif ! Cliquez sur n'importe quelle ligne de prime (comme la RIST ou l'ISQ) pour ajuster les valeurs selon votre centre.",
         },
       },
       {
         element: "#row-202206",
         popover: {
           title: "3. N'oubliez pas la CSG !",
-          description:
-            "Attention : l'Indemnité Compensatrice CSG est propre à chaque agent. Pensez bien à cliquer sur cette ligne pour saisir votre montant exact (indiqué sur votre vraie fiche).",
           side: "top",
           align: "start",
+          description: "Attention : l'Indemnité Compensatrice CSG est propre à chaque agent. Pensez bien à cliquer sur cette ligne pour saisir votre montant exact (indiqué sur votre vraie fiche).",
         },
       },
       {
         element: "#row-taux-impot",
         popover: {
           title: "4. Prélèvement à la Source",
-          description:
-            "Il est essentiel de bien régler votre taux d'imposition personnalisé pour avoir un Net à Payer réaliste. Cliquez ici pour le modifier.",
           side: "top",
           align: "start",
+          description: "Il est essentiel de bien régler votre taux d'imposition personnalisé pour avoir un Net à Payer réaliste. Cliquez ici pour le modifier.",
         },
       },
       {
         element: ".add-row",
         popover: {
           title: "5. Les éléments variables",
-          description:
-            "C'est ici que vous pourrez ajouter les options protocolaires, vos forfaits mobilités, nuits travaillées ou vos jours d'absence.",
           side: "top",
           align: "center",
+          description: "C'est ici que vous pourrez ajouter les options protocolaires, vos forfaits mobilités, nuits travaillées ou vos jours d'absence.",
         },
       },
       {
         element: ".pay-table-foot",
         popover: {
           title: "6. Le Verdict",
-          description:
-            "Vos charges, votre Net Social et votre Net à Payer se mettront à jour instantanément à chaque modification. Bonne simulation !",
           side: "top",
           align: "end",
+          description: "Vos charges, votre Net Social et votre Net à Payer se mettront à jour instantanément à chaque modification. Bonne simulation !",
         },
       },
     ],

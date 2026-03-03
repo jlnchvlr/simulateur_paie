@@ -5,1552 +5,394 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulateur Paie ICNA</title>
     <link rel="stylesheet" href="style.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css" />
   </head>
   <body>
-    <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">
-      💡 Comment ça marche ?
-    </button>
+    <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">💡 Comment ça marche ?</button>
 
     <dialog id="magic-modal" class="magic-modal">
       <div class="modal-header">
         <h2 id="modal-title">Modifier l'élément</h2>
-        <button
-          class="close-btn"
-          onclick="document.getElementById('magic-modal').close()"
-        >
-          ✖
-        </button>
+        <button class="close-btn" onclick="document.getElementById('magic-modal').close()">✖</button>
       </div>
 
       <div class="modal-body">
+        <!-- ══════════════════════════════════════
+             PANEL : Attractivité Géographique
+             ══════════════════════════════════════ -->
         <div id="panel-attractivite" class="setting-panel">
-          <p
-            style="
-              margin-top: 0;
-              font-size: 13px;
-              color: #555;
-              margin-bottom: 15px;
-            "
-          >
-            Sélectionnez la prime liée à l'attractivité géographique de votre
-            centre.
-          </p>
-          <select
-            id="input-attractivite"
-            style="
-              width: 100%;
-              padding: 12px 15px;
-              border: 2px solid var(--dgfip-light);
-              border-radius: 6px;
-              font-family: var(--font-main);
-              font-size: 14px;
-              background-color: white;
-              color: var(--dgfip-dark);
-              cursor: pointer;
-              outline: none;
-            "
-          ></select>
+          <p class="panel-hint">Sélectionnez la prime liée à l'attractivité géographique de votre centre.</p>
+          <select id="input-attractivite" class="panel-select"></select>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Fidélisation
+             ══════════════════════════════════════ -->
         <div id="panel-fidelisation" class="setting-panel">
-          <p
-            style="
-              margin-top: 0;
-              font-size: 13px;
-              color: #555;
-              margin-bottom: 15px;
-            "
-          >
-            Sélectionnez votre palier de fidélisation (Prime de Fidélisation
-            Territoriale).
-          </p>
-          <select
-            id="input-fidelisation"
-            style="
-              width: 100%;
-              padding: 12px 15px;
-              border: 2px solid var(--dgfip-light);
-              border-radius: 6px;
-              font-family: var(--font-main);
-              font-size: 14px;
-              background-color: white;
-              color: var(--dgfip-dark);
-              cursor: pointer;
-              outline: none;
-            "
-          ></select>
+          <p class="panel-hint">Sélectionnez votre palier de fidélisation (Prime de Fidélisation Territoriale).</p>
+          <select id="input-fidelisation" class="panel-select"></select>
         </div>
-        <div id="panel-residence" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
 
-          <p
-            style="
-              font-size: 12px;
-              color: #555;
-              margin-bottom: 20px;
-              line-height: 1.5;
-              background-color: #f9f9f9;
-              padding: 10px;
-              border-left: 3px solid var(--dgfip-dark);
-            "
-          >
-            L'indemnité compense le coût de la vie selon votre zone
-            d'affectation :<br />
-            <strong>Zone 1 (3%) :</strong> Île-de-France, Corse, Aix-Marseille,
-            Genevois français...<br />
-            <strong>Zone 2 (1%) :</strong> Grandes agglomérations (Lyon, Lille,
-            Toulouse, Nice, etc.).<br />
+        <!-- ══════════════════════════════════════
+             PANEL : Zone de Résidence
+             ══════════════════════════════════════ -->
+        <div id="panel-residence" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">
+            L'indemnité compense le coût de la vie selon votre zone d'affectation :<br />
+            <strong>Zone 1 (3%) :</strong> Île-de-France, Corse, Aix-Marseille, Genevois français...<br />
+            <strong>Zone 2 (1%) :</strong> Grandes agglomérations (Lyon, Lille, Toulouse, Nice, etc.).<br />
             <strong>Zone 3 (0%) :</strong> Toutes les autres communes.
           </p>
-
           <div class="ir-tabs">
-            <input
-              type="radio"
-              id="ir-zone1"
-              name="ir-zone"
-              value="Zone 1"
-              checked
-              onchange="calculerPaie()"
-            />
-            <label for="ir-zone1"
-              ><strong>3 %</strong><br /><small>Zone 1</small></label
-            >
-
-            <input
-              type="radio"
-              id="ir-zone2"
-              name="ir-zone"
-              value="Zone 2"
-              onchange="calculerPaie()"
-            />
-            <label for="ir-zone2"
-              ><strong>1 %</strong><br /><small>Zone 2</small></label
-            >
-
-            <input
-              type="radio"
-              id="ir-zone3"
-              name="ir-zone"
-              value="Zone 3"
-              onchange="calculerPaie()"
-            />
-            <label for="ir-zone3"
-              ><strong>0 %</strong><br /><small>Zone 3</small></label
-            >
+            <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" checked onchange="calculerPaie()" />
+            <label for="ir-zone1"><strong>3 %</strong><br /><small>Zone 1</small></label>
+            <input type="radio" id="ir-zone2" name="ir-zone" value="Zone 2" onchange="calculerPaie()" />
+            <label for="ir-zone2"><strong>1 %</strong><br /><small>Zone 2</small></label>
+            <input type="radio" id="ir-zone3" name="ir-zone" value="Zone 3" onchange="calculerPaie()" />
+            <label for="ir-zone3"><strong>0 %</strong><br /><small>Zone 3</small></label>
           </div>
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : RIST Part Fonctions
+             ══════════════════════════════════════ -->
         <div id="panel-rist-fonctions" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Part Fonctions (RIST)</label>
           <input type="hidden" id="input-fonction" value="Niveau 10" />
-
           <div class="rist-list-container" onmouseleave="resetHelperRist()">
-            <div
-              class="rist-option"
-              data-value="Niveau 1"
-              onmouseenter="previewHelperRist('Niveau 1')"
-              onclick="selectRist('Niveau 1')"
-            >
-              Niveau 1 (440,74 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 2"
-              onmouseenter="previewHelperRist('Niveau 2')"
-              onclick="selectRist('Niveau 2')"
-            >
-              Niveau 2 (550,93 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 3"
-              onmouseenter="previewHelperRist('Niveau 3')"
-              onclick="selectRist('Niveau 3')"
-            >
-              Niveau 3 (637,87 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 4"
-              onmouseenter="previewHelperRist('Niveau 4')"
-              onclick="selectRist('Niveau 4')"
-            >
-              Niveau 4 (711,40 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 5"
-              onmouseenter="previewHelperRist('Niveau 5')"
-              onclick="selectRist('Niveau 5')"
-            >
-              Niveau 5 (1 156,99 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 6"
-              onmouseenter="previewHelperRist('Niveau 6')"
-              onclick="selectRist('Niveau 6')"
-            >
-              Niveau 6 (1 242,67 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 7"
-              onmouseenter="previewHelperRist('Niveau 7')"
-              onclick="selectRist('Niveau 7')"
-            >
-              Niveau 7 (1 322,26 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 8"
-              onmouseenter="previewHelperRist('Niveau 8')"
-              onclick="selectRist('Niveau 8')"
-            >
-              Niveau 8 (1 432,44 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 9"
-              onmouseenter="previewHelperRist('Niveau 9')"
-              onclick="selectRist('Niveau 9')"
-            >
-              Niveau 9 (1 518,16 €)
-            </div>
-            <div
-              class="rist-option selected"
-              data-value="Niveau 10"
-              onmouseenter="previewHelperRist('Niveau 10')"
-              onclick="selectRist('Niveau 10')"
-            >
-              Niveau 10 (1 591,62 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 11"
-              onmouseenter="previewHelperRist('Niveau 11')"
-              onclick="selectRist('Niveau 11')"
-            >
-              Niveau 11 (1 701,81 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 12"
-              onmouseenter="previewHelperRist('Niveau 12')"
-              onclick="selectRist('Niveau 12')"
-            >
-              Niveau 12 (1 775,28 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 13"
-              onmouseenter="previewHelperRist('Niveau 13')"
-              onclick="selectRist('Niveau 13')"
-            >
-              Niveau 13 (1 878,50 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 14"
-              onmouseenter="previewHelperRist('Niveau 14')"
-              onclick="selectRist('Niveau 14')"
-            >
-              Niveau 14 (1 936,41 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 15"
-              onmouseenter="previewHelperRist('Niveau 15')"
-              onclick="selectRist('Niveau 15')"
-            >
-              Niveau 15 (1 994,32 €)
-            </div>
+            <div class="rist-option" data-value="Niveau 1" onmouseenter="previewHelperRist('Niveau 1')" onclick="selectRist('Niveau 1')">Niveau 1 (440,74 €)</div>
+            <div class="rist-option" data-value="Niveau 2" onmouseenter="previewHelperRist('Niveau 2')" onclick="selectRist('Niveau 2')">Niveau 2 (550,93 €)</div>
+            <div class="rist-option" data-value="Niveau 3" onmouseenter="previewHelperRist('Niveau 3')" onclick="selectRist('Niveau 3')">Niveau 3 (637,87 €)</div>
+            <div class="rist-option" data-value="Niveau 4" onmouseenter="previewHelperRist('Niveau 4')" onclick="selectRist('Niveau 4')">Niveau 4 (711,40 €)</div>
+            <div class="rist-option" data-value="Niveau 5" onmouseenter="previewHelperRist('Niveau 5')" onclick="selectRist('Niveau 5')">Niveau 5 (1 156,99 €)</div>
+            <div class="rist-option" data-value="Niveau 6" onmouseenter="previewHelperRist('Niveau 6')" onclick="selectRist('Niveau 6')">Niveau 6 (1 242,67 €)</div>
+            <div class="rist-option" data-value="Niveau 7" onmouseenter="previewHelperRist('Niveau 7')" onclick="selectRist('Niveau 7')">Niveau 7 (1 322,26 €)</div>
+            <div class="rist-option" data-value="Niveau 8" onmouseenter="previewHelperRist('Niveau 8')" onclick="selectRist('Niveau 8')">Niveau 8 (1 432,44 €)</div>
+            <div class="rist-option" data-value="Niveau 9" onmouseenter="previewHelperRist('Niveau 9')" onclick="selectRist('Niveau 9')">Niveau 9 (1 518,16 €)</div>
+            <div class="rist-option selected" data-value="Niveau 10" onmouseenter="previewHelperRist('Niveau 10')" onclick="selectRist('Niveau 10')">Niveau 10 (1 591,62 €)</div>
+            <div class="rist-option" data-value="Niveau 11" onmouseenter="previewHelperRist('Niveau 11')" onclick="selectRist('Niveau 11')">Niveau 11 (1 701,81 €)</div>
+            <div class="rist-option" data-value="Niveau 12" onmouseenter="previewHelperRist('Niveau 12')" onclick="selectRist('Niveau 12')">Niveau 12 (1 775,28 €)</div>
+            <div class="rist-option" data-value="Niveau 13" onmouseenter="previewHelperRist('Niveau 13')" onclick="selectRist('Niveau 13')">Niveau 13 (1 878,50 €)</div>
+            <div class="rist-option" data-value="Niveau 14" onmouseenter="previewHelperRist('Niveau 14')" onclick="selectRist('Niveau 14')">Niveau 14 (1 936,41 €)</div>
+            <div class="rist-option" data-value="Niveau 15" onmouseenter="previewHelperRist('Niveau 15')" onclick="selectRist('Niveau 15')">Niveau 15 (1 994,32 €)</div>
           </div>
-
-          <div
-            id="rist-helper-text"
-            style="
-              font-size: 11px;
-              color: #0056b3;
-              background-color: #e6f2ff;
-              padding: 10px;
-              border-radius: 4px;
-              font-style: italic;
-              min-height: 35px;
-              border-left: 3px solid #0056b3;
-            "
-          >
-            Sélectionnez un niveau pour voir les fonctions...
+          <div id="rist-helper-text" class="helper-text">Sélectionnez un niveau pour voir les fonctions...</div>
+          <div class="preview-amount">
+            Montant sur la paie : <strong><span id="preview-rist-fonctions">0,00</span> €</strong>
           </div>
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 10px;
-              border-radius: 4px;
-              margin-top: 15px;
-              margin-bottom: 15px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Montant sur la paie :
-            <strong style="color: var(--dgfip-dark); font-size: 16px"
-              ><span id="preview-rist-fonctions">0,00</span> €</strong
-            >
-          </div>
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : RIST Part Expérience
+             ══════════════════════════════════════ -->
         <div id="panel-rist-experience" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Part Expérience Professionnelle</label>
           <input type="hidden" id="input-experience" value="Niveau 4" />
-
           <div class="rist-list-container" onmouseleave="resetHelperExp()">
-            <div
-              class="rist-option"
-              data-value="Niveau 1"
-              onmouseenter="previewHelperExp('Niveau 1')"
-              onclick="selectExp('Niveau 1')"
-            >
-              Niveau 1 (271,50 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 2"
-              onmouseenter="previewHelperExp('Niveau 2')"
-              onclick="selectExp('Niveau 2')"
-            >
-              Niveau 2 (325,49 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 3"
-              onmouseenter="previewHelperExp('Niveau 3')"
-              onclick="selectExp('Niveau 3')"
-            >
-              Niveau 3 (379,72 €)
-            </div>
-            <div
-              class="rist-option selected"
-              data-value="Niveau 4"
-              onmouseenter="previewHelperExp('Niveau 4')"
-              onclick="selectExp('Niveau 4')"
-            >
-              Niveau 4 (454,72 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 5"
-              onmouseenter="previewHelperExp('Niveau 5')"
-              onclick="selectExp('Niveau 5')"
-            >
-              Niveau 5 (559,69 €)
-            </div>
+            <div class="rist-option" data-value="Niveau 1" onmouseenter="previewHelperExp('Niveau 1')" onclick="selectExp('Niveau 1')">Niveau 1 (271,50 €)</div>
+            <div class="rist-option" data-value="Niveau 2" onmouseenter="previewHelperExp('Niveau 2')" onclick="selectExp('Niveau 2')">Niveau 2 (325,49 €)</div>
+            <div class="rist-option" data-value="Niveau 3" onmouseenter="previewHelperExp('Niveau 3')" onclick="selectExp('Niveau 3')">Niveau 3 (379,72 €)</div>
+            <div class="rist-option selected" data-value="Niveau 4" onmouseenter="previewHelperExp('Niveau 4')" onclick="selectExp('Niveau 4')">Niveau 4 (454,72 €)</div>
+            <div class="rist-option" data-value="Niveau 5" onmouseenter="previewHelperExp('Niveau 5')" onclick="selectExp('Niveau 5')">Niveau 5 (559,69 €)</div>
           </div>
-
-          <div
-            id="exp-helper-text"
-            style="
-              font-size: 11px;
-              color: #0056b3;
-              background-color: #e6f2ff;
-              padding: 10px;
-              border-radius: 4px;
-              font-style: italic;
-              min-height: 35px;
-              border-left: 3px solid #0056b3;
-            "
-          >
-            Sélectionnez un niveau pour voir les grades correspondants...
+          <div id="exp-helper-text" class="helper-text">Sélectionnez un niveau pour voir les grades correspondants...</div>
+          <div class="preview-amount">
+            Montant sur la paie : <strong><span id="preview-rist-experience">0,00</span> €</strong>
           </div>
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 10px;
-              border-radius: 4px;
-              margin-top: 15px;
-              margin-bottom: 15px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Montant sur la paie :
-            <strong style="color: var(--dgfip-dark); font-size: 16px"
-              ><span id="preview-rist-experience">0,00</span> €</strong
-            >
-          </div>
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : ISQ Licence
+             ══════════════════════════════════════ -->
         <div id="panel-rist-isq-licence" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Licence ISQ</label>
           <input type="hidden" id="input-isq-licence" value="Niveau 5" />
-
-          <div
-            class="rist-list-container"
-            onmouseleave="resetHelperIsqLicence()"
-          >
-            <div
-              class="rist-option"
-              data-value="Aucune"
-              onmouseenter="previewHelperIsqLicence('Aucune')"
-              onclick="selectIsqLicence('Aucune')"
-            >
-              Aucune / Suspendue (0,00 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 1"
-              onmouseenter="previewHelperIsqLicence('Niveau 1')"
-              onclick="selectIsqLicence('Niveau 1')"
-            >
-              Niveau 1 (932,04 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 2"
-              onmouseenter="previewHelperIsqLicence('Niveau 2')"
-              onclick="selectIsqLicence('Niveau 2')"
-            >
-              Niveau 2 (1 258,42 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 3"
-              onmouseenter="previewHelperIsqLicence('Niveau 3')"
-              onclick="selectIsqLicence('Niveau 3')"
-            >
-              Niveau 3 (1 376,85 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 4"
-              onmouseenter="previewHelperIsqLicence('Niveau 4')"
-              onclick="selectIsqLicence('Niveau 4')"
-            >
-              Niveau 4 (377,53 €)
-            </div>
-            <div
-              class="rist-option selected"
-              data-value="Niveau 5"
-              onmouseenter="previewHelperIsqLicence('Niveau 5')"
-              onclick="selectIsqLicence('Niveau 5')"
-            >
-              Niveau 5 (1 976,11 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 6"
-              onmouseenter="previewHelperIsqLicence('Niveau 6')"
-              onclick="selectIsqLicence('Niveau 6')"
-            >
-              Niveau 6 (576,11 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 7"
-              onmouseenter="previewHelperIsqLicence('Niveau 7')"
-              onclick="selectIsqLicence('Niveau 7')"
-            >
-              Niveau 7 (1 526,85 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 8"
-              onmouseenter="previewHelperIsqLicence('Niveau 8')"
-              onclick="selectIsqLicence('Niveau 8')"
-            >
-              Niveau 8 (1 077,53 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 9"
-              onmouseenter="previewHelperIsqLicence('Niveau 9')"
-              onclick="selectIsqLicence('Niveau 9')"
-            >
-              Niveau 9 (1 276,11 €)
-            </div>
+          <div class="rist-list-container" onmouseleave="resetHelperIsqLicence()">
+            <div class="rist-option" data-value="Aucune" onmouseenter="previewHelperIsqLicence('Aucune')" onclick="selectIsqLicence('Aucune')">Aucune / Suspendue (0,00 €)</div>
+            <div class="rist-option" data-value="Niveau 1" onmouseenter="previewHelperIsqLicence('Niveau 1')" onclick="selectIsqLicence('Niveau 1')">Niveau 1 (932,04 €)</div>
+            <div class="rist-option" data-value="Niveau 2" onmouseenter="previewHelperIsqLicence('Niveau 2')" onclick="selectIsqLicence('Niveau 2')">Niveau 2 (1 258,42 €)</div>
+            <div class="rist-option" data-value="Niveau 3" onmouseenter="previewHelperIsqLicence('Niveau 3')" onclick="selectIsqLicence('Niveau 3')">Niveau 3 (1 376,85 €)</div>
+            <div class="rist-option" data-value="Niveau 4" onmouseenter="previewHelperIsqLicence('Niveau 4')" onclick="selectIsqLicence('Niveau 4')">Niveau 4 (377,53 €)</div>
+            <div class="rist-option selected" data-value="Niveau 5" onmouseenter="previewHelperIsqLicence('Niveau 5')" onclick="selectIsqLicence('Niveau 5')">Niveau 5 (1 976,11 €)</div>
+            <div class="rist-option" data-value="Niveau 6" onmouseenter="previewHelperIsqLicence('Niveau 6')" onclick="selectIsqLicence('Niveau 6')">Niveau 6 (576,11 €)</div>
+            <div class="rist-option" data-value="Niveau 7" onmouseenter="previewHelperIsqLicence('Niveau 7')" onclick="selectIsqLicence('Niveau 7')">Niveau 7 (1 526,85 €)</div>
+            <div class="rist-option" data-value="Niveau 8" onmouseenter="previewHelperIsqLicence('Niveau 8')" onclick="selectIsqLicence('Niveau 8')">Niveau 8 (1 077,53 €)</div>
+            <div class="rist-option" data-value="Niveau 9" onmouseenter="previewHelperIsqLicence('Niveau 9')" onclick="selectIsqLicence('Niveau 9')">Niveau 9 (1 276,11 €)</div>
           </div>
-
-          <div
-            id="isq-licence-helper-text"
-            style="
-              font-size: 11px;
-              color: #0056b3;
-              background-color: #e6f2ff;
-              padding: 10px;
-              border-radius: 4px;
-              font-style: italic;
-              min-height: 35px;
-              border-left: 3px solid #0056b3;
-            "
-          >
-            Sélectionnez un niveau pour voir l'affectation correspondante...
+          <div id="isq-licence-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
+          <div class="preview-amount">
+            Montant sur la paie : <strong><span id="preview-rist-isq-licence">0,00</span> €</strong>
           </div>
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 10px;
-              border-radius: 4px;
-              margin-top: 15px;
-              margin-bottom: 15px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Montant sur la paie :
-            <strong style="color: var(--dgfip-dark); font-size: 16px"
-              ><span id="preview-rist-isq-licence">0,00</span> €</strong
-            >
-          </div>
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : ISQ Complément
+             ══════════════════════════════════════ -->
         <div id="panel-rist-isq-complement" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau du Complément ISQ</label>
           <input type="hidden" id="input-isq-complement" value="Niveau 7" />
-
-          <div
-            class="rist-list-container"
-            onmouseleave="resetHelperIsqComplement()"
-          >
-            <div
-              class="rist-option"
-              data-value="Aucun"
-              onmouseenter="previewHelperIsqComplement('Aucun')"
-              onclick="selectIsqComplement('Aucun')"
-            >
-              Aucun / Suspendu (0,00 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 1"
-              onmouseenter="previewHelperIsqComplement('Niveau 1')"
-              onclick="selectIsqComplement('Niveau 1')"
-            >
-              Niveau 1 (1 679,36 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 2"
-              onmouseenter="previewHelperIsqComplement('Niveau 2')"
-              onclick="selectIsqComplement('Niveau 2')"
-            >
-              Niveau 2 (1 751,15 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 3"
-              onmouseenter="previewHelperIsqComplement('Niveau 3')"
-              onclick="selectIsqComplement('Niveau 3')"
-            >
-              Niveau 3 (2 136,88 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 4"
-              onmouseenter="previewHelperIsqComplement('Niveau 4')"
-              onclick="selectIsqComplement('Niveau 4')"
-            >
-              Niveau 4 (2 202,45 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 5"
-              onmouseenter="previewHelperIsqComplement('Niveau 5')"
-              onclick="selectIsqComplement('Niveau 5')"
-            >
-              Niveau 5 (1 969,09 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 6"
-              onmouseenter="previewHelperIsqComplement('Niveau 6')"
-              onclick="selectIsqComplement('Niveau 6')"
-            >
-              Niveau 6 (2 037,51 €)
-            </div>
-            <div
-              class="rist-option selected"
-              data-value="Niveau 7"
-              onmouseenter="previewHelperIsqComplement('Niveau 7')"
-              onclick="selectIsqComplement('Niveau 7')"
-            >
-              Niveau 7 (2 281,78 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 8"
-              onmouseenter="previewHelperIsqComplement('Niveau 8')"
-              onclick="selectIsqComplement('Niveau 8')"
-            >
-              Niveau 8 (396,01 €)
-            </div>
+          <div class="rist-list-container" onmouseleave="resetHelperIsqComplement()">
+            <div class="rist-option" data-value="Aucun" onmouseenter="previewHelperIsqComplement('Aucun')" onclick="selectIsqComplement('Aucun')">Aucun / Non éligible (0,00 €)</div>
+            <div class="rist-option" data-value="Niveau 1" onmouseenter="previewHelperIsqComplement('Niveau 1')" onclick="selectIsqComplement('Niveau 1')">Niveau 1 (1 679,36 €)</div>
+            <div class="rist-option" data-value="Niveau 2" onmouseenter="previewHelperIsqComplement('Niveau 2')" onclick="selectIsqComplement('Niveau 2')">Niveau 2 (1 751,15 €)</div>
+            <div class="rist-option" data-value="Niveau 3" onmouseenter="previewHelperIsqComplement('Niveau 3')" onclick="selectIsqComplement('Niveau 3')">Niveau 3 (2 136,88 €)</div>
+            <div class="rist-option" data-value="Niveau 4" onmouseenter="previewHelperIsqComplement('Niveau 4')" onclick="selectIsqComplement('Niveau 4')">Niveau 4 (2 202,45 €)</div>
+            <div class="rist-option" data-value="Niveau 5" onmouseenter="previewHelperIsqComplement('Niveau 5')" onclick="selectIsqComplement('Niveau 5')">Niveau 5 (1 969,09 €)</div>
+            <div class="rist-option" data-value="Niveau 6" onmouseenter="previewHelperIsqComplement('Niveau 6')" onclick="selectIsqComplement('Niveau 6')">Niveau 6 (2 037,51 €)</div>
+            <div class="rist-option selected" data-value="Niveau 7" onmouseenter="previewHelperIsqComplement('Niveau 7')" onclick="selectIsqComplement('Niveau 7')">Niveau 7 (2 281,78 €)</div>
+            <div class="rist-option" data-value="Niveau 8" onmouseenter="previewHelperIsqComplement('Niveau 8')" onclick="selectIsqComplement('Niveau 8')">Niveau 8 (396,01 €)</div>
           </div>
-
-          <div
-            id="isq-complement-helper-text"
-            style="
-              font-size: 11px;
-              color: #0056b3;
-              background-color: #e6f2ff;
-              padding: 10px;
-              border-radius: 4px;
-              font-style: italic;
-              min-height: 35px;
-              border-left: 3px solid #0056b3;
-            "
-          >
-            Sélectionnez un niveau pour voir l'affectation correspondante...
+          <div id="isq-complement-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
+          <div class="preview-amount">
+            Montant sur la paie : <strong><span id="preview-rist-isq-complement">0,00</span> €</strong>
           </div>
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 10px;
-              border-radius: 4px;
-              margin-top: 15px;
-              margin-bottom: 15px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Montant sur la paie :
-            <strong style="color: var(--dgfip-dark); font-size: 16px"
-              ><span id="preview-rist-isq-complement">0,00</span> €</strong
-            >
-          </div>
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : ISQ Majoration
+             ══════════════════════════════════════ -->
         <div id="panel-rist-isq-majoration" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de Majoration du Complément ISQ</label>
           <input type="hidden" id="input-isq-majoration" value="Aucune" />
-
-          <div
-            class="rist-list-container"
-            onmouseleave="resetHelperIsqMajoration()"
-          >
-            <div
-              class="rist-option selected"
-              data-value="Aucune"
-              onmouseenter="previewHelperIsqMajoration('Aucune')"
-              onclick="selectIsqMajoration('Aucune')"
-            >
-              Aucune / Non éligible (0,00 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 1"
-              onmouseenter="previewHelperIsqMajoration('Niveau 1')"
-              onclick="selectIsqMajoration('Niveau 1')"
-            >
-              Niveau 1 (215,00 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 2"
-              onmouseenter="previewHelperIsqMajoration('Niveau 2')"
-              onclick="selectIsqMajoration('Niveau 2')"
-            >
-              Niveau 2 (284,98 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 3"
-              onmouseenter="previewHelperIsqMajoration('Niveau 3')"
-              onclick="selectIsqMajoration('Niveau 3')"
-            >
-              Niveau 3 (319,39 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 4"
-              onmouseenter="previewHelperIsqMajoration('Niveau 4')"
-              onclick="selectIsqMajoration('Niveau 4')"
-            >
-              Niveau 4 (376,19 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 5"
-              onmouseenter="previewHelperIsqMajoration('Niveau 5')"
-              onclick="selectIsqMajoration('Niveau 5')"
-            >
-              Niveau 5 (421,12 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 6"
-              onmouseenter="previewHelperIsqMajoration('Niveau 6')"
-              onclick="selectIsqMajoration('Niveau 6')"
-            >
-              Niveau 6 (191,60 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 7"
-              onmouseenter="previewHelperIsqMajoration('Niveau 7')"
-              onclick="selectIsqMajoration('Niveau 7')"
-            >
-              Niveau 7 (217,60 €)
-            </div>
-            <div
-              class="rist-option"
-              data-value="Niveau 8"
-              onmouseenter="previewHelperIsqMajoration('Niveau 8')"
-              onclick="selectIsqMajoration('Niveau 8')"
-            >
-              Niveau 8 (405,32 €)
-            </div>
+          <div class="rist-list-container" onmouseleave="resetHelperIsqMajoration()">
+            <div class="rist-option selected" data-value="Aucune" onmouseenter="previewHelperIsqMajoration('Aucune')" onclick="selectIsqMajoration('Aucune')">Aucune / Non éligible (0,00 €)</div>
+            <div class="rist-option" data-value="Niveau 1" onmouseenter="previewHelperIsqMajoration('Niveau 1')" onclick="selectIsqMajoration('Niveau 1')">Niveau 1 (215,00 €)</div>
+            <div class="rist-option" data-value="Niveau 2" onmouseenter="previewHelperIsqMajoration('Niveau 2')" onclick="selectIsqMajoration('Niveau 2')">Niveau 2 (284,98 €)</div>
+            <div class="rist-option" data-value="Niveau 3" onmouseenter="previewHelperIsqMajoration('Niveau 3')" onclick="selectIsqMajoration('Niveau 3')">Niveau 3 (319,39 €)</div>
+            <div class="rist-option" data-value="Niveau 4" onmouseenter="previewHelperIsqMajoration('Niveau 4')" onclick="selectIsqMajoration('Niveau 4')">Niveau 4 (376,19 €)</div>
+            <div class="rist-option" data-value="Niveau 5" onmouseenter="previewHelperIsqMajoration('Niveau 5')" onclick="selectIsqMajoration('Niveau 5')">Niveau 5 (421,12 €)</div>
+            <div class="rist-option" data-value="Niveau 6" onmouseenter="previewHelperIsqMajoration('Niveau 6')" onclick="selectIsqMajoration('Niveau 6')">Niveau 6 (191,60 €)</div>
+            <div class="rist-option" data-value="Niveau 7" onmouseenter="previewHelperIsqMajoration('Niveau 7')" onclick="selectIsqMajoration('Niveau 7')">Niveau 7 (217,60 €)</div>
+            <div class="rist-option" data-value="Niveau 8" onmouseenter="previewHelperIsqMajoration('Niveau 8')" onclick="selectIsqMajoration('Niveau 8')">Niveau 8 (405,32 €)</div>
           </div>
-
-          <div
-            id="isq-majoration-helper-text"
-            style="
-              font-size: 11px;
-              color: #0056b3;
-              background-color: #e6f2ff;
-              padding: 10px;
-              border-radius: 4px;
-              font-style: italic;
-              min-height: 35px;
-              border-left: 3px solid #0056b3;
-            "
-          >
-            Sélectionnez un niveau pour voir l'affectation correspondante...
+          <div id="isq-majoration-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
+          <div class="preview-amount">
+            Montant sur la paie : <strong><span id="preview-rist-isq-majoration">0,00</span> €</strong>
           </div>
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 10px;
-              border-radius: 4px;
-              margin-top: 15px;
-              margin-bottom: 15px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Montant sur la paie :
-            <strong style="color: var(--dgfip-dark); font-size: 16px"
-              ><span id="preview-rist-isq-majoration">0,00</span> €</strong
-            >
-          </div>
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : OTT / Protocole
+             ══════════════════════════════════════ -->
         <div id="panel-ott" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">Configurez ici l'application du protocole dans votre centre.</p>
 
-          <p
-            style="
-              font-size: 12px;
-              color: #555;
-              margin-bottom: 15px;
-              line-height: 1.5;
-              background-color: #f9f9f9;
-              padding: 10px;
-              border-left: 3px solid var(--dgfip-dark);
-            "
-          >
-            Configurez ici l'application du protocole dans votre centre.
-          </p>
-
-          <h3
-            style="
-              font-size: 13px;
-              color: var(--dgfip-dark);
-              border-bottom: 1px solid #ccc;
-              padding-bottom: 5px;
-              margin-top: 0;
-            "
-          >
-            1. Ma Part Fixe Mensuelle
-          </h3>
-          <p
-            style="
-              font-size: 11px;
-              color: #666;
-              margin-top: 0;
-              margin-bottom: 10px;
-            "
-          >
-            Cliquez sur les options actives dans votre centre :
-          </p>
+          <h3 class="panel-subhead">1. Ma Part Fixe Mensuelle</h3>
+          <p class="panel-hint-small">Cliquez sur les options actives dans votre centre :</p>
 
           <div class="ott-grid">
-            <input
-              type="checkbox"
-              id="pf-opt1-l16"
-              class="pf-checkbox"
-              value="345"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-l16" class="ott-card"
-              ><span class="ott-card-title">Option 1 (Listes 1 à 6)</span
-              ><span class="ott-card-amount">+ 345,00 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt1-cdg"
-              class="pf-checkbox"
-              value="379.50"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-cdg" class="ott-card"
-              ><span class="ott-card-title">Option 1 (CDG)</span
-              ><span class="ott-card-amount">+ 379,50 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt1-l711"
-              class="pf-checkbox"
-              value="293.25"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-l711" class="ott-card"
-              ><span class="ott-card-title">Option 1 (Listes 7 à 8)</span
-              ><span class="ott-card-amount">+ 293,25 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt1-l911"
-              class="pf-checkbox"
-              value="241.50"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-l911" class="ott-card"
-              ><span class="ott-card-title">Option 1 (Listes 9 à 11)</span
-              ><span class="ott-card-amount">+ 241,50 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt1-plus-n1"
-              class="pf-checkbox"
-              value="80"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-plus-n1" class="ott-card"
-              ><span class="ott-card-title">Option 1 Plus (N' &le; 2)</span
-              ><span class="ott-card-amount">+ 80,00 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt1-plus-n2"
-              class="pf-checkbox"
-              value="160"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-plus-n2" class="ott-card"
-              ><span class="ott-card-title">Option 1 Plus (N' &gt; 2)</span
-              ><span class="ott-card-amount">+ 160,00 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt2-1"
-              class="pf-checkbox"
-              value="115"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt2-1" class="ott-card"
-              ><span class="ott-card-title">Option 2-1</span
-              ><span class="ott-card-amount">+ 115,00 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt2-2"
-              class="pf-checkbox"
-              value="115"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt2-2" class="ott-card"
-              ><span class="ott-card-title">Option 2-2</span
-              ><span class="ott-card-amount">+ 115,00 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt2-bis"
-              class="pf-checkbox"
-              value="105.05"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt2-bis" class="ott-card"
-              ><span class="ott-card-title">Option 2 bis</span
-              ><span class="ott-card-amount">+ 105,05 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt4"
-              class="pf-checkbox"
-              value="150"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt4" class="ott-card"
-              ><span class="ott-card-title">Option 4</span
-              ><span class="ott-card-amount">+ 150,00 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt1-enac"
-              class="pf-checkbox"
-              value="680"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-enac" class="ott-card"
-              ><span class="ott-card-title">Option 1 ENAC</span
-              ><span class="ott-card-amount">+ 680,00 €</span></label
-            >
-
-            <input
-              type="checkbox"
-              id="pf-opt1-plus-enac"
-              class="pf-checkbox"
-              value="880"
-              onchange="calculerPaie()"
-            />
-            <label for="pf-opt1-plus-enac" class="ott-card"
-              ><span class="ott-card-title">Option 1-Plus ENAC</span
-              ><span class="ott-card-amount">+ 880,00 €</span></label
-            >
+            <input type="checkbox" id="pf-opt1-l16" class="pf-checkbox" value="345" onchange="calculerPaie()" />
+            <label for="pf-opt1-l16" class="ott-card"><span class="ott-card-title">Option 1 (Listes 1 à 6)</span><span class="ott-card-amount">+ 345,00 €</span></label>
+            <input type="checkbox" id="pf-opt1-cdg" class="pf-checkbox" value="379.50" onchange="calculerPaie()" />
+            <label for="pf-opt1-cdg" class="ott-card"><span class="ott-card-title">Option 1 (CDG)</span><span class="ott-card-amount">+ 379,50 €</span></label>
+            <input type="checkbox" id="pf-opt1-l711" class="pf-checkbox" value="293.25" onchange="calculerPaie()" />
+            <label for="pf-opt1-l711" class="ott-card"><span class="ott-card-title">Option 1 (Listes 7 à 8)</span><span class="ott-card-amount">+ 293,25 €</span></label>
+            <input type="checkbox" id="pf-opt1-l911" class="pf-checkbox" value="241.50" onchange="calculerPaie()" />
+            <label for="pf-opt1-l911" class="ott-card"><span class="ott-card-title">Option 1 (Listes 9 à 11)</span><span class="ott-card-amount">+ 241,50 €</span></label>
+            <input type="checkbox" id="pf-opt1-plus-n1" class="pf-checkbox" value="80" onchange="calculerPaie()" />
+            <label for="pf-opt1-plus-n1" class="ott-card"><span class="ott-card-title">Option 1 Plus (N' &le; 2)</span><span class="ott-card-amount">+ 80,00 €</span></label>
+            <input type="checkbox" id="pf-opt1-plus-n2" class="pf-checkbox" value="160" onchange="calculerPaie()" />
+            <label for="pf-opt1-plus-n2" class="ott-card"><span class="ott-card-title">Option 1 Plus (N' &gt; 2)</span><span class="ott-card-amount">+ 160,00 €</span></label>
+            <input type="checkbox" id="pf-opt2-1" class="pf-checkbox" value="115" onchange="calculerPaie()" />
+            <label for="pf-opt2-1" class="ott-card"><span class="ott-card-title">Option 2-1</span><span class="ott-card-amount">+ 115,00 €</span></label>
+            <input type="checkbox" id="pf-opt2-2" class="pf-checkbox" value="115" onchange="calculerPaie()" />
+            <label for="pf-opt2-2" class="ott-card"><span class="ott-card-title">Option 2-2</span><span class="ott-card-amount">+ 115,00 €</span></label>
+            <input type="checkbox" id="pf-opt2-bis" class="pf-checkbox" value="57.50" onchange="calculerPaie()" />
+            <label for="pf-opt2-bis" class="ott-card"><span class="ott-card-title">Option 2 Bis</span><span class="ott-card-amount">+ 57,50 €</span></label>
+            <input type="checkbox" id="pf-opt4" class="pf-checkbox" value="115" onchange="calculerPaie()" />
+            <label for="pf-opt4" class="ott-card"><span class="ott-card-title">Option 4</span><span class="ott-card-amount">+ 115,00 €</span></label>
+            <input type="checkbox" id="pf-opt1-enac" class="pf-checkbox" value="216" onchange="calculerPaie()" />
+            <label for="pf-opt1-enac" class="ott-card"><span class="ott-card-title">Option 1 ENAC</span><span class="ott-card-amount">+ 216,00 €</span></label>
+            <input type="checkbox" id="pf-opt1-plus-enac" class="pf-checkbox" value="80" onchange="calculerPaie()" />
+            <label for="pf-opt1-plus-enac" class="ott-card"><span class="ott-card-title">Option 1 Plus ENAC</span><span class="ott-card-amount">+ 80,00 €</span></label>
           </div>
 
-          <div
-            style="
-              margin-top: 5px;
-              padding-top: 10px;
-              border-top: 1px dashed #ccc;
-            "
-          >
-            <label
-              style="
-                font-weight: normal;
-                margin: 0;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-              "
-            >
+          <div class="ott-manual-row">
+            <label class="ott-manual-label">
               <span>Autre Option / Saisie manuelle (€) :</span>
-              <input
-                type="number"
-                id="pf-manuel"
-                value="0.00"
-                step="10"
-                oninput="calculerPaie()"
-                style="width: 80px; padding: 4px"
-              />
+              <input type="number" id="pf-manuel" class="ott-manual-input" value="0.00" step="10" oninput="calculerPaie()" />
             </label>
           </div>
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 8px;
-              border-radius: 4px;
-              margin-bottom: 20px;
-              margin-top: 10px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Total Part Fixe :
-            <strong style="color: var(--dgfip-dark); font-size: 14px"
-              ><span id="preview-ott-pf">0,00</span> €</strong
-            >
+          <div class="preview-amount preview-amount--compact">
+            Total Part Fixe : <strong><span id="preview-ott-pf">0,00</span> €</strong>
           </div>
 
-          <h3
-            style="
-              font-size: 13px;
-              color: var(--dgfip-dark);
-              border-bottom: 1px solid #ccc;
-              padding-bottom: 5px;
-              margin-top: 0;
-            "
-          >
-            2. Mon Bonus Annuel (Part Variable)
-          </h3>
-          <p style="font-size: 11px; color: #666; margin-top: 0">
-            Remplissez ces champs uniquement les mois où la DGAC vous verse
-            votre bonus.
-          </p>
-
+          <h3 class="panel-subhead">2. Mon Bonus Annuel (Part Variable)</h3>
+          <p class="panel-hint-small">Remplissez ces champs uniquement les mois où la DGAC vous verse votre bonus.</p>
           <label>Montant Part Variable Globale (€)</label>
-          <input
-            type="number"
-            id="pv-globale"
-            value="0.00"
-            step="10"
-            oninput="calculerPaie()"
-          />
-
+          <input type="number" id="pv-globale" value="0.00" step="10" oninput="calculerPaie()" />
           <label>Montant Part Variable Option 3-1 / 3-2 (€)</label>
-          <input
-            type="number"
-            id="pv-opt32"
-            value="0.00"
-            step="10"
-            oninput="calculerPaie()"
-          />
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 8px;
-              border-radius: 4px;
-              margin-top: 15px;
-              margin-bottom: 15px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Total Part Variable (Ce mois-ci) :
-            <strong style="color: var(--dgfip-dark); font-size: 14px"
-              ><span id="preview-ott-pv">0,00</span> €</strong
-            >
+          <input type="number" id="pv-opt32" value="0.00" step="10" oninput="calculerPaie()" />
+          <div class="preview-amount preview-amount--compact">
+            Total Part Variable (Ce mois-ci) : <strong><span id="preview-ott-pv">0,00</span> €</strong>
           </div>
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Nuits & Soirées
+             ══════════════════════════════════════ -->
         <div id="panel-nuits" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Nombre de Nuits complètes (N)</label>
           <input type="number" id="input-nuit-n" value="0" step="1" />
-
           <label>Nombre de Soirées (S2)</label>
           <input type="number" id="input-nuit-s2" value="0" step="1" />
-
-          <div
-            style="
-              background-color: #e8f0fe;
-              padding: 10px;
-              border-radius: 4px;
-              margin-top: 15px;
-              margin-bottom: 15px;
-              text-align: right;
-              font-family: var(--font-main);
-            "
-          >
-            Montant estimé :
-            <strong style="color: var(--dgfip-dark); font-size: 16px"
-              ><span id="preview-nuits">0,00</span> €</strong
-            >
+          <div class="preview-amount">
+            Montant estimé : <strong><span id="preview-nuits">0,00</span> €</strong>
           </div>
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Absences
+             ══════════════════════════════════════ -->
         <div id="panel-absences" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Service Non Fait / Grève (Retenue 100%)</label>
-          <input
-            type="number"
-            id="input-greve"
-            value="0"
-            min="0"
-            max="30"
-            oninput="limiterAbsences(this)"
-            title="Retenue d'un 1/30ème par jour"
-          />
-
+          <input type="number" id="input-greve" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue d'un 1/30ème par jour" />
           <label>Jour(s) de Carence Maladie (Retenue 100%)</label>
-          <input
-            type="number"
-            id="input-carence"
-            value="0"
-            min="0"
-            max="30"
-            oninput="limiterAbsences(this)"
-          />
-
+          <input type="number" id="input-carence" value="0" min="0" max="30" oninput="limiterAbsences(this)" />
           <label>Jours de Maladie rémunérés à 90%</label>
-          <input
-            type="number"
-            id="input-maladie-90"
-            value="0"
-            min="0"
-            max="30"
-            oninput="limiterAbsences(this)"
-            title="Retenue de 10% d'un 1/30ème par jour"
-          />
-
+          <input type="number" id="input-maladie-90" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue de 10% d'un 1/30ème par jour" />
           <label>Jours de Maladie à demi-traitement (50%)</label>
-          <input
-            type="number"
-            id="input-maladie-50"
-            value="0"
-            min="0"
-            max="30"
-            oninput="limiterAbsences(this)"
-            title="Retenue de 50% d'un 1/30ème par jour"
-          />
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <input type="number" id="input-maladie-50" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue de 50% d'un 1/30ème par jour" />
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : PSC (Mutuelle)
+             ══════════════════════════════════════ -->
         <div id="panel-psc" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
-          <p
-            style="
-              font-size: 12px;
-              color: #555;
-              margin-bottom: 20px;
-              line-height: 1.5;
-              background-color: #f9f9f9;
-              padding: 10px;
-              border-left: 3px solid var(--dgfip-dark);
-            "
-          >
-            Vous pouvez cumuler plusieurs aides (cochez celles qui s'appliquent
-            à votre situation) :
-          </p>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">Vous pouvez cumuler plusieurs aides (cochez celles qui s'appliquent à votre situation) :</p>
           <div class="ir-tabs">
-            <input
-              type="checkbox"
-              id="psc-15"
-              class="psc-checkbox"
-              value="15"
-              onchange="calculerPaie()"
-            />
+            <input type="checkbox" id="psc-15" class="psc-checkbox" value="15" onchange="calculerPaie()" />
             <label for="psc-15"
-              ><strong>15 €</strong><br /><small
-                >Jusqu'au<br />30/04/26</small
-              ></label
+              ><strong>15 €</strong><br /><small>Jusqu'au<br />30/04/26</small></label
             >
-
-            <input
-              type="checkbox"
-              id="psc-7"
-              class="psc-checkbox"
-              value="7"
-              onchange="calculerPaie()"
-            />
+            <input type="checkbox" id="psc-7" class="psc-checkbox" value="7" onchange="calculerPaie()" />
             <label for="psc-7"
-              ><strong>7 €</strong><br /><small
-                >Prév. MGAS<br />(Dès 05/26)</small
-              ></label
+              ><strong>7 €</strong><br /><small>Prév. MGAS<br />(Dès 05/26)</small></label
             >
-
-            <input
-              type="checkbox"
-              id="psc-5"
-              class="psc-checkbox"
-              value="5"
-              onchange="calculerPaie()"
-            />
+            <input type="checkbox" id="psc-5" class="psc-checkbox" value="5" onchange="calculerPaie()" />
             <label for="psc-5"
-              ><strong>5 €</strong><br /><small
-                >Santé ALAN<br />(Dès 05/26)</small
-              ></label
+              ><strong>5 €</strong><br /><small>Santé ALAN<br />(Dès 05/26)</small></label
             >
           </div>
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Menu d'ajout
+             ══════════════════════════════════════ -->
         <div id="panel-menu-ajout" class="setting-panel">
-          <p
-            style="
-              margin-top: 0;
-              font-size: 13px;
-              color: #555;
-              margin-bottom: 15px;
-            "
-          >
-            Sélectionnez ou recherchez l'élément à ajouter à votre fiche :
-          </p>
-
-          <input
-            type="text"
-            id="recherche-ajout"
-            placeholder="Rechercher une prime, absence, indemnité..."
-            autocomplete="off"
-          />
-
+          <p class="panel-hint">Sélectionnez ou recherchez l'élément à ajouter à votre fiche :</p>
+          <input type="text" id="recherche-ajout" placeholder="Rechercher une prime, absence, indemnité..." autocomplete="off" />
           <div id="resultats-recherche" style="display: none"></div>
-
           <div id="boutons-ajout-defaut" class="add-buttons-grid">
-            <button
-              onclick="
-                ouvrirModal('panel-nuits', '🌙 Travail de Nuit & Soirées')
-              "
-            >
-              🌙 Nuits & Soirées
-            </button>
-            <button
-              onclick="ouvrirModal('panel-absences', '🤒 Absences & Carence')"
-            >
-              🤒 Jours d'absence
-            </button>
-            <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">
-              📊 Protocole (OTT)
-            </button>
-            <button
-              onclick="
-                ouvrirModal('panel-primes', '💰 Partage Performance (PPP)')
-              "
-            >
-              💰 Partage Performance
-            </button>
-            <button
-              onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')"
-            >
-              📍 Attractivité Géo
-            </button>
-            <button
-              onclick="
-                ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')
-              "
-            >
-              ⏳ Prime Fidélisation
-            </button>
-            <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">
-              🚲 Forfait Mobilités
-            </button>
-            <button
-              onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')"
-            >
-              📈 Indemnité Inflation
-            </button>
-            <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">
-              🛡️ Participation PSC
-            </button>
+            <button onclick="ouvrirModal('panel-nuits', '🌙 Travail de Nuit &amp; Soirées')">🌙 Nuits &amp; Soirées</button>
+            <button onclick="ouvrirModal('panel-absences', '🤒 Absences &amp; Carence')">🤒 Jours d'absence</button>
+            <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">📊 Protocole (OTT)</button>
+            <button onclick="ouvrirModal('panel-primes', '💰 Partage Performance (PPP)')">💰 Partage Performance</button>
+            <button onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')">📍 Attractivité Géo</button>
+            <button onclick="ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')">⏳ Prime Fidélisation</button>
+            <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
+            <button onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
+            <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">🛡️ Participation PSC</button>
           </div>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Forfait Mobilités Durables
+             ══════════════════════════════════════ -->
         <div id="panel-fmd" class="setting-panel">
-          <button
-            type="button"
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Montant du Forfait Mobilités Durables</label>
-          <select
-            id="input-fmd"
-            style="
-              width: 100%;
-              padding: 10px;
-              border-radius: 4px;
-              border: 1px solid #ccc;
-              font-family: inherit;
-              margin-bottom: 20px;
-              font-size: 14px;
-              cursor: pointer;
-            "
-          >
+          <select id="input-fmd" class="select-light">
             <option value="0">-- Aucun --</option>
             <option value="100">100 € (30 à 59 jours)</option>
             <option value="200">200 € (60 à 99 jours)</option>
             <option value="300">300 € (100 jours et plus)</option>
           </select>
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Indemnité Inflation
+             ══════════════════════════════════════ -->
         <div id="panel-inflation" class="setting-panel">
-          <button
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
-          <p
-            style="
-              margin-top: 0;
-              font-size: 13px;
-              color: #555;
-              margin-bottom: 15px;
-            "
-          >
-            Saisissez manuellement le montant de l'indemnité inflation / pouvoir
-            d'achat.
-          </p>
+          <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-hint">Saisissez manuellement le montant de l'indemnité inflation / pouvoir d'achat.</p>
           <label>Montant de l'indemnité (€)</label>
-          <input
-            type="number"
-            id="input-inflation"
-            value="0.00"
-            step="10"
-            oninput="calculerPaie()"
-          />
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <input type="number" id="input-inflation" value="0.00" step="10" oninput="calculerPaie()" />
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Prime Partage Performance
+             ══════════════════════════════════════ -->
         <div id="panel-primes" class="setting-panel">
-          <button
-            class="back-btn"
-            onclick="
-              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
-            "
-          >
-            ⬅ Retour au menu
-          </button>
-
+          <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Prime Partage Performance (€)</label>
           <input type="number" id="input-perf" value="0.00" step="10" />
-
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Prélèvement à la Source
+             ══════════════════════════════════════ -->
         <div id="panel-impots" class="setting-panel">
           <label>Taux de Prélèvement à la Source (%)</label>
           <input type="number" id="input-pas" value="19.6" step="0.1" />
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
+        <!-- ══════════════════════════════════════
+             PANEL : Indemnité Compensatrice CSG
+             ══════════════════════════════════════ -->
         <div id="panel-csg" class="setting-panel">
           <label>Indemnité Compensatrice CSG (€)</label>
           <input type="number" id="input-ind-csg" value="115.18" step="0.01" />
-          <p
-            style="
-              font-size: 10px;
-              color: #666;
-              font-style: italic;
-              margin-top: 5px;
-            "
-          >
-            Cette indemnité est propre à chaque agent (figée sur la base de la
-            rémunération de 2017).
-          </p>
-          <button
-            type="button"
-            class="validate-btn"
-            onclick="document.getElementById('magic-modal').close()"
-          >
-            Valider & Fermer ↵
-          </button>
+          <p class="panel-footnote">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
       </div>
+      <!-- /.modal-body -->
     </dialog>
 
+    <!-- ══════════════════════════════════════
+         SPOTLIGHT (Ctrl + K)
+         ══════════════════════════════════════ -->
     <dialog id="spotlight-modal" class="spotlight-modal">
       <div class="spotlight-container">
         <div class="spotlight-header">
           <span class="spotlight-icon">🔍</span>
-          <input
-            type="text"
-            id="spotlight-input"
-            placeholder="Rechercher (Primes, Absences, Impôts...)"
-            autocomplete="off"
-          />
+          <input type="text" id="spotlight-input" placeholder="Rechercher (Primes, Absences, Impôts...)" autocomplete="off" />
           <span class="spotlight-shortcut">ESC</span>
         </div>
         <div id="spotlight-results" class="spotlight-results"></div>
       </div>
     </dialog>
 
+    <!-- ══════════════════════════════════════
+         PAGE A4 — FICHE DE PAIE
+         ══════════════════════════════════════ -->
     <div class="page-a4">
-      <div style="height: 20px"></div>
+      <div class="page-top-spacer"></div>
 
       <table class="info-table">
         <thead>
@@ -1566,46 +408,15 @@
         <tbody>
           <tr>
             <td>
-              <select
-                id="input-grade"
-                style="
-                  border: none;
-                  background: transparent;
-                  font-family: inherit;
-                  font-size: inherit;
-                  font-weight: inherit;
-                  cursor: pointer;
-                  outline: none;
-                "
-                title="Cliquez pour changer de grade"
-              >
-                <option value="ING. EN CHEF CONT.NAV.AE">
-                  ING. CHEF CONT.NAV.AE
-                </option>
-                <option value="ING.DIV. CONT.NAV.AE" selected>
-                  ING. DIV. CONT.NAV.AE
-                </option>
+              <select id="input-grade" class="select-transparent" title="Cliquez pour changer de grade">
+                <option value="ING. EN CHEF CONT.NAV.AE">ING. CHEF CONT.NAV.AE</option>
+                <option value="ING.DIV. CONT.NAV.AE" selected>ING. DIV. CONT.NAV.AE</option>
                 <option value="ING. CONT.NAV.AE">ING. NORM. CONT.NAV.AE</option>
-                <option value="ELEVE / STAGIAIRE ICNA">
-                  ELEVE / STAGIAIRE ICNA
-                </option>
+                <option value="ELEVE / STAGIAIRE ICNA">ELEVE / STAGIAIRE ICNA</option>
               </select>
             </td>
             <td>
-              <select
-                id="input-enfants"
-                style="
-                  border: none;
-                  background: transparent;
-                  font-family: inherit;
-                  font-size: inherit;
-                  font-weight: inherit;
-                  text-align: center;
-                  cursor: pointer;
-                  outline: none;
-                "
-                title="Nombre d'enfants à charge"
-              >
+              <select id="input-enfants" class="select-transparent" title="Nombre d'enfants à charge">
                 <option value="0">00</option>
                 <option value="1">01</option>
                 <option value="2">02</option>
@@ -1615,33 +426,11 @@
               </select>
             </td>
             <td>
-              <select
-                id="input-echelon"
-                style="
-                  border: none;
-                  background: transparent;
-                  font-family: inherit;
-                  font-size: inherit;
-                  font-weight: inherit;
-                  cursor: pointer;
-                  outline: none;
-                "
-                title="Choisissez votre échelon"
-              ></select>
+              <select id="input-echelon" class="select-transparent" title="Choisissez votre échelon"></select>
             </td>
             <td id="ui-indice">0462</td>
-            <td style="text-align: center">
-              <input
-                type="checkbox"
-                id="input-nbi-checkbox"
-                style="
-                  cursor: pointer;
-                  width: 14px;
-                  height: 14px;
-                  margin-top: 2px;
-                "
-                title="Activer/Désactiver la NBI"
-              />
+            <td>
+              <input type="checkbox" id="input-nbi-checkbox" class="nbi-checkbox" title="Activer/Désactiver la NBI" />
             </td>
             <td>&nbsp;</td>
           </tr>
@@ -1651,201 +440,60 @@
       <table class="pay-table">
         <thead>
           <tr>
-            <th class="col-code center">CODE</th>
-            <th class="col-libelle center">ÉLÉMENTS</th>
-            <th class="col-amount center">À PAYER</th>
-            <th class="col-amount center">À DÉDUIRE</th>
-            <th class="col-amount center">POUR INFORMATION</th>
+            <th class="col-code">CODE</th>
+            <th class="col-libelle">ÉLÉMENTS</th>
+            <th class="col-amount">À PAYER</th>
+            <th class="col-amount">À DÉDUIRE</th>
+            <th class="col-amount">POUR INFORMATION</th>
           </tr>
         </thead>
         <tbody id="lignes-paie"></tbody>
 
         <tfoot class="pay-table-foot">
           <tr>
-            <td colspan="5" style="height: 15px; padding: 0"></td>
+            <td colspan="5" class="foot-spacer"></td>
           </tr>
-
           <tr>
-            <td
-              colspan="2"
-              rowspan="2"
-              class="no-bg"
-              style="padding: 5px 15px 0 0; vertical-align: top"
-            >
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: flex-start;
-                  width: 100%;
-                "
-              >
-                <div
-                  class="summary-box"
-                  style="width: 140px; margin-right: 15px"
-                >
+            <td colspan="2" rowspan="2" class="no-bg foot-meta">
+              <div class="foot-meta-inner">
+                <div class="summary-box foot-summary-wide">
                   <div class="summary-title">MONTANT IMPOSABLE DU MOIS</div>
-                  <div class="summary-value" style="padding: 4px">
-                    €
-                    <span style="float: right" id="ui-net-imposable">0,00</span>
-                  </div>
+                  <div class="summary-value summary-value--padded">€ <span class="float-right" id="ui-net-imposable">0,00</span></div>
                 </div>
-
-                <div style="display: flex; align-items: flex-start">
-                  <div
-                    style="
-                      display: flex;
-                      flex-direction: column;
-                      width: 120px;
-                      margin-right: 15px;
-                    "
-                  >
-                    <div
-                      style="
-                        border: 1px solid var(--dgfip-dark);
-                        border-bottom: none;
-                        background: white;
-                        padding: 3px 5px;
-                        font-family: var(--font-numbers);
-                        font-size: 12px;
-                        font-weight: bold;
-                        display: flex;
-                        justify-content: space-between;
-                        box-sizing: border-box;
-                        height: 20px;
-                      "
-                    >
-                      <span>€</span><span id="ui-cout-employeur">0,00</span>
-                    </div>
-                    <div
-                      style="
-                        background-color: var(--dgfip-medium);
-                        color: white;
-                        font-size: 8px;
-                        text-align: center;
-                        padding: 3px 0;
-                        border: 1px solid var(--dgfip-dark);
-                        border-top: none;
-                        box-sizing: border-box;
-                        height: 20px;
-                      "
-                    >
-                      COÛT TOTAL<br />EMPLOYEUR
-                    </div>
+                <div class="foot-totals-group">
+                  <div class="cout-employeur-wrap">
+                    <div class="cout-employeur-val"><span>€</span><span id="ui-cout-employeur">0,00</span></div>
+                    <div class="cout-employeur-lbl">COÛT TOTAL<br />EMPLOYEUR</div>
                   </div>
-                  <div
-                    style="
-                      background-color: var(--dgfip-dark);
-                      color: white;
-                      font-size: 10px;
-                      font-weight: bold;
-                      padding: 2px 15px;
-                      height: 20px;
-                      box-sizing: border-box;
-                      display: flex;
-                      align-items: center;
-                    "
-                  >
-                    TOTAUX DU MOIS
-                  </div>
+                  <div class="totaux-badge">TOTAUX DU MOIS</div>
                 </div>
               </div>
             </td>
-
             <td class="col-amount u-border">
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  width: 100%;
-                "
-              >
-                <span>€</span><span id="ui-total-a-payer">0,00</span>
-              </div>
+              <div class="amount-cell"><span>€</span><span id="ui-total-a-payer">0,00</span></div>
             </td>
             <td class="col-amount u-border">
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  width: 100%;
-                "
-              >
-                <span>€</span><span id="ui-total-a-deduire">0,00</span>
-              </div>
+              <div class="amount-cell"><span>€</span><span id="ui-total-a-deduire">0,00</span></div>
             </td>
             <td class="col-amount u-border">
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  width: 100%;
-                "
-              >
-                <span>€</span><span id="ui-charges-patronales">0,00</span>
-              </div>
+              <div class="amount-cell"><span>€</span><span id="ui-charges-patronales">0,00</span></div>
             </td>
           </tr>
-
           <tr>
-            <td
-              colspan="2"
-              class="no-bg"
-              style="padding: 15px 5px 0 0; vertical-align: top"
-            >
-              <div
-                style="
-                  display: flex;
-                  justify-content: flex-end;
-                  align-items: center;
-                  gap: 15px;
-                "
-              >
-                <div
-                  style="
-                    color: var(--dgfip-medium);
-                    font-size: 16px;
-                    font-weight: bold;
-                    white-space: nowrap;
-                  "
-                >
-                  NET À PAYER
-                </div>
-                <div
-                  style="
-                    background: white;
-                    border: 2px solid var(--dgfip-dark);
-                    display: inline-block;
-                    padding: 5px 10px;
-                    font-family: var(--font-numbers);
-                    font-size: 18px;
-                    font-weight: bold;
-                    min-width: 120px;
-                    text-align: right;
-                  "
-                >
-                  <span id="ui-net-a-payer">0,00 €</span>
-                </div>
+            <td colspan="2" class="no-bg foot-net-meta">
+              <div class="foot-net-wrap">
+                <div class="foot-net-label">NET À PAYER</div>
+                <div class="foot-net-value"><span id="ui-net-a-payer">0,00 €</span></div>
               </div>
             </td>
-            <td class="no-bg" style="padding: 15px 0 0 0; vertical-align: top">
-              <div
-                style="
-                  background-color: var(--dgfip-dark);
-                  color: white;
-                  text-align: center;
-                  font-size: 9px;
-                  font-weight: bold;
-                  padding: 6px 2px;
-                "
-              >
-                TOTAL CHARGES<br />PATRONALES
-              </div>
+            <td class="no-bg foot-charges-meta">
+              <div class="foot-charges-label">TOTAL CHARGES<br />PATRONALES</div>
             </td>
           </tr>
         </tfoot>
       </table>
     </div>
+    <!-- /.page-a4 -->
 
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script src="engine.js"></script>
