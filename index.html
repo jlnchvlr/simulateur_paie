@@ -27,6 +27,63 @@
       </div>
 
       <div class="modal-body">
+        <div id="panel-attractivite" class="setting-panel">
+          <p
+            style="
+              margin-top: 0;
+              font-size: 13px;
+              color: #555;
+              margin-bottom: 15px;
+            "
+          >
+            Sélectionnez la prime liée à l'attractivité géographique de votre
+            centre.
+          </p>
+          <select
+            id="input-attractivite"
+            style="
+              width: 100%;
+              padding: 12px 15px;
+              border: 2px solid var(--dgfip-light);
+              border-radius: 6px;
+              font-family: var(--font-main);
+              font-size: 14px;
+              background-color: white;
+              color: var(--dgfip-dark);
+              cursor: pointer;
+              outline: none;
+            "
+          ></select>
+        </div>
+
+        <div id="panel-fidelisation" class="setting-panel">
+          <p
+            style="
+              margin-top: 0;
+              font-size: 13px;
+              color: #555;
+              margin-bottom: 15px;
+            "
+          >
+            Sélectionnez votre palier de fidélisation (Prime de Fidélisation
+            Territoriale).
+          </p>
+          <select
+            id="input-fidelisation"
+            style="
+              width: 100%;
+              padding: 12px 15px;
+              border: 2px solid var(--dgfip-light);
+              border-radius: 6px;
+              font-family: var(--font-main);
+              font-size: 14px;
+              background-color: white;
+              color: var(--dgfip-dark);
+              cursor: pointer;
+              outline: none;
+            "
+          ></select>
+        </div>
         <div id="panel-residence" class="setting-panel">
           <button
             type="button"
@@ -1308,11 +1365,24 @@
             <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">
               📊 Protocole (OTT)
             </button>
-            <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
-              💰 Autres Primes
-            </button>
+
             <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">
               🛡️ Participation PSC
+            </button>
+            <button
+              onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')"
+            >
+              📍 Attractivité Géo
+            </button>
+            <button
+              onclick="
+                ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')
+              "
+            >
+              ⏳ Prime Fidélisation
+            </button>
+            <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
+              💰 Autres Primes
             </button>
           </div>
         </div>
@@ -1369,12 +1439,6 @@
 
           <label>Prime Partage Performance (€)</label>
           <input type="number" id="input-perf" value="0.00" step="10" />
-
-          <label>Prime de fidélisation territoriale (€)</label>
-          <input type="number" id="input-fidelisation" value="0.00" step="10" />
-
-          <label>Prime d'attractivité géographique (€)</label>
-          <input type="number" id="input-geographique" value="0.00" step="10" />
 
           <button
             type="button"

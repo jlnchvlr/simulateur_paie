@@ -12,6 +12,24 @@ const indexRecherche = [
     cible: "panel-nuits",
   },
   {
+    titre: "📍 Attractivité Géographique",
+    motsCles: [
+      "attractivite",
+      "majo",
+      "geo",
+      "201987",
+      "201986",
+      "nord",
+      "cdg",
+    ],
+    cible: "panel-attractivite",
+  },
+  {
+    titre: "⏳ Prime de Fidélisation",
+    motsCles: ["fidelisation", "pft", "palier", "engagement", "duree"],
+    cible: "panel-fidelisation",
+  },
+  {
     titre: "🤒 Jours d'absence (Grève, Maladie)",
     motsCles: [
       "grève",
@@ -165,6 +183,25 @@ async function initialiserApplication() {
     baseDonnees = await reponse.json();
 
     mettreAJourEchelons();
+
+    // Remplissage des Selects Attractivité et Fidélisation
+    if (baseDonnees.attractivite) {
+      const selectAttr = document.getElementById("input-attractivite");
+      if (selectAttr) {
+        baseDonnees.attractivite.forEach((opt) => {
+          selectAttr.add(new Option(opt.label, opt.valeur));
+        });
+      }
+    }
+
+    if (baseDonnees.fidelisation) {
+      const selectFid = document.getElementById("input-fidelisation");
+      if (selectFid) {
+        baseDonnees.fidelisation.forEach((opt) => {
+          selectFid.add(new Option(opt.label, opt.valeur));
+        });
+      }
+    }
 
     document.getElementById("input-grade").addEventListener("input", () => {
       mettreAJourEchelons();
@@ -624,10 +661,6 @@ function getProfilDepuisInterface() {
         parseInt(document.getElementById("input-maladie-50")?.value) || 0,
       prime_performance:
         parseFloat(document.getElementById("input-perf")?.value) || 0,
-      fidelisation:
-        parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
-      geographique:
-        parseFloat(document.getElementById("input-geographique")?.value) || 0,
       ott_pf: pfTotal,
       ott_pv_globale:
         parseFloat(document.getElementById("pv-globale")?.value) || 0,
@@ -657,6 +690,10 @@ function getProfilDepuisInterface() {
         baseDonnees.rist?.isq_majoration[
           document.getElementById("input-isq-majoration")?.value
         ] || 0,
+      attractivite:
+        parseFloat(document.getElementById("input-attractivite")?.value) || 0,
+      fidelisation:
+        parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
       ind_compensatrice_csg:
         parseFloat(document.getElementById("input-ind-csg")?.value) || 0,
       psc: pscTotal,
@@ -877,11 +914,11 @@ function calculerPaie() {
     (profilAgent.primes.rist_maj_isq - absRistMaj) +
     (profilAgent.primes.ind_compensatrice_csg - absIndCsg) +
     profilAgent.evenements.prime_performance +
-    profilAgent.evenements.fidelisation +
-    profilAgent.evenements.geographique +
     profilAgent.evenements.ott_pf +
     profilAgent.evenements.ott_pv_globale +
-    profilAgent.evenements.ott_pv_opt32;
+    profilAgent.evenements.ott_pv_opt32 +
+    profilAgent.primes.attractivite +
+    profilAgent.primes.fidelisation;
 
   let montantSFT = 0;
   if (profilAgent.enfants === 1) montantSFT = 2.29;
@@ -1009,8 +1046,8 @@ function calculerPaie() {
     200176: { cible: "panel-nuits", titre: "Travail de Nuit & Soirées" },
     200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
     202485: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
-    203001: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
-    203002: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
+    203001: { cible: "panel-fidelisation", titre: "Prime de Fidélisation" },
+    203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
     604958: { cible: "panel-absences", titre: "Absences et Carence" },
     604959: { cible: "panel-absences", titre: "Absences et Carence" },
     558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
@@ -1400,23 +1437,23 @@ function calculerPaie() {
       null,
       ["pv-opt32"],
     );
-  if (profilAgent.evenements.fidelisation > 0)
+  if (profilAgent.primes.fidelisation > 0)
     ajouterLigne(
       "203001",
       "PRIME DE FIDELISATION TERR.",
-      profilAgent.evenements.fidelisation,
+      profilAgent.primes.fidelisation,
       null,
       null,
       ["input-fidelisation"],
     );
-  if (profilAgent.evenements.geographique > 0)
+  if (profilAgent.primes.attractivite > 0)
     ajouterLigne(
       "203002",
-      "PRIME ATTRACTIVITE GEOGRAPHIQUE",
-      profilAgent.evenements.geographique,
+      "ATTRACTIVITE GEOGRAPHIQUE",
+      profilAgent.primes.attractivite,
       null,
       null,
-      ["input-geographique"],
+      ["input-attractivite"],
     );
 
   majPreview("preview-ott-pf", profilAgent.evenements.ott_pf);
