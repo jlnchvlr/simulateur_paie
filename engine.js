@@ -914,36 +914,11 @@ function calculerPaie() {
     (profilAgent.primes.rist_maj_isq - absRistMaj) +
     (profilAgent.primes.ind_compensatrice_csg - absIndCsg) +
     profilAgent.evenements.prime_performance +
-    profilAgent.evenements.fidelisation +
-    profilAgent.evenements.geographique +
     profilAgent.evenements.ott_pf +
     profilAgent.evenements.ott_pv_globale +
-    profilAgent.evenements.ott_pv_opt32;
-  +profilAgent.primes.attractivite + profilAgent.primes.fidelisation;
-
-  // 📍 ATTRACTIVITÉ
-  if (profilAgent.primes.attractivite > 0) {
-    ajouterLigne(
-      "203002",
-      "ATTRACTIVITE GEOGRAPHIQUE",
-      profilAgent.primes.attractivite,
-      null,
-      null,
-      ["input-attractivite"],
-    );
-  }
-
-  // ⏳ FIDÉLISATION
-  if (profilAgent.primes.fidelisation > 0) {
-    ajouterLigne(
-      "203001",
-      "PRIME DE FIDELISATION TERR.",
-      profilAgent.primes.fidelisation,
-      null,
-      null,
-      ["input-fidelisation"],
-    );
-  }
+    profilAgent.evenements.ott_pv_opt32 +
+    profilAgent.primes.attractivite +
+    profilAgent.primes.fidelisation;
 
   let montantSFT = 0;
   if (profilAgent.enfants === 1) montantSFT = 2.29;
@@ -1462,23 +1437,23 @@ function calculerPaie() {
       null,
       ["pv-opt32"],
     );
-  if (profilAgent.evenements.fidelisation > 0)
+  if (profilAgent.primes.fidelisation > 0)
     ajouterLigne(
       "203001",
       "PRIME DE FIDELISATION TERR.",
-      profilAgent.evenements.fidelisation,
+      profilAgent.primes.fidelisation,
       null,
       null,
       ["input-fidelisation"],
     );
-  if (profilAgent.evenements.geographique > 0)
+  if (profilAgent.primes.attractivite > 0)
     ajouterLigne(
       "203002",
-      "PRIME ATTRACTIVITE GEOGRAPHIQUE",
-      profilAgent.evenements.geographique,
+      "ATTRACTIVITE GEOGRAPHIQUE",
+      profilAgent.primes.attractivite,
       null,
       null,
-      ["input-geographique"],
+      ["input-attractivite"],
     );
 
   majPreview("preview-ott-pf", profilAgent.evenements.ott_pf);
