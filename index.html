@@ -1269,10 +1269,27 @@
         </div>
 
         <div id="panel-menu-ajout" class="setting-panel">
-          <p style="margin-top: 0; font-size: 13px; color: #555">
-            Sélectionnez l'élément que vous souhaitez ajouter à votre fiche :
+          <p
+            style="
+              margin-top: 0;
+              font-size: 13px;
+              color: #555;
+              margin-bottom: 15px;
+            "
+          >
+            Sélectionnez ou recherchez l'élément à ajouter à votre fiche :
           </p>
-          <div class="add-buttons-grid">
+
+          <input
+            type="text"
+            id="recherche-ajout"
+            placeholder="Rechercher une prime, absence, indemnité..."
+            autocomplete="off"
+          />
+
+          <div id="resultats-recherche" style="display: none"></div>
+
+          <div id="boutons-ajout-defaut" class="add-buttons-grid">
             <button
               onclick="
                 ouvrirModal('panel-nuits', '🌙 Travail de Nuit & Soirées')
@@ -1291,11 +1308,11 @@
             <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">
               📊 Protocole (OTT)
             </button>
-            <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">
-              🛡️ Participation PSC
-            </button>
             <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
               💰 Autres Primes
+            </button>
+            <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">
+              🛡️ Participation PSC
             </button>
           </div>
         </div>
@@ -1402,6 +1419,22 @@
             Valider & Fermer ↵
           </button>
         </div>
+      </div>
+    </dialog>
+
+    <dialog id="spotlight-modal" class="spotlight-modal">
+      <div class="spotlight-container">
+        <div class="spotlight-header">
+          <span class="spotlight-icon">🔍</span>
+          <input
+            type="text"
+            id="spotlight-input"
+            placeholder="Rechercher (Primes, Absences, Impôts...)"
+            autocomplete="off"
+          />
+          <span class="spotlight-shortcut">ESC</span>
+        </div>
+        <div id="spotlight-results" class="spotlight-results"></div>
       </div>
     </dialog>
 

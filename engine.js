@@ -1,7 +1,163 @@
 let baseDonnees = {};
-window.isTourActive = false; // Le verrou de la visite
-window.tourSavedStep = undefined; // Pour mémoriser l'étape en cours
+window.isTourActive = false;
+window.tourSavedStep = undefined;
 
+// =========================================
+// MOTEUR DE RECHERCHE GLOBAL (Le Cerveau)
+// =========================================
+const indexRecherche = [
+  {
+    titre: "🌙 Nuits & Soirées",
+    motsCles: ["nuit", "soirée", "soiree", "majoration", "horaire"],
+    cible: "panel-nuits",
+  },
+  {
+    titre: "🤒 Jours d'absence (Grève, Maladie)",
+    motsCles: [
+      "grève",
+      "greve",
+      "maladie",
+      "carence",
+      "absence",
+      "arrêt",
+      "arret",
+      "snf",
+      "1/30",
+      "jour",
+    ],
+    cible: "panel-absences",
+  },
+  {
+    titre: "🚲 Forfait Mobilités Durables",
+    motsCles: [
+      "vélo",
+      "velo",
+      "fmd",
+      "mobilité",
+      "mobilite",
+      "covoiturage",
+      "voiture",
+      "transport",
+    ],
+    cible: "panel-fmd",
+  },
+  {
+    titre: "📊 Protocole (OTT)",
+    motsCles: [
+      "ott",
+      "protocole",
+      "part fixe",
+      "part variable",
+      "pf",
+      "pv",
+      "option",
+      "enac",
+      "cdg",
+      "liste",
+    ],
+    cible: "panel-ott",
+  },
+  {
+    titre: "💰 Autres Primes (Perf, Fidélisation)",
+    motsCles: [
+      "prime",
+      "ppp",
+      "performance",
+      "fidélisation",
+      "fidelisation",
+      "attractivité",
+      "géographique",
+      "geo",
+    ],
+    cible: "panel-primes",
+  },
+  {
+    titre: "🛡️ Participation PSC (Mutuelle)",
+    motsCles: [
+      "psc",
+      "mutuelle",
+      "santé",
+      "sante",
+      "prévoyance",
+      "prevoyance",
+      "alan",
+      "mgas",
+      "aide",
+    ],
+    cible: "panel-psc",
+  },
+  {
+    titre: "Impôt sur le Revenu (PAS)",
+    motsCles: [
+      "impôt",
+      "impot",
+      "pas",
+      "source",
+      "taux",
+      "prélèvement",
+      "prelevement",
+      "personnalisé",
+    ],
+    cible: "panel-impots",
+  },
+  {
+    titre: "Indemnité Compensatrice CSG",
+    motsCles: ["csg", "indemnité", "indemnite", "compensatrice"],
+    cible: "panel-csg",
+  },
+  {
+    titre: "Zone de Résidence (IR)",
+    motsCles: ["ir", "résidence", "residence", "zone", "indemnité"],
+    cible: "panel-residence",
+  },
+  {
+    titre: "RIST - Part Fonctions",
+    motsCles: ["rist", "fonctions", "part", "prime", "niveau"],
+    cible: "panel-rist-fonctions",
+  },
+  {
+    titre: "RIST - Part Expérience",
+    motsCles: ["rist", "expérience", "experience", "exp"],
+    cible: "panel-rist-experience",
+  },
+  {
+    titre: "Licence ISQ",
+    motsCles: ["isq", "licence", "icna"],
+    cible: "panel-rist-isq-licence",
+  },
+  {
+    titre: "Complément ISQ",
+    motsCles: ["isq", "complément", "complement", "cplt"],
+    cible: "panel-rist-isq-complement",
+  },
+  {
+    titre: "Majoration ISQ",
+    motsCles: ["majoration", "isq"],
+    cible: "panel-rist-isq-majoration",
+  },
+];
+
+function normaliserTexte(texte) {
+  return texte
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+window.rechercherElement = function (requete) {
+  if (!requete || requete.trim() === "") return [];
+  const requeteNormalisee = normaliserTexte(requete.trim());
+  return indexRecherche.filter((item) => {
+    if (normaliserTexte(item.titre).includes(requeteNormalisee)) return true;
+    return item.motsCles.some((mot) =>
+      normaliserTexte(mot).includes(requeteNormalisee),
+    );
+  });
+};
+
+// =========================================
+// INITIALISATION ET LOGIQUE PRINCIPALE
+// =========================================
 async function initialiserApplication() {
   try {
     const reponse = await fetch("data.json");
@@ -22,31 +178,52 @@ async function initialiserApplication() {
 
     const modal = document.getElementById("magic-modal");
 
-    // Fermeture avec Entrée
     modal.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        modal.close();
+        // Si le focus est sur un résultat de recherche, on clique dessus !
+        if (
+          document.activeElement &&
+          document.activeElement.classList.contains("resultat-item")
+        ) {
+          document.activeElement.click();
+        } else {
+          modal.close(); // Comportement normal sinon
+        }
       }
     });
 
-    // --- NOUVEAU : Réveil de la Visite Guidée (et passage à la suite !) ---
     modal.addEventListener("close", () => {
       if (window.tourSavedStep !== undefined) {
         setTimeout(() => {
-          // On calcule l'étape d'après
           const etapeSuivante = window.tourSavedStep + 1;
-
-          // Comme on a 6 étapes au total (l'index va de 0 à 5),
-          // on vérifie qu'on ne dépasse pas la fin de la visite
           if (etapeSuivante <= 5) {
             window.lancerVisiteGuidee(etapeSuivante);
           } else {
-            window.isTourActive = false; // La visite est terminée
+            window.isTourActive = false;
           }
-
           window.tourSavedStep = undefined;
-        }, 150); // Petit délai pour laisser le menu disparaître
+        }, 150);
+      }
+    });
+
+    // --- NOUVEAU : FULL KEYBOARD MODE (Menu Ajout) ---
+    modal.addEventListener("keydown", (e) => {
+      const champRecherche = document.getElementById("recherche-ajout");
+      // Si on est en mode recherche, qu'on n'est pas dans l'input, et qu'on tape un truc
+      if (
+        modal.classList.contains("search-mode") &&
+        document.activeElement !== champRecherche
+      ) {
+        if (e.key === "Backspace") {
+          e.preventDefault(); // Empêche le comportement par défaut
+          champRecherche.focus();
+          champRecherche.value = champRecherche.value.slice(0, -1); // Efface la dernière lettre
+          champRecherche.dispatchEvent(new Event("input")); // Met à jour la liste
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+          // Si on tape une lettre normale, on refocus direct l'input
+          champRecherche.focus();
+        }
       }
     });
 
@@ -59,24 +236,21 @@ async function initialiserApplication() {
 
     champsNumeriques.forEach((champ) => {
       champ.addEventListener("input", function () {
-        if (this.value === "") return; // On le laisse effacer temporairement
+        if (this.value === "") return;
 
         let valeur = parseFloat(this.value);
-        let valeurCorrigee = false; // 👈 Le marqueur magique
+        let valeurCorrigee = false;
 
-        // Règle A : Pas de nombres négatifs
         if (valeur < 0) {
           this.value = "0";
           valeurCorrigee = true;
         }
 
-        // Règle B : L'impôt à la source ne peut pas dépasser 100%
         if (this.id === "input-pas" && valeur > 100) {
           this.value = "100";
           valeurCorrigee = true;
         }
 
-        // Règle C : Règle du 30ème (Plafond à 30 jours pour nuits/soirées)
         if (
           (this.id === "input-nuit-n" || this.id === "input-nuit-s2") &&
           valeur > 30
@@ -85,17 +259,12 @@ async function initialiserApplication() {
           valeurCorrigee = true;
         }
 
-        // 👈 LA CORRECTION EST LÀ :
-        // Si le script a dû modifier la valeur saisie, on force le recalcul
-        // pour écraser le calcul faussé (le fameux -0.97)
         if (valeurCorrigee) {
           calculerPaie();
         }
       });
 
-      // Quand l'utilisateur clique en dehors de la case (Blur)
       champ.addEventListener("blur", function () {
-        // S'il a laissé la case totalement vide, on remet un zéro propre
         if (this.value === "") {
           if (this.step && this.step.includes(".")) {
             this.value = "0.00";
@@ -106,7 +275,130 @@ async function initialiserApplication() {
         }
       });
     });
+
     // ---------------------------------------------------------
+    // --- LOGIQUE DE LA BARRE DE RECHERCHE (MENU AJOUT) ---
+    // ---------------------------------------------------------
+    const champRecherche = document.getElementById("recherche-ajout");
+    const conteneurResultats = document.getElementById("resultats-recherche");
+    const conteneurBoutonsDefaut = document.getElementById(
+      "boutons-ajout-defaut",
+    );
+
+    if (champRecherche) {
+      champRecherche.addEventListener("input", (e) => {
+        const requete = e.target.value;
+
+        if (requete.trim() === "") {
+          conteneurResultats.style.display = "none";
+          conteneurBoutonsDefaut.style.display = "grid";
+          return;
+        }
+
+        const resultats = window.rechercherElement(requete);
+
+        conteneurBoutonsDefaut.style.display = "none";
+        conteneurResultats.style.display = "flex";
+        conteneurResultats.innerHTML = "";
+
+        if (resultats.length === 0) {
+          conteneurResultats.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
+        } else {
+          resultats.forEach((res) => {
+            const btn = document.createElement("button"); // Utilisation de BUTTON pour l'accessibilité
+            btn.className = "resultat-item";
+            btn.innerHTML = `<span>${res.titre}</span> <span style="color: #aaa; font-size: 12px;">➔</span>`;
+            btn.onclick = () => {
+              ouvrirModal(res.cible, res.titre);
+            };
+            conteneurResultats.appendChild(btn);
+          });
+        }
+      });
+    }
+
+    // ---------------------------------------------------------
+    // --- LOGIQUE DU SPOTLIGHT (Ctrl + K) ---
+    // ---------------------------------------------------------
+    const spotlightModal = document.getElementById("spotlight-modal");
+    const spotlightInput = document.getElementById("spotlight-input");
+    const spotlightResults = document.getElementById("spotlight-results");
+
+    if (spotlightModal && spotlightInput) {
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+          e.preventDefault();
+          if (!spotlightModal.open) {
+            spotlightModal.showModal();
+            spotlightInput.value = "";
+            spotlightResults.innerHTML = "";
+            spotlightInput.focus();
+          } else {
+            spotlightModal.close();
+          }
+        }
+      });
+
+      spotlightModal.addEventListener("click", (e) => {
+        const rect = spotlightModal.getBoundingClientRect();
+        const inDialog =
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom;
+        if (!inDialog) {
+          spotlightModal.close();
+        }
+      });
+
+      spotlightInput.addEventListener("input", (e) => {
+        const requete = e.target.value;
+        spotlightResults.innerHTML = "";
+
+        if (requete.trim() === "") return;
+
+        const resultats = window.rechercherElement(requete);
+
+        if (resultats.length === 0) {
+          spotlightResults.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
+        } else {
+          resultats.forEach((res) => {
+            const btn = document.createElement("button"); // Utilisation de BUTTON pour l'accessibilité
+            btn.className = "resultat-item";
+            btn.innerHTML = `<span>${res.titre}</span> <span style="color: #aaa; font-size: 12px;">➔</span>`;
+            btn.onclick = () => {
+              spotlightModal.close();
+              ouvrirModal(res.cible, res.titre);
+            };
+            spotlightResults.appendChild(btn);
+          });
+        }
+      });
+
+      // --- NOUVEAU : FULL KEYBOARD MODE (Spotlight) ---
+      spotlightModal.addEventListener("keydown", (e) => {
+        if (document.activeElement !== spotlightInput) {
+          if (e.key === "Backspace") {
+            e.preventDefault();
+            spotlightInput.focus();
+            spotlightInput.value = spotlightInput.value.slice(0, -1);
+            spotlightInput.dispatchEvent(new Event("input"));
+          } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            spotlightInput.focus();
+          }
+        }
+      });
+    }
+
+    // --- NOUVEAU : DÉTECTION SOURIS VS CLAVIER (Pour éviter les doubles sélections) ---
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab" || e.key.startsWith("Arrow")) {
+        document.body.classList.add("navigation-clavier");
+      }
+    });
+    document.addEventListener("mousemove", () => {
+      document.body.classList.remove("navigation-clavier");
+    });
 
     calculerPaie();
     resetHelperRist();
@@ -150,7 +442,6 @@ function mettreAJourEchelons() {
     : echelons[0] || "";
 }
 
-// --- L'USINE À MENUS INTERACTIFS (DRY) ---
 function creerMenuInteractif(
   nomGlobal,
   inputId,
@@ -300,7 +591,7 @@ function getProfilDepuisInterface() {
   document.querySelectorAll(".pf-checkbox").forEach((cb) => {
     if (cb.checked) pfTotal += parseFloat(cb.value);
   });
-  // NOUVEAU : Calcul des multiples cases PSC
+
   let pscTotal = 0;
   document.querySelectorAll(".psc-checkbox").forEach((cb) => {
     if (cb.checked) pscTotal += parseFloat(cb.value);
@@ -392,12 +683,26 @@ function arrondir(valeur) {
 }
 
 function ouvrirModal(panelIds, titre) {
-  // --- NOUVEAU : MISE EN PAUSE DE LA VISITE ---
-  // Si le tuto est en cours, on l'efface le temps que le menu soit ouvert
   if (window.isTourActive && window.tourObj) {
     const state = window.tourObj.getState();
     window.tourSavedStep = state ? state.activeIndex : 0;
     window.tourObj.destroy();
+  }
+
+  const modal = document.getElementById("magic-modal");
+
+  // --- GESTION DU MODE DE LA MODALE ---
+  if (panelIds === "panel-menu-ajout") {
+    modal.classList.add("search-mode");
+    const champRecherche = document.getElementById("recherche-ajout");
+    if (champRecherche) {
+      champRecherche.value = "";
+      document.getElementById("resultats-recherche").style.display = "none";
+      document.getElementById("boutons-ajout-defaut").style.display = "grid";
+      setTimeout(() => champRecherche.focus(), 50);
+    }
+  } else {
+    modal.classList.remove("search-mode");
   }
 
   document.getElementById("modal-title").textContent = titre;
@@ -413,7 +718,7 @@ function ouvrirModal(panelIds, titre) {
     document.getElementById(panelIds).classList.add("active");
   }
 
-  document.getElementById("magic-modal").showModal();
+  modal.showModal();
 
   setTimeout(() => {
     const activePanel = document.querySelector(".setting-panel.active");
@@ -1252,7 +1557,6 @@ function calculerPaie() {
       ? "0,00"
       : formaterMontant(netImposableAffichage);
 
-  // --- REMPLISSAGE ZÉBRÉ INTELLIGENT ET RÉ-ANCRAGE DU TOUR ---
   requestAnimationFrame(() => {
     document.querySelectorAll(".ligne-fantome").forEach((el) => el.remove());
 
@@ -1278,8 +1582,6 @@ function calculerPaie() {
       }
     }
 
-    // NOUVEAU : Si l'utilisateur modifie la paie depuis le header (Grade, Echelon...)
-    // on relance la visite proprement sur l'étape actuelle sans faire planter Driver.js
     if (window.isTourActive && window.tourObj) {
       const state = window.tourObj.getState();
       const currentStep = state ? state.activeIndex : 0;
