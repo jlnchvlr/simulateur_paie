@@ -1292,6 +1292,168 @@ function calculerPaie() {
   });
 }
 
+// =========================================
+// MOTEUR DE RECHERCHE GLOBAL (Le Cerveau)
+// =========================================
+
+// Le dictionnaire : Il fait le lien entre les termes du quotidien et tes panneaux
+const indexRecherche = [
+  {
+    titre: "🌙 Nuits & Soirées",
+    motsCles: ["nuit", "soirée", "soiree", "majoration", "horaire"],
+    cible: "panel-nuits",
+  },
+  {
+    titre: "🤒 Jours d'absence (Grève, Maladie)",
+    motsCles: [
+      "grève",
+      "greve",
+      "maladie",
+      "carence",
+      "absence",
+      "arrêt",
+      "arret",
+      "snf",
+      "1/30",
+      "jour",
+    ],
+    cible: "panel-absences",
+  },
+  {
+    titre: "🚲 Forfait Mobilités Durables",
+    motsCles: [
+      "vélo",
+      "velo",
+      "fmd",
+      "mobilité",
+      "mobilite",
+      "covoiturage",
+      "voiture",
+      "transport",
+    ],
+    cible: "panel-fmd",
+  },
+  {
+    titre: "📊 Protocole (OTT)",
+    motsCles: [
+      "ott",
+      "protocole",
+      "part fixe",
+      "part variable",
+      "pf",
+      "pv",
+      "option",
+      "enac",
+      "cdg",
+      "liste",
+    ],
+    cible: "panel-ott",
+  },
+  {
+    titre: "💰 Autres Primes (Perf, Fidélisation)",
+    motsCles: [
+      "prime",
+      "ppp",
+      "performance",
+      "fidélisation",
+      "fidelisation",
+      "attractivité",
+      "géographique",
+      "geo",
+    ],
+    cible: "panel-primes",
+  },
+  {
+    titre: "🛡️ Participation PSC (Mutuelle)",
+    motsCles: [
+      "psc",
+      "mutuelle",
+      "santé",
+      "sante",
+      "prévoyance",
+      "prevoyance",
+      "alan",
+      "mgas",
+      "aide",
+    ],
+    cible: "panel-psc",
+  },
+  {
+    titre: "Impôt sur le Revenu (PAS)",
+    motsCles: [
+      "impôt",
+      "impot",
+      "pas",
+      "source",
+      "taux",
+      "prélèvement",
+      "prelevement",
+      "personnalisé",
+    ],
+    cible: "panel-impots",
+  },
+  {
+    titre: "Indemnité Compensatrice CSG",
+    motsCles: ["csg", "indemnité", "indemnite", "compensatrice"],
+    cible: "panel-csg",
+  },
+  {
+    titre: "Zone de Résidence (IR)",
+    motsCles: ["ir", "résidence", "residence", "zone", "indemnité"],
+    cible: "panel-residence",
+  },
+  {
+    titre: "RIST - Part Fonctions",
+    motsCles: ["rist", "fonctions", "part", "prime", "niveau"],
+    cible: "panel-rist-fonctions",
+  },
+  {
+    titre: "RIST - Part Expérience",
+    motsCles: ["rist", "expérience", "experience", "exp"],
+    cible: "panel-rist-experience",
+  },
+  {
+    titre: "Licence ISQ",
+    motsCles: ["isq", "licence", "icna"],
+    cible: "panel-rist-isq-licence",
+  },
+  {
+    titre: "Complément ISQ",
+    motsCles: ["isq", "complément", "complement", "cplt"],
+    cible: "panel-rist-isq-complement",
+  },
+  {
+    titre: "Majoration ISQ",
+    motsCles: ["majoration", "isq"],
+    cible: "panel-rist-isq-majoration",
+  },
+];
+
+// Fonction utilitaire pour retirer les accents et passer en minuscules
+function normaliserTexte(texte) {
+  return texte
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+// La fonction qui sera appelée quand on tapera au clavier
+window.rechercherElement = function (requete) {
+  if (!requete || requete.trim() === "") return [];
+
+  const requeteNormalisee = normaliserTexte(requete.trim());
+
+  return indexRecherche.filter((item) => {
+    // 1. On cherche d'abord si ça "match" dans le titre
+    if (normaliserTexte(item.titre).includes(requeteNormalisee)) return true;
+
+    // 2. Sinon, on fouille dans les mots-clés
+    return item.motsCles.some((mot) =>
+      normaliserTexte(mot).includes(requeteNormalisee),
+    );
+  });
+};
+
 window.onload = initialiserApplication;
 
 // =========================================
