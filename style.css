@@ -776,3 +776,257 @@ body.navigation-clavier .resultat-item:focus {
   outline-offset: -2px;
   background-color: #f8f9fa;
 }
+
+/* =========================================
+   6. UTILITAIRES — REMPLACEMENT INLINE STYLES
+   ========================================= */
+
+/* Textes d'aide dans les panneaux */
+.panel-hint {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #555;
+}
+.panel-notice {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: #555;
+  line-height: 1.5;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-left: 3px solid var(--dgfip-dark);
+}
+.panel-footnote {
+  margin-top: 5px;
+  font-size: 10px;
+  color: #666;
+  font-style: italic;
+}
+.panel-hint-small {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: #666;
+}
+.panel-subhead {
+  margin-top: 0;
+  font-size: 13px;
+  color: var(--dgfip-dark);
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+/* Selects */
+.panel-select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--dgfip-light);
+  border-radius: 6px;
+  font-family: var(--font-main);
+  font-size: 14px;
+  background-color: white;
+  color: var(--dgfip-dark);
+  cursor: pointer;
+  outline: none;
+}
+.select-light {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.select-transparent {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+/* RIST / ISQ helpers */
+.helper-text {
+  font-size: 11px;
+  color: #0056b3;
+  background-color: #e6f2ff;
+  padding: 10px;
+  border-radius: 4px;
+  font-style: italic;
+  min-height: 35px;
+  border-left: 3px solid #0056b3;
+}
+
+/* Boîte de preview montant */
+.preview-amount {
+  background-color: #e8f0fe;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  text-align: right;
+  font-family: var(--font-main);
+}
+.preview-amount strong {
+  color: var(--dgfip-dark);
+  font-size: 16px;
+}
+.preview-amount--compact {
+  padding: 8px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+.preview-amount--compact strong {
+  font-size: 14px;
+}
+
+/* OTT — saisie manuelle */
+.ott-manual-row {
+  margin-top: 5px;
+  padding-top: 10px;
+  border-top: 1px dashed #ccc;
+}
+.ott-manual-label {
+  font-weight: normal;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ott-manual-input {
+  width: 80px;
+  padding: 4px;
+}
+
+/* Info-table */
+.nbi-checkbox {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+}
+
+/* Pied de tableau */
+.foot-spacer {
+  height: 15px;
+  padding: 0;
+}
+.foot-meta {
+  padding: 5px 15px 0 0;
+  vertical-align: top;
+}
+.foot-meta-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+.foot-summary-wide {
+  width: 140px;
+  margin-right: 15px;
+}
+.summary-value--padded {
+  padding: 4px;
+}
+.foot-totals-group {
+  display: flex;
+  align-items: flex-start;
+}
+.cout-employeur-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+  margin-right: 15px;
+}
+.cout-employeur-val {
+  border: 1px solid var(--dgfip-dark);
+  border-bottom: none;
+  background: white;
+  padding: 3px 5px;
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  box-sizing: border-box;
+  height: 20px;
+}
+.cout-employeur-lbl {
+  background-color: var(--dgfip-medium);
+  color: white;
+  font-size: 8px;
+  text-align: center;
+  padding: 3px 0;
+  border: 1px solid var(--dgfip-dark);
+  border-top: none;
+  box-sizing: border-box;
+  height: 20px;
+}
+.totaux-badge {
+  background-color: var(--dgfip-dark);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 15px;
+  height: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+.amount-cell {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+.foot-net-meta {
+  padding: 15px 5px 0 0;
+  vertical-align: top;
+}
+.foot-net-wrap {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 15px;
+}
+.foot-net-label {
+  color: var(--dgfip-medium);
+  font-size: 16px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.foot-net-value {
+  background: white;
+  border: 2px solid var(--dgfip-dark);
+  display: inline-block;
+  padding: 5px 10px;
+  font-family: var(--font-numbers);
+  font-size: 18px;
+  font-weight: bold;
+  min-width: 120px;
+  text-align: right;
+}
+.foot-charges-meta {
+  padding: 15px 0 0 0;
+  vertical-align: top;
+}
+.foot-charges-label {
+  background-color: var(--dgfip-dark);
+  color: white;
+  text-align: center;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 6px 2px;
+}
+.float-right {
+  float: right;
+}
+.page-top-spacer {
+  height: 20px;
+}
