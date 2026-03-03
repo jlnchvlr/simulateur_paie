@@ -661,10 +661,6 @@ function getProfilDepuisInterface() {
         parseInt(document.getElementById("input-maladie-50")?.value) || 0,
       prime_performance:
         parseFloat(document.getElementById("input-perf")?.value) || 0,
-      fidelisation:
-        parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
-      geographique:
-        parseFloat(document.getElementById("input-geographique")?.value) || 0,
       ott_pf: pfTotal,
       ott_pv_globale:
         parseFloat(document.getElementById("pv-globale")?.value) || 0,
@@ -694,13 +690,13 @@ function getProfilDepuisInterface() {
         baseDonnees.rist?.isq_majoration[
           document.getElementById("input-isq-majoration")?.value
         ] || 0,
-      ind_compensatrice_csg:
-        parseFloat(document.getElementById("input-ind-csg")?.value) || 0,
-      psc: pscTotal,
       attractivite:
         parseFloat(document.getElementById("input-attractivite")?.value) || 0,
       fidelisation:
         parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
+      ind_compensatrice_csg:
+        parseFloat(document.getElementById("input-ind-csg")?.value) || 0,
+      psc: pscTotal,
     },
   };
 }
@@ -923,10 +919,10 @@ function calculerPaie() {
     profilAgent.evenements.ott_pf +
     profilAgent.evenements.ott_pv_globale +
     profilAgent.evenements.ott_pv_opt32;
+  +profilAgent.primes.attractivite + profilAgent.primes.fidelisation;
 
+  // 📍 ATTRACTIVITÉ
   if (profilAgent.primes.attractivite > 0) {
-    // Si tu veux dynamiser le code/libellé, tu peux récupérer le texte du select.
-    // Pour simplifier, on affiche une ligne générique ici :
     ajouterLigne(
       "203002",
       "ATTRACTIVITE GEOGRAPHIQUE",
@@ -937,10 +933,11 @@ function calculerPaie() {
     );
   }
 
+  // ⏳ FIDÉLISATION
   if (profilAgent.primes.fidelisation > 0) {
     ajouterLigne(
       "203001",
-      "PRIME FIDELISATION",
+      "PRIME DE FIDELISATION TERR.",
       profilAgent.primes.fidelisation,
       null,
       null,
@@ -1074,8 +1071,8 @@ function calculerPaie() {
     200176: { cible: "panel-nuits", titre: "Travail de Nuit & Soirées" },
     200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
     202485: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
-    203001: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
-    203002: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
+    203001: { cible: "panel-fidelisation", titre: "Prime de Fidélisation" },
+    203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
     604958: { cible: "panel-absences", titre: "Absences et Carence" },
     604959: { cible: "panel-absences", titre: "Absences et Carence" },
     558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
