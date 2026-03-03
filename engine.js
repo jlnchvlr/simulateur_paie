@@ -448,6 +448,69 @@ function ouvrirModal(panelIds, titre) {
       setTimeout(() => champRecherche.focus(), 50);
     }
   }
+
+  // ---------------------------------------------------------
+  // --- LOGIQUE DU SPOTLIGHT (Ctrl + K) ---
+  // ---------------------------------------------------------
+  const spotlightModal = document.getElementById("spotlight-modal");
+  const spotlightInput = document.getElementById("spotlight-input");
+  const spotlightResults = document.getElementById("spotlight-results");
+
+  if (spotlightModal && spotlightInput) {
+    // 1. Écoute du raccourci clavier global (Ctrl+K ou Cmd+K sur Mac)
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault(); // Empêche le navigateur de faire sa propre recherche
+
+        if (!spotlightModal.open) {
+          spotlightModal.showModal();
+          spotlightInput.value = "";
+          spotlightResults.innerHTML = "";
+          spotlightInput.focus();
+        } else {
+          spotlightModal.close();
+        }
+      }
+    });
+
+    // 2. Fermeture si on clique en dehors de la boîte
+    spotlightModal.addEventListener("click", (e) => {
+      const rect = spotlightModal.getBoundingClientRect();
+      const inDialog =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+      if (!inDialog) {
+        spotlightModal.close();
+      }
+    });
+
+    // 3. Logique de recherche en temps réel
+    spotlightInput.addEventListener("input", (e) => {
+      const requete = e.target.value;
+      spotlightResults.innerHTML = "";
+
+      if (requete.trim() === "") return;
+
+      const resultats = window.rechercherElement(requete); // On utilise notre "Cerveau" !
+
+      if (resultats.length === 0) {
+        spotlightResults.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
+      } else {
+        resultats.forEach((res) => {
+          const btn = document.createElement("div");
+          btn.className = "resultat-item"; // On réutilise le beau design du Commit 2
+          btn.innerHTML = `<span>${res.titre}</span> <span style="color: #aaa; font-size: 12px;">➔</span>`;
+          btn.onclick = () => {
+            spotlightModal.close(); // On ferme le spotlight
+            ouvrirModal(res.cible, res.titre); // On ouvre le bon menu !
+          };
+          spotlightResults.appendChild(btn);
+        });
+      }
+    });
+  }
   // ---------------------------------------------
   // --- NOUVEAU : MISE EN PAUSE DE LA VISITE ---
   // Si le tuto est en cours, on l'efface le temps que le menu soit ouvert
