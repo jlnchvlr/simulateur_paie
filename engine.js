@@ -181,7 +181,15 @@ async function initialiserApplication() {
     modal.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        modal.close();
+        // Si le focus est sur un résultat de recherche, on clique dessus !
+        if (
+          document.activeElement &&
+          document.activeElement.classList.contains("resultat-item")
+        ) {
+          document.activeElement.click();
+        } else {
+          modal.close(); // Comportement normal sinon
+        }
       }
     });
 
@@ -196,6 +204,26 @@ async function initialiserApplication() {
           }
           window.tourSavedStep = undefined;
         }, 150);
+      }
+    });
+
+    // --- NOUVEAU : FULL KEYBOARD MODE (Menu Ajout) ---
+    modal.addEventListener("keydown", (e) => {
+      const champRecherche = document.getElementById("recherche-ajout");
+      // Si on est en mode recherche, qu'on n'est pas dans l'input, et qu'on tape un truc
+      if (
+        modal.classList.contains("search-mode") &&
+        document.activeElement !== champRecherche
+      ) {
+        if (e.key === "Backspace") {
+          e.preventDefault(); // Empêche le comportement par défaut
+          champRecherche.focus();
+          champRecherche.value = champRecherche.value.slice(0, -1); // Efface la dernière lettre
+          champRecherche.dispatchEvent(new Event("input")); // Met à jour la liste
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+          // Si on tape une lettre normale, on refocus direct l'input
+          champRecherche.focus();
+        }
       }
     });
 
@@ -346,7 +374,31 @@ async function initialiserApplication() {
           });
         }
       });
+
+      // --- NOUVEAU : FULL KEYBOARD MODE (Spotlight) ---
+      spotlightModal.addEventListener("keydown", (e) => {
+        if (document.activeElement !== spotlightInput) {
+          if (e.key === "Backspace") {
+            e.preventDefault();
+            spotlightInput.focus();
+            spotlightInput.value = spotlightInput.value.slice(0, -1);
+            spotlightInput.dispatchEvent(new Event("input"));
+          } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            spotlightInput.focus();
+          }
+        }
+      });
     }
+
+    // --- NOUVEAU : DÉTECTION SOURIS VS CLAVIER (Pour éviter les doubles sélections) ---
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab" || e.key.startsWith("Arrow")) {
+        document.body.classList.add("navigation-clavier");
+      }
+    });
+    document.addEventListener("mousemove", () => {
+      document.body.classList.remove("navigation-clavier");
+    });
 
     calculerPaie();
     resetHelperRist();

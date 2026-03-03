@@ -647,7 +647,7 @@ body {
   justify-content: space-between;
   align-items: center;
 }
-.resultat-item:hover {
+body:not(.navigation-clavier) .resultat-item:hover {
   border-color: var(--dgfip-medium);
   background-color: #f8f9fa;
   transform: translateX(4px); /* Petit effet de glissement vers la droite */
@@ -764,7 +764,14 @@ body {
   box-sizing: border-box;
   /* ... (garde tes autres styles .resultat-item existants : border, padding, etc.) ... */
 }
-.resultat-item:focus-visible {
+
+/* 1. On tue la bordure par défaut du navigateur en toutes circonstances */
+.resultat-item:focus {
+  outline: none;
+}
+
+/* 2. On affiche NOTRE belle bordure UNIQUEMENT si on navigue au clavier */
+body.navigation-clavier .resultat-item:focus {
   outline: 2px solid var(--dgfip-dark);
   outline-offset: -2px;
   background-color: #f8f9fa;
