@@ -197,79 +197,6 @@ function afficherResultatsRecherche(conteneur, resultats, requete, onSelect) {
 // =============================================================================
 // 5. MENUS INTERACTIFS RIST / ISQ
 // =============================================================================
-
-/**
- * Descriptions contextuelles de chaque niveau de la part Fonctions RIST.
- * Affichées dans le panneau de sélection au survol et à la sélection.
- * @type {Object.<string, string>}
- */
-const DETAILS_RIST = {
-  "Niveau 1": "ICNA en formation sans mention, IESSA 1ère affectation, TSEEAC en qualif...",
-  "Niveau 2": "ICNA formation 1 mention, IESSA stagiaires > 9 mois...",
-  "Niveau 3": "ICNA formation 2 mentions, Agents bureaux d'information, Contrôleurs Listes 9 à 11...",
-  "Niveau 4": "PC examinateurs / évaluateurs / facilitateurs FH Listes 9 à 11...",
-  "Niveau 5": "PC Liste 8, ICNA formation 3 mentions, Chefs CA Listes 9-11...",
-  "Niveau 6": "Chefs de tour/quart Liste 8, PC exam/éval/FH Liste 8, PC Liste 7...",
-  "Niveau 7": "Chefs de tour/quart Liste 7, Chefs CA Liste 8, PC exam/éval/FH Liste 7...",
-  "Niveau 8": "PC Listes 5 et 6, Chefs CA Liste 7, Spécialistes...",
-  "Niveau 9": "PC Listes 1 à 4, Chefs de quart Listes 5-6, PC exam/éval/FH Listes 5-6...",
-  "Niveau 10": "Chefs d'équipe CRNA, Adjoints chefs de salle ATFCM (ACDS), Chefs de tour L5-6, PC exam/éval/FH Listes 1 à 4, Assistants subdivision...",
-  "Niveau 11": "Chefs de salle CRNA, Chefs d'approche CDG, Chefs de tour L1-3, Chargés de projet, Chefs de subdivision...",
-  "Niveau 12": "Chefs de programmes, Chefs de projet, Chefs organismes L7-8, Chefs de division...",
-  "Niveau 13": "Chefs de division, Chefs de pôle, Chefs organismes L4-6, Adjoints chefs département...",
-  "Niveau 14": "Chefs SNA, Chefs département (DSNA, ENAC...), Chefs de pôles majeurs DO/DTI...",
-  "Niveau 15": "Chefs CRNA, Chefs Roissy / Orly, Directeurs DSAC/IR, Chef SIA, CESNAC...",
-};
-
-/** @type {Object.<string, string>} Descriptions de la part Expérience Professionnelle */
-const DETAILS_EXP = {
-  "Niveau 1": "Personnels stagiaires",
-  "Niveau 2": "TSEEAC Normal",
-  "Niveau 3": "TSEEAC Principal / TSEEAC Normal (1e qualif + 1 an) / IESSA Normal / ICNA Normal",
-  "Niveau 4": "ICNA Divisionnaire / TSEEAC Exceptionnel / TSEEAC Principal (2e qualif + 1 an) / IEEAC Normal / IESSA Principal",
-  "Niveau 5": "ICNA en Chef / IESSA Div ou Chef / IEEAC Principal ou HC / RTAC, CTAC, CSTAC",
-};
-
-/** @type {Object.<string, string>} Descriptions de la Licence ISQ */
-const DETAILS_ISQ_LICENCE = {
-  Aucune: "Licence non détenue, perdue ou suspendue.",
-  "Niveau 1": "Formation LFPG/LFPO/CRNA (détenteur LOC ou CR).",
-  "Niveau 2": "Personnels d'un organisme classé en liste 11.",
-  "Niveau 3": "Personnels d'un organisme classé en liste 10.",
-  "Niveau 4": "PC d'un organisme classé en liste 7 ou 8.",
-  "Niveau 5": "PC Listes 1 à 3 / ICNA stagiaires listes 1-3 (max 30 mois).",
-  "Niveau 6": "PC d'un organisme classé en liste 4 à 6.",
-  "Niveau 7": "PC d'un organisme classé en liste 9.",
-  "Niveau 8": "ICNA titularisés sur CDG/ORY en formation LOC ou Approche.",
-  "Niveau 9": "ICNA stagiaires affectés Listes 4 à 11 (max 30 mois).",
-};
-
-/** @type {Object.<string, string>} Descriptions du Complément ISQ */
-const DETAILS_ISQ_COMPLEMENT = {
-  Aucun: "Aucun complément, non éligible ou suspendu.",
-  "Niveau 1": "PC d'un organisme classé en liste 8.",
-  "Niveau 2": "PC d'un organisme classé en liste 7.",
-  "Niveau 3": "PC d'un organisme classé en liste 5 ou 6.",
-  "Niveau 4": "PC d'un organisme classé en liste 4.",
-  "Niveau 5": "PC d'un organisme classé en liste 3.",
-  "Niveau 6": "PC d'un organisme classé en liste 2.",
-  "Niveau 7": "PC d'un organisme classé en liste 1.",
-  "Niveau 8": "PC d'un organisme classé en listes 9 à 11.",
-};
-
-/** @type {Object.<string, string>} Descriptions de la Majoration ISQ */
-const DETAILS_ISQ_MAJORATION = {
-  Aucune: "Aucune majoration / Non éligible.",
-  "Niveau 1": "Personnels d'un organisme classé en listes 9 à 11.",
-  "Niveau 2": "Personnels d'un organisme classé en liste 8.",
-  "Niveau 3": "Personnels d'un organisme classé en liste 7.",
-  "Niveau 4": "Personnels d'un organisme classé en listes 5 et 6.",
-  "Niveau 5": "Personnels d'un organisme classé en liste 4.",
-  "Niveau 6": "Personnels d'un organisme classé en liste 3.",
-  "Niveau 7": "Personnels d'un organisme classé en liste 2.",
-  "Niveau 8": "Personnels d'un organisme classé en liste 1.",
-};
-
 /**
  * Factory : crée et enregistre sur `window` les 3 fonctions nécessaires à un menu interactif.
  * Ces fonctions DOIVENT être sur `window` car appelées via `onclick="..."` dans le HTML.
@@ -305,13 +232,89 @@ function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
     calculerPaie();
   };
 }
+/**
+ * Descriptions contextuelles de chaque niveau de la part Fonctions RIST.
+ * Affichées dans le panneau de sélection au survol et à la sélection.
+ * @type {Object.<string, string>}
+ */
+/**
+ * Configuration des 5 menus RIST / ISQ.
+ * Source unique de vérité : toute modification ici suffit pour ajouter ou supprimer un menu.
+ * @type {Array<{nom:string, inputId:string, helperId:string, panelId:string, previewId:string, dataKey:string, placeholder:string}>}
+ */
+const CONFIGS_RIST = [
+  {
+    nom: "Rist",
+    inputId: "input-fonction",
+    helperId: "rist-helper-text",
+    panelId: "panel-rist-fonctions",
+    previewId: "preview-rist-fonctions",
+    dataKey: "fonctions",
+    placeholder: "Sélectionnez un niveau pour voir les fonctions...",
+  },
+  {
+    nom: "Exp",
+    inputId: "input-experience",
+    helperId: "exp-helper-text",
+    panelId: "panel-rist-experience",
+    previewId: "preview-rist-experience",
+    dataKey: "experience",
+    placeholder: "Sélectionnez un niveau pour voir les grades correspondants...",
+  },
+  {
+    nom: "IsqLicence",
+    inputId: "input-isq-licence",
+    helperId: "isq-licence-helper-text",
+    panelId: "panel-rist-isq-licence",
+    previewId: "preview-rist-isq-licence",
+    dataKey: "isq_licence",
+    placeholder: "Sélectionnez un niveau pour voir l'affectation correspondante...",
+  },
+  {
+    nom: "IsqComplement",
+    inputId: "input-isq-complement",
+    helperId: "isq-complement-helper-text",
+    panelId: "panel-rist-isq-complement",
+    previewId: "preview-rist-isq-complement",
+    dataKey: "isq_complement",
+    placeholder: "Sélectionnez un niveau pour voir l'affectation correspondante...",
+  },
+  {
+    nom: "IsqMajoration",
+    inputId: "input-isq-majoration",
+    helperId: "isq-majoration-helper-text",
+    panelId: "panel-rist-isq-majoration",
+    previewId: "preview-rist-isq-majoration",
+    dataKey: "isq_majoration",
+    placeholder: "Sélectionnez un niveau pour voir l'affectation correspondante...",
+  },
+];
 
-// Enregistrement des 5 menus interactifs RIST / ISQ
-creerMenuInteractif("Rist", "input-fonction", "rist-helper-text", "panel-rist-fonctions", DETAILS_RIST);
-creerMenuInteractif("Exp", "input-experience", "exp-helper-text", "panel-rist-experience", DETAILS_EXP);
-creerMenuInteractif("IsqLicence", "input-isq-licence", "isq-licence-helper-text", "panel-rist-isq-licence", DETAILS_ISQ_LICENCE);
-creerMenuInteractif("IsqComplement", "input-isq-complement", "isq-complement-helper-text", "panel-rist-isq-complement", DETAILS_ISQ_COMPLEMENT);
-creerMenuInteractif("IsqMajoration", "input-isq-majoration", "isq-majoration-helper-text", "panel-rist-isq-majoration", DETAILS_ISQ_MAJORATION);
+/**
+ * Génère dynamiquement les options d'un menu RIST/ISQ depuis `baseDonnees`.
+ * Remplace les `<div class="rist-option">` codés en dur dans le HTML.
+ * Doit être appelée après le chargement de `data.json`.
+ *
+ * @param {typeof CONFIGS_RIST[0]} cfg - Configuration du menu à générer
+ */
+function genererListeRist(cfg) {
+  const container = document.querySelector(`#${cfg.panelId} .rist-list-container`);
+  const section = baseDonnees.rist?.[cfg.dataKey];
+  if (!container || !section) return;
+
+  const valeurActuelle = document.getElementById(cfg.inputId)?.value;
+  container.innerHTML = "";
+
+  Object.entries(section.montants).forEach(([niveau, montant]) => {
+    const div = document.createElement("div");
+    div.className = "rist-option" + (niveau === valeurActuelle ? " selected" : "");
+    div.dataset.value = niveau;
+    div.textContent = `${niveau} (${montant.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €)`;
+    div.addEventListener("mouseenter", () => window[`previewHelper${cfg.nom}`](niveau));
+    div.addEventListener("click", () => window[`select${cfg.nom}`](niveau));
+    container.appendChild(div);
+  });
+}
 
 // =============================================================================
 // 6. INTERFACE UTILISATEUR
@@ -487,11 +490,11 @@ function getProfilDepuisInterface() {
 
     primes: {
       forfait_mobilites: lireFloat("input-fmd"),
-      rist_fonctions: baseDonnees.rist?.fonctions?.[ristKey] || 0,
-      rist_exper_prof: baseDonnees.rist?.experience?.[expKey] || 0,
-      rist_lic_isq: baseDonnees.rist?.isq_licence?.[licKey] || 0,
-      rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.[cpltKey] || 0,
-      rist_maj_isq: baseDonnees.rist?.isq_majoration?.[majKey] || 0,
+      rist_fonctions: baseDonnees.rist?.fonctions?.montants?.[ristKey] || 0,
+      rist_exper_prof: baseDonnees.rist?.experience?.montants?.[expKey] || 0,
+      rist_lic_isq: baseDonnees.rist?.isq_licence?.montants?.[licKey] || 0,
+      rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.montants?.[cpltKey] || 0,
+      rist_maj_isq: baseDonnees.rist?.isq_majoration?.montants?.[majKey] || 0,
       attractivite: lireFloat("input-attractivite"),
       fidelisation: lireFloat("input-fidelisation"),
       inflation: lireFloat("input-inflation"),
@@ -1081,6 +1084,12 @@ async function initialiserApplication() {
       }
     });
 
+    // Génération dynamique des listes RIST / ISQ + enregistrement des menus interactifs
+    CONFIGS_RIST.forEach((cfg) => {
+      genererListeRist(cfg);
+      creerMenuInteractif(cfg.nom, cfg.inputId, cfg.helperId, cfg.panelId, baseDonnees.rist[cfg.dataKey].descriptions);
+    });
+
     // Changement de grade → échelons + recalcul
     document.getElementById("input-grade").addEventListener("input", () => {
       mettreAJourEchelons();
@@ -1217,11 +1226,7 @@ async function initialiserApplication() {
 
     // Premier affichage
     calculerPaie();
-    resetHelperRist();
-    resetHelperExp();
-    resetHelperIsqLicence();
-    resetHelperIsqComplement();
-    resetHelperIsqMajoration();
+    CONFIGS_RIST.forEach((cfg) => window[`resetHelper${cfg.nom}`]());
   } catch (erreur) {
     console.error("Erreur d'initialisation :", erreur);
   }
