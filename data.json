@@ -135,5 +135,23 @@
       "Niveau 8": 405.32
     },
     "ind_csg_default": 115.18
-  }
+  },
+
+  "attractivite": [
+    { "valeur": "0", "label": "Aucune Prime d'Attractivité" },
+    {
+      "valeur": "415",
+      "label": "RIST Majoration Géo Nord / Nord-Est (201987)"
+    },
+    { "valeur": "520", "label": "RIST Majoration CDG / CRNA Ouest (201986)" },
+    { "valeur": "600", "label": "RIST Majoration Pyrénées / Cayenne (202550)" },
+    { "valeur": "150", "label": "Nouvelle Attractivité - Niveau 2" },
+    { "valeur": "300", "label": "Nouvelle Attractivité - Niveau 3" }
+  ],
+  "fidelisation": [
+    { "valeur": "0", "label": "Aucune Prime de Fidélisation" },
+    { "valeur": "150", "label": "Prime Fidélisation - Palier 1 (3 ans)" },
+    { "valeur": "300", "label": "Prime Fidélisation - Palier 2 (5 ans)" },
+    { "valeur": "500", "label": "Prime Fidélisation - Palier 3 (10 ans)" }
+  ]
 }

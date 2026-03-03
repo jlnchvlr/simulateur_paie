@@ -12,6 +12,24 @@ const indexRecherche = [
     cible: "panel-nuits",
   },
   {
+    titre: "📍 Attractivité Géographique",
+    motsCles: [
+      "attractivite",
+      "majo",
+      "geo",
+      "201987",
+      "201986",
+      "nord",
+      "cdg",
+    ],
+    cible: "panel-attractivite",
+  },
+  {
+    titre: "⏳ Prime de Fidélisation",
+    motsCles: ["fidelisation", "pft", "palier", "engagement", "duree"],
+    cible: "panel-fidelisation",
+  },
+  {
     titre: "🤒 Jours d'absence (Grève, Maladie)",
     motsCles: [
       "grève",
@@ -165,6 +183,25 @@ async function initialiserApplication() {
     baseDonnees = await reponse.json();
 
     mettreAJourEchelons();
+
+    // Remplissage des Selects Attractivité et Fidélisation
+    if (baseDonnees.attractivite) {
+      const selectAttr = document.getElementById("input-attractivite");
+      if (selectAttr) {
+        baseDonnees.attractivite.forEach((opt) => {
+          selectAttr.add(new Option(opt.label, opt.valeur));
+        });
+      }
+    }
+
+    if (baseDonnees.fidelisation) {
+      const selectFid = document.getElementById("input-fidelisation");
+      if (selectFid) {
+        baseDonnees.fidelisation.forEach((opt) => {
+          selectFid.add(new Option(opt.label, opt.valeur));
+        });
+      }
+    }
 
     document.getElementById("input-grade").addEventListener("input", () => {
       mettreAJourEchelons();
@@ -660,6 +697,10 @@ function getProfilDepuisInterface() {
       ind_compensatrice_csg:
         parseFloat(document.getElementById("input-ind-csg")?.value) || 0,
       psc: pscTotal,
+      attractivite:
+        parseFloat(document.getElementById("input-attractivite")?.value) || 0,
+      fidelisation:
+        parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
     },
   };
 }
@@ -882,6 +923,30 @@ function calculerPaie() {
     profilAgent.evenements.ott_pf +
     profilAgent.evenements.ott_pv_globale +
     profilAgent.evenements.ott_pv_opt32;
+
+  if (profilAgent.primes.attractivite > 0) {
+    // Si tu veux dynamiser le code/libellé, tu peux récupérer le texte du select.
+    // Pour simplifier, on affiche une ligne générique ici :
+    ajouterLigne(
+      "203002",
+      "ATTRACTIVITE GEOGRAPHIQUE",
+      profilAgent.primes.attractivite,
+      null,
+      null,
+      ["input-attractivite"],
+    );
+  }
+
+  if (profilAgent.primes.fidelisation > 0) {
+    ajouterLigne(
+      "203001",
+      "PRIME FIDELISATION",
+      profilAgent.primes.fidelisation,
+      null,
+      null,
+      ["input-fidelisation"],
+    );
+  }
 
   let montantSFT = 0;
   if (profilAgent.enfants === 1) montantSFT = 2.29;
