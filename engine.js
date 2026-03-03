@@ -776,7 +776,52 @@ function calculerMontants(p) {
   };
   const totalPatronal = Object.values(charges).reduce((s, v) => s + v, 0);
 
+  // ── Totaux des colonnes & nets ───────────────────────────────────────────────
+  const totalAPayer = arrondir(
+    traitementBrut +
+      (montantNbi > 0 ? montantNbi - absNbi : 0) +
+      indemniteResidence +
+      montantSFT +
+      (nuit > 0 ? nuit : 0) +
+      (p.primes.forfait_mobilites > 0 ? p.primes.forfait_mobilites : 0) +
+      (p.primes.inflation > 0 ? p.primes.inflation : 0) +
+      (p.primes.rist_fonctions > 0 ? p.primes.rist_fonctions - absRistFct : 0) +
+      (p.primes.rist_exper_prof > 0 ? p.primes.rist_exper_prof - absRistExp : 0) +
+      (p.primes.rist_lic_isq > 0 ? p.primes.rist_lic_isq - absRistIsq : 0) +
+      (p.primes.rist_cplt_lic_isq > 0 ? p.primes.rist_cplt_lic_isq - absRistCplt : 0) +
+      (p.primes.rist_maj_isq > 0 ? p.primes.rist_maj_isq - absRistMaj : 0) +
+      (p.primes.ind_compensatrice_csg > 0 ? p.primes.ind_compensatrice_csg - absIndCsg : 0) +
+      (p.primes.psc > 0 ? p.primes.psc : 0) +
+      (p.evenements.prime_performance > 0 ? p.evenements.prime_performance : 0) +
+      (p.evenements.ott_pv_globale > 0 ? p.evenements.ott_pv_globale : 0) +
+      (p.evenements.ott_pf > 0 ? p.evenements.ott_pf : 0) +
+      (p.evenements.ott_pv_opt32 > 0 ? p.evenements.ott_pv_opt32 : 0) +
+      (p.primes.fidelisation > 0 ? p.primes.fidelisation : 0) +
+      (p.primes.attractivite > 0 ? p.primes.attractivite : 0),
+  );
+
+  const totalADeduire = arrondir(
+    retenuePC +
+      (montantNbi > 0 ? retenuePcNbi : 0) +
+      csgNonDeductible +
+      csgDeductible +
+      crds +
+      cotisationRafp +
+      (joursAbs > 0 ? absTraitement : 0) +
+      (joursAbs > 0 ? absResidence : 0) +
+      transfertPrimes +
+      retenueIsq,
+  );
+
+  const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
+  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc + retenueIsq);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds - p.primes.forfait_mobilites);
+  const impotSource = arrondir(netImposableFinal * p.taux_pas);
+  const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
+  const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal - transfertPrimes);
+
   return {
+    // --- champs existants ---
     indice,
     traitementBrut,
     montantNbi,
@@ -813,6 +858,15 @@ function calculerMontants(p) {
     charges,
     totalPatronal,
     psc: p.primes.psc,
+    // --- champs ajoutés à l'étape 5 ---
+    totalAPayer,
+    totalADeduire,
+    netAPayerAvantImpot,
+    netSocial,
+    netImposableFinal,
+    impotSource,
+    netFinal,
+    coutTotalEmployeur,
   };
 }
 
@@ -858,8 +912,6 @@ const ROUTAGE_MODAL = {
 function dessinerFiche(p, m) {
   const tbody = document.getElementById("lignes-paie");
   tbody.innerHTML = "";
-  let totalAPayer = 0;
-  let totalADeduire = 0;
 
   // Label de détail des absences (ex. "GREVE 2J // MAL 90% 3J")
   const detailAbs = [m.joursGreve > 0 && `GREVE ${m.joursGreve}J`, m.joursCarence > 0 && `CAR ${m.joursCarence}J`, m.jours90 > 0 && `MAL 90% ${m.jours90}J`, m.jours50 > 0 && `MAL 50% ${m.jours50}J`]
@@ -884,9 +936,6 @@ function dessinerFiche(p, m) {
    * @param {string}      [customId]       - ID `<tr>` personnalisé (outrepasse `row-{code}`)
    */
   function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo, inputsAReset = null, tooltipMontant = null, customId = null) {
-    if (aPayer) totalAPayer += aPayer;
-    if (aDeduire) totalADeduire += aDeduire;
-
     const tr = document.createElement("tr");
     if (customId) tr.id = customId;
     else if (code) tr.id = `row-${code}`;
@@ -1048,18 +1097,10 @@ function dessinerFiche(p, m) {
   ajouterLigne("751095", "24,6% ISQ", null, m.retenueIsq, null);
 
   // ── Nets ─────────────────────────────────────────────────────────────────────
-  const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   ajouterLigne("", "", null, null, null);
-  ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, netAPayerAvantImpot);
-
-  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - m.psc + m.retenueIsq);
-  ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, netSocial);
-
-  const netImposable = netAPayerAvantImpot + m.csgNonDeductible + m.crds - p.primes.forfait_mobilites;
-  const netImposableFinal = Math.max(0, netImposable);
-  const impotSource = arrondir(netImposableFinal * p.taux_pas);
-
-  ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, impotSource, null);
+  ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, m.netAPayerAvantImpot);
+  ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, m.netSocial);
+  ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, m.impotSource, null);
   ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(p.taux_pas * 100)}%)`, null, null, null, null, null, "row-taux-impot");
 
   // ── Ligne d'ajout d'éléments variables ──────────────────────────────────────
@@ -1083,16 +1124,12 @@ function dessinerFiche(p, m) {
   tbody.appendChild(trRessort);
 
   // ── Totaux dans le pied de page ───────────────────────────────────────────────
-  const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
-  const coutTotalEmployeur = arrondir(totalAPayer + m.totalPatronal - m.transfertPrimes);
 
-  document.getElementById("ui-indice").textContent = "0" + (m.indice || "000");
-  document.getElementById("ui-total-a-payer").textContent = formaterMontant(arrondir(totalAPayer));
-  document.getElementById("ui-total-a-deduire").textContent = formaterMontant(arrondir(totalADeduire));
-  document.getElementById("ui-charges-patronales").textContent = formaterMontant(m.totalPatronal);
-  document.getElementById("ui-cout-employeur").textContent = formaterMontant(coutTotalEmployeur);
-  document.getElementById("ui-net-a-payer").textContent = (netFinal === 0 ? "0,00" : formaterMontant(netFinal)) + " €";
-  document.getElementById("ui-net-imposable").textContent = netImposableFinal === 0 ? "0,00" : formaterMontant(netImposableFinal);
+  document.getElementById("ui-total-a-payer").textContent = formaterMontant(m.totalAPayer);
+  document.getElementById("ui-total-a-deduire").textContent = formaterMontant(m.totalADeduire);
+  document.getElementById("ui-cout-employeur").textContent = formaterMontant(m.coutTotalEmployeur);
+  document.getElementById("ui-net-a-payer").textContent = (m.netFinal === 0 ? "0,00" : formaterMontant(m.netFinal)) + " €";
+  document.getElementById("ui-net-imposable").textContent = m.netImposableFinal === 0 ? "0,00" : formaterMontant(m.netImposableFinal);
 
   // ── Injection des lignes fantômes après repaint (requestAnimationFrame) ───────
   requestAnimationFrame(() => {
