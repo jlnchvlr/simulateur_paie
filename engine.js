@@ -300,6 +300,12 @@ function getProfilDepuisInterface() {
   document.querySelectorAll(".pf-checkbox").forEach((cb) => {
     if (cb.checked) pfTotal += parseFloat(cb.value);
   });
+  // NOUVEAU : Calcul des multiples cases PSC
+  let pscTotal = 0;
+  document.querySelectorAll(".psc-checkbox").forEach((cb) => {
+    if (cb.checked) pscTotal += parseFloat(cb.value);
+  });
+
   return {
     grade:
       document.getElementById("input-grade")?.value || "ING.DIV. CONT.NAV.AE",
@@ -362,6 +368,7 @@ function getProfilDepuisInterface() {
         ] || 0,
       ind_compensatrice_csg:
         parseFloat(document.getElementById("input-ind-csg")?.value) || 0,
+      psc: pscTotal,
     },
   };
 }
@@ -484,7 +491,7 @@ function calculerPaie() {
   const joursRetenus =
     joursGreve + joursCarence + jours90 * 0.1 + jours50 * 0.5;
 
-  const psc = baseDonnees.constantes.participation_psc;
+  const psc = profilAgent.primes.psc;
 
   const absenceTraitement = arrondir((traitementBrut / 30) * joursRetenus);
   const absenceNbi = arrondir((montantNbi / 30) * joursRetenus);
@@ -703,6 +710,7 @@ function calculerPaie() {
     604959: { cible: "panel-absences", titre: "Absences et Carence" },
     558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
     202206: { cible: "panel-csg", titre: "Indemnité Compensatrice CSG" },
+    202354: { cible: "panel-psc", titre: "Participation à la PSC" },
     202558: {
       cible: "panel-ott",
       titre: "Organisation du Travail (Protocole)",
@@ -1028,7 +1036,13 @@ function calculerPaie() {
     );
   }
 
-  ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null);
+  if (psc > 0) {
+    ajouterLigne("202354", "PARTICIPATION A LA PSC", psc, null, null, [
+      "psc-15",
+      "psc-7",
+      "psc-5",
+    ]);
+  }
 
   if (profilAgent.evenements.prime_performance > 0)
     ajouterLigne(

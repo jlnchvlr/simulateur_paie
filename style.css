@@ -533,3 +533,48 @@ body {
     display: none !important;
   }
 }
+/* =========================================
+   FIX UX/UI POUR LES CHECKBOXES PSC (Façon Onglets)
+   ========================================= */
+
+/* 1. On cache la petite case à cocher originale */
+.setting-panel .ir-tabs input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* 2. Style par défaut du cadre (label) cliquable */
+.setting-panel .ir-tabs input[type="checkbox"] + label {
+  border: 1px solid var(--dgfip-light);
+  background-color: white;
+  color: var(--dgfip-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  /* On réutilise les styles d'alignement existants de .ir-tabs label */
+}
+
+/* 3. Style au survol (hover) */
+.setting-panel .ir-tabs input[type="checkbox"] + label:hover {
+  background-color: #f8f9fa;
+  border-color: var(--dgfip-medium);
+}
+
+/* 4. Style quand la case est cochée (le cadre devient bleu) */
+.setting-panel .ir-tabs input[type="checkbox"]:checked + label {
+  background-color: var(--dgfip-dark);
+  color: white;
+  border-color: var(--dgfip-dark);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 5. Petit bonus pour l'accessibilité au clavier */
+.setting-panel .ir-tabs input[type="checkbox"]:focus-visible + label {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: 2px;
+}
+/* 6. Correction de lisibilité : le sous-titre <small> devient blanc quand l'onglet est sélectionné */
+.setting-panel .ir-tabs input:checked + label small {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
