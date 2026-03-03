@@ -1,4 +1,10 @@
 {
+  "meta": {
+    "version": "2025-01",
+    "valable_depuis": "2025-01-01",
+    "valeur_point_source": "Décret n°2023-519 du 28 juin 2023",
+    "notes": "Taux RAFP, PC et cotisations au 01/01/2025. Grilles ICNA issues du protocole 2022-2025."
+  },
   "constantes": {
     "valeur_point_mensuel": 4.92278,
     "taux_retenue_pc": 0.111,

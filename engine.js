@@ -1074,6 +1074,17 @@ async function initialiserApplication() {
     if (!reponse.ok) throw new Error("Impossible de charger data.json.");
     baseDonnees = await reponse.json();
 
+    // Affichage de la version du barème dans la console (debug) et dans le DOM si l'élément existe
+    const meta = baseDonnees.meta;
+    if (meta) {
+      console.info(`📋 Barème chargé : v${meta.version} — valable depuis ${meta.valable_depuis}`);
+      const elVersion = document.getElementById("ui-version-bareme");
+      if (elVersion) {
+        const [annee, mois] = meta.version.split("-");
+        elVersion.textContent = `Barème ${mois}-${annee}`;
+      }
+    }
+
     mettreAJourEchelons();
 
     // Peuplement des selects depuis data.json (attractivité & fidélisation)
