@@ -1030,11 +1030,30 @@ body.navigation-clavier .resultat-item:focus {
 .page-top-spacer {
   height: 20px;
 }
+.bareme-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
 .bareme-version {
-  text-align: right;
   font-size: 8px;
   color: var(--dgfip-medium);
   font-family: var(--font-numbers);
   opacity: 0.6;
-  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+.reset-profil {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--dgfip-medium);
+  opacity: 0.4;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+.reset-profil:hover {
+  opacity: 1;
 }
