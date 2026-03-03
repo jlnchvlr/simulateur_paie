@@ -106,7 +106,51 @@ async function initialiserApplication() {
         }
       });
     });
+
     // ---------------------------------------------------------
+    // --- LOGIQUE DE LA BARRE DE RECHERCHE (MENU AJOUT) ---
+    // ---------------------------------------------------------
+    const champRecherche = document.getElementById("recherche-ajout");
+    const conteneurResultats = document.getElementById("resultats-recherche");
+    const conteneurBoutonsDefaut = document.getElementById(
+      "boutons-ajout-defaut",
+    );
+
+    if (champRecherche) {
+      champRecherche.addEventListener("input", (e) => {
+        const requete = e.target.value;
+
+        if (requete.trim() === "") {
+          // Si on efface tout, on remet les boutons d'origine
+          conteneurResultats.style.display = "none";
+          conteneurBoutonsDefaut.style.display = "grid";
+          return;
+        }
+
+        // On cherche via le "Cerveau" (codé au commit 1)
+        const resultats = window.rechercherElement(requete);
+
+        // On cache les boutons et on affiche la zone de résultats
+        conteneurBoutonsDefaut.style.display = "none";
+        conteneurResultats.style.display = "flex";
+        conteneurResultats.innerHTML = "";
+
+        if (resultats.length === 0) {
+          conteneurResultats.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
+        } else {
+          resultats.forEach((res) => {
+            const btn = document.createElement("div");
+            btn.className = "resultat-item";
+            btn.innerHTML = `<span>${res.titre}</span> <span style="color: #aaa; font-size: 12px;">➔</span>`;
+            btn.onclick = () => {
+              // Au clic sur un résultat, on ouvre le bon panneau !
+              ouvrirModal(res.cible, res.titre);
+            };
+            conteneurResultats.appendChild(btn);
+          });
+        }
+      });
+    }
 
     calculerPaie();
     resetHelperRist();
@@ -392,6 +436,19 @@ function arrondir(valeur) {
 }
 
 function ouvrirModal(panelIds, titre) {
+  // --- NOUVEAU : UX DE LA BARRE DE RECHERCHE ---
+  // Si on ouvre le menu d'ajout, on vide la recherche et on met le focus clavier
+  if (panelIds === "panel-menu-ajout") {
+    const champRecherche = document.getElementById("recherche-ajout");
+    if (champRecherche) {
+      champRecherche.value = "";
+      document.getElementById("resultats-recherche").style.display = "none";
+      document.getElementById("boutons-ajout-defaut").style.display = "grid";
+      // On attend que la modale s'ouvre pour placer le curseur
+      setTimeout(() => champRecherche.focus(), 50);
+    }
+  }
+  // ---------------------------------------------
   // --- NOUVEAU : MISE EN PAUSE DE LA VISITE ---
   // Si le tuto est en cours, on l'efface le temps que le menu soit ouvert
   if (window.isTourActive && window.tourObj) {
