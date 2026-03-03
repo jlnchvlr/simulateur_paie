@@ -247,14 +247,44 @@ body {
 /* =========================================
    4. FENÊTRE MODALE & UI
    ========================================= */
+/* Trouve .magic-modal (vers la ligne 180) et modifie-la ainsi : */
 .magic-modal {
-  border: 2px solid var(--dgfip-dark);
+  /* Design de base */
+  border: none;
   border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 480px;
   padding: 0;
-  width: 450px;
-  max-width: 90vw;
-  background: white;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+
+  /* 1. On "tue" le comportement par défaut du dialog natif */
+  margin: 0;
+  bottom: auto;
+
+  /* 2. Position fixe choisie (Mets ici la valeur que tu préférais !) */
+  position: fixed;
+  top: 35%; /* Par exemple 35% pour être près du bouton d'ajout */
+  left: 50%;
+
+  /* 3. L'astuce fluide : on centre horizontalement avec translate */
+  transform: translate(-50%, 0);
+
+  /* Une courbe d'animation très douce (ease-out un peu freiné sur la fin) */
+  animation: modalSlideSmooth 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes modalSlideSmooth {
+  from {
+    opacity: 0;
+    /* On le fait démarrer juste 20 pixels plus haut, pas besoin de jouer avec les % */
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    /* Il atterrit exactement à sa place finale (top: 35%) */
+    transform: translate(-50%, 0);
+  }
 }
 .magic-modal::backdrop {
   background: rgba(0, 0, 0, 0.6);
@@ -583,7 +613,8 @@ body {
    ========================================= */
 #recherche-ajout {
   width: 100%;
-  padding: 12px 15px;
+  /* On augmente la padding-left pour faire de la place à l'icône (35px au lieu de 15px) */
+  padding: 12px 15px 12px 35px;
   border: 2px solid var(--dgfip-light);
   border-radius: 6px;
   font-family: var(--font-main);
@@ -591,6 +622,12 @@ body {
   margin-bottom: 15px;
   box-sizing: border-box;
   transition: border-color 0.2s;
+
+  /* NOUVEAU : Intégration de l'icône en CSS */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center; /* Positionne l'icône à 10px de la gauche */
+  background-size: 18px 18px; /* Taille de l'icône */
 }
 #recherche-ajout:focus {
   outline: none;
