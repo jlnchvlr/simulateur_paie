@@ -249,7 +249,6 @@ body {
    ========================================= */
 /* Trouve .magic-modal (vers la ligne 180) et modifie-la ainsi : */
 .magic-modal {
-  /* Design de base */
   border: none;
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -257,33 +256,25 @@ body {
   max-width: 480px;
   padding: 0;
   overflow: hidden;
-
-  /* 1. On "tue" le comportement par défaut du dialog natif */
   margin: 0;
   bottom: auto;
-
-  /* 2. Position fixe choisie (Mets ici la valeur que tu préférais !) */
   position: fixed;
-  top: 35%; /* Par exemple 35% pour être près du bouton d'ajout */
+
+  /* MODE PAR DÉFAUT : Centré parfaitement au milieu */
+  top: 50%;
   left: 50%;
-
-  /* 3. L'astuce fluide : on centre horizontalement avec translate */
-  transform: translate(-50%, 0);
-
-  /* Une courbe d'animation très douce (ease-out un peu freiné sur la fin) */
-  animation: modalSlideSmooth 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  transform: translate(-50%, -50%);
+  animation: modalSlideCenter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-@keyframes modalSlideSmooth {
+@keyframes modalSlideCenter {
   from {
     opacity: 0;
-    /* On le fait démarrer juste 20 pixels plus haut, pas besoin de jouer avec les % */
-    transform: translate(-50%, -20px);
+    transform: translate(-50%, -40%);
   }
   to {
     opacity: 1;
-    /* Il atterrit exactement à sa place finale (top: 35%) */
-    transform: translate(-50%, 0);
+    transform: translate(-50%, -50%);
   }
 }
 .magic-modal::backdrop {
@@ -749,3 +740,32 @@ body {
 }
 
 /* (On réutilise ta classe .resultat-item du Commit 2 pour le design des lignes !) */
+/* MODE RECHERCHE : Ancré en haut (Activé dynamiquement en JS) */
+.magic-modal.search-mode {
+  top: 15%;
+  transform: translate(-50%, 0);
+  animation: modalSlideTop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes modalSlideTop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Accessibilité : Focus clavier sur les résultats de recherche */
+.resultat-item {
+  width: 100%; /* Important car on va passer de div à button */
+  box-sizing: border-box;
+  /* ... (garde tes autres styles .resultat-item existants : border, padding, etc.) ... */
+}
+.resultat-item:focus-visible {
+  outline: 2px solid var(--dgfip-dark);
+  outline-offset: -2px;
+  background-color: #f8f9fa;
+}
