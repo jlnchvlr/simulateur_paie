@@ -56,6 +56,122 @@ const CALC = {
 };
 
 // =============================================================================
+// 1b. PERSISTANCE DU PROFIL (localStorage)
+// =============================================================================
+
+const CLE_STOCKAGE = "icna_profil_v1";
+
+/**
+ * Liste des champs du profil permanent à persister.
+ * Les événements mensuels (nuits, absences, OTT...) sont exclus volontairement :
+ * ils sont ressaisis chaque mois.
+ */
+const CHAMPS_PROFIL = [
+  // Identité / grille
+  { id: "input-grade", type: "select" },
+  { id: "input-echelon", type: "select" },
+  { id: "input-enfants", type: "select" },
+  { id: "input-nbi-checkbox", type: "checkbox" },
+  // Taux et indemnités fixes
+  { id: "input-pas", type: "value" },
+  { id: "input-ind-csg", type: "value" },
+  // Zone de résidence (radio)
+  { id: "ir-zone", type: "radio", name: "ir-zone" },
+  // Sélections RIST / ISQ (inputs hidden)
+  { id: "input-fonction", type: "value" },
+  { id: "input-experience", type: "value" },
+  { id: "input-isq-licence", type: "value" },
+  { id: "input-isq-complement", type: "value" },
+  { id: "input-isq-majoration", type: "value" },
+  // Primes mensuelles fixes
+  { id: "input-attractivite", type: "select" },
+  { id: "input-fidelisation", type: "select" },
+  // PSC (cases à cocher cumulables)
+  { id: "psc-15", type: "checkbox" },
+  { id: "psc-7", type: "checkbox" },
+  { id: "psc-5", type: "checkbox" },
+];
+
+/**
+ * Lit tous les champs du profil permanent et les sauvegarde dans localStorage.
+ * Appelée automatiquement à chaque recalcul.
+ */
+function sauvegarderProfil() {
+  const profil = {};
+  CHAMPS_PROFIL.forEach(({ id, type, name }) => {
+    if (type === "radio") {
+      const checked = document.querySelector(`input[name="${name}"]:checked`);
+      if (checked) profil[id] = checked.value;
+    } else {
+      const el = document.getElementById(id);
+      if (!el) return;
+      profil[id] = type === "checkbox" ? el.checked : el.value;
+    }
+  });
+  try {
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(profil));
+  } catch (e) {
+    console.warn("Sauvegarde profil impossible :", e);
+  }
+}
+
+/**
+ * Restaure les champs du formulaire depuis le profil sauvegardé.
+ * Doit être appelée APRÈS le peuplement des selects dynamiques (attractivité,
+ * fidélisation, RIST) pour que les options existent avant d'être sélectionnées.
+ *
+ * @returns {boolean} true si un profil a été restauré, false sinon
+ */
+function restaurerProfil() {
+  let profil;
+  try {
+    const raw = localStorage.getItem(CLE_STOCKAGE);
+    if (!raw) return false;
+    profil = JSON.parse(raw);
+  } catch (e) {
+    console.warn("Restauration profil impossible :", e);
+    return false;
+  }
+
+  CHAMPS_PROFIL.forEach(({ id, type, name }) => {
+    if (type === "radio") {
+      const valeur = profil[id];
+      if (valeur) {
+        const radio = document.querySelector(`input[name="${name}"][value="${valeur}"]`);
+        if (radio) radio.checked = true;
+      }
+    } else {
+      const el = document.getElementById(id);
+      if (!el || profil[id] === undefined) return;
+      if (type === "checkbox") {
+        el.checked = profil[id];
+      } else {
+        el.value = profil[id];
+      }
+    }
+  });
+
+  // Resynchroniser les classes "selected" sur les listes RIST/ISQ
+  CONFIGS_RIST.forEach((cfg) => {
+    const valeur = document.getElementById(cfg.inputId)?.value;
+    document.querySelectorAll(`#${cfg.panelId} .rist-option`).forEach((div) => {
+      div.classList.toggle("selected", div.dataset.value === valeur);
+    });
+  });
+
+  return true;
+}
+
+/**
+ * Efface le profil sauvegardé et recharge la page.
+ * Exposée sur `window` car appelable depuis un bouton HTML.
+ */
+window.effacerProfil = function () {
+  localStorage.removeItem(CLE_STOCKAGE);
+  location.reload();
+};
+
+// =============================================================================
 // 2. INDEX DE RECHERCHE
 // =============================================================================
 
@@ -1022,16 +1138,14 @@ function dessinerFiche(p, m) {
 function calculerPaie() {
   const profilAgent = getProfilDepuisInterface();
   const m = calculerMontants(profilAgent);
-
-  // Mise à jour des aperçus dans les panneaux de configuration
   majPreview("preview-nuits", m.nuit);
   majPreview("preview-rist-fonctions", profilAgent.primes.rist_fonctions);
   majPreview("preview-rist-experience", profilAgent.primes.rist_exper_prof);
   majPreview("preview-rist-isq-licence", profilAgent.primes.rist_lic_isq);
   majPreview("preview-rist-isq-complement", profilAgent.primes.rist_cplt_lic_isq);
   majPreview("preview-rist-isq-majoration", profilAgent.primes.rist_maj_isq);
-
   dessinerFiche(profilAgent, m);
+  sauvegarderProfil(); // ← ajouter
 }
 
 // =============================================================================
@@ -1100,6 +1214,16 @@ async function initialiserApplication() {
       genererListeRist(cfg);
       creerMenuInteractif(cfg.nom, cfg.inputId, cfg.helperId, cfg.panelId, baseDonnees.rist[cfg.dataKey].descriptions);
     });
+
+    // Restauration du profil sauvegardé (après peuplement des listes)
+    const profilRestauré = restaurerProfil();
+    if (profilRestauré) {
+      // Le grade restauré peut avoir changé → reconstruire les échelons
+      mettreAJourEchelons();
+      // Réappliquer l'échelon sauvegardé (mettreAJourEchelons() remet sur le premier)
+      const echelonSauve = JSON.parse(localStorage.getItem(CLE_STOCKAGE))?.["input-echelon"];
+      if (echelonSauve) document.getElementById("input-echelon").value = echelonSauve;
+    }
 
     // Changement de grade → échelons + recalcul
     document.getElementById("input-grade").addEventListener("input", () => {
