@@ -1359,15 +1359,15 @@
             >
               🤒 Jours d'absence
             </button>
-            <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">
-              🚲 Forfait Mobilités
-            </button>
             <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">
               📊 Protocole (OTT)
             </button>
-
-            <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">
-              🛡️ Participation PSC
+            <button
+              onclick="
+                ouvrirModal('panel-primes', '💰 Partage Performance (PPP)')
+              "
+            >
+              💰 Partage Performance
             </button>
             <button
               onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')"
@@ -1381,8 +1381,16 @@
             >
               ⏳ Prime Fidélisation
             </button>
-            <button onclick="ouvrirModal('panel-primes', '💰 Autres Primes')">
-              💰 Autres Primes
+            <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">
+              🚲 Forfait Mobilités
+            </button>
+            <button
+              onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')"
+            >
+              📈 Indemnité Inflation
+            </button>
+            <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">
+              🛡️ Participation PSC
             </button>
           </div>
         </div>
@@ -1417,6 +1425,45 @@
             <option value="200">200 € (60 à 99 jours)</option>
             <option value="300">300 € (100 jours et plus)</option>
           </select>
+
+          <button
+            type="button"
+            class="validate-btn"
+            onclick="document.getElementById('magic-modal').close()"
+          >
+            Valider & Fermer ↵
+          </button>
+        </div>
+
+        <div id="panel-inflation" class="setting-panel">
+          <button
+            class="back-btn"
+            onclick="
+              ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')
+            "
+          >
+            ⬅ Retour au menu
+          </button>
+
+          <p
+            style="
+              margin-top: 0;
+              font-size: 13px;
+              color: #555;
+              margin-bottom: 15px;
+            "
+          >
+            Saisissez manuellement le montant de l'indemnité inflation / pouvoir
+            d'achat.
+          </p>
+          <label>Montant de l'indemnité (€)</label>
+          <input
+            type="number"
+            id="input-inflation"
+            value="0.00"
+            step="10"
+            oninput="calculerPaie()"
+          />
 
           <button
             type="button"

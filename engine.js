@@ -75,20 +75,7 @@ const indexRecherche = [
     ],
     cible: "panel-ott",
   },
-  {
-    titre: "💰 Autres Primes (Perf, Fidélisation)",
-    motsCles: [
-      "prime",
-      "ppp",
-      "performance",
-      "fidélisation",
-      "fidelisation",
-      "attractivité",
-      "géographique",
-      "geo",
-    ],
-    cible: "panel-primes",
-  },
+
   {
     titre: "🛡️ Participation PSC (Mutuelle)",
     motsCles: [
@@ -103,6 +90,16 @@ const indexRecherche = [
       "aide",
     ],
     cible: "panel-psc",
+  },
+  {
+    titre: "💰 Partage Performance (PPP)",
+    motsCles: ["prime", "ppp", "performance", "partage", "exceptionnelle"],
+    cible: "panel-primes",
+  },
+  {
+    titre: "📈 Indemnité Inflation",
+    motsCles: ["inflation", "pouvoir", "achat", "gpa", "indemnité"],
+    cible: "panel-inflation",
   },
   {
     titre: "Impôt sur le Revenu (PAS)",
@@ -694,6 +691,8 @@ function getProfilDepuisInterface() {
         parseFloat(document.getElementById("input-attractivite")?.value) || 0,
       fidelisation:
         parseFloat(document.getElementById("input-fidelisation")?.value) || 0,
+      inflation:
+        parseFloat(document.getElementById("input-inflation")?.value) || 0,
       ind_compensatrice_csg:
         parseFloat(document.getElementById("input-ind-csg")?.value) || 0,
       psc: pscTotal,
@@ -919,6 +918,7 @@ function calculerPaie() {
     profilAgent.evenements.ott_pv_opt32 +
     profilAgent.primes.attractivite +
     profilAgent.primes.fidelisation;
+  +profilAgent.primes.inflation;
 
   let montantSFT = 0;
   if (profilAgent.enfants === 1) montantSFT = 2.29;
@@ -1045,7 +1045,8 @@ function calculerPaie() {
     },
     200176: { cible: "panel-nuits", titre: "Travail de Nuit & Soirées" },
     200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
-    202485: { cible: "panel-primes", titre: "Primes Exceptionnelles" },
+    202485: { cible: "panel-primes", titre: "Prime Partage Performance" },
+    201000: { cible: "panel-inflation", titre: "Indemnité Pouvoir d'Achat" },
     203001: { cible: "panel-fidelisation", titre: "Prime de Fidélisation" },
     203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
     604958: { cible: "panel-absences", titre: "Absences et Carence" },
@@ -1221,6 +1222,17 @@ function calculerPaie() {
       null,
       ["input-fmd"],
     );
+
+  if (profilAgent.primes.inflation > 0) {
+    ajouterLigne(
+      "201000",
+      "INDEM. GARANTIE POUVOIR D'ACHAT",
+      profilAgent.primes.inflation,
+      null,
+      null,
+      ["input-inflation"],
+    );
+  }
 
   ajouterLigne(
     "201958",
