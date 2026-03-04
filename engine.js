@@ -71,6 +71,49 @@ const CLE_STOCKAGE = "icna_profil_v1";
  */
 let _initEnCours = true;
 
+// =============================================================================
+// 1c. TRACKING "CHAMPS À CONFIGURER" (onboarding par-champ)
+// =============================================================================
+
+/**
+ * Clés de tous les champs qui doivent être explicitement configurés.
+ * Un badge "À configurer" s'affiche sur chaque champ absent de _configures.
+ */
+const CHAMPS_REQUIS = new Set([
+  "grade", "echelon", "enfants", "nbi",
+  "rist_fonctions", "rist_experience", "rist_isq_licence",
+  "rist_isq_complement", "rist_isq_majoration",
+  "ind_compensatrice_csg", "taux_pas",
+]);
+
+const CLE_CONFIGURES = "icna_configures_v1";
+
+/**
+ * Ensemble des champs déjà configurés par l'utilisateur.
+ * Persisté séparément dans localStorage.
+ */
+let _configures = (() => {
+  try {
+    const saved = localStorage.getItem(CLE_CONFIGURES);
+    if (saved) return new Set(JSON.parse(saved));
+    // Migration : si un profil exist déjà, on considère tout configuré
+    if (localStorage.getItem(CLE_STOCKAGE)) return new Set(CHAMPS_REQUIS);
+  } catch (_) {}
+  return new Set();
+})();
+
+/** Marque un champ comme configuré et persiste. */
+function marquerConfigure(cle) {
+  _configures.add(cle);
+  try { localStorage.setItem(CLE_CONFIGURES, JSON.stringify([..._configures])); } catch (_) {}
+}
+
+/** Vrai si le champ n'a pas encore été configuré. */
+const nonConfigure = (cle) => CHAMPS_REQUIS.has(cle) && !_configures.has(cle);
+
+/** Vrai si au moins un champ requis n'est pas encore configuré. */
+const configurationIncomplete = () => [...CHAMPS_REQUIS].some(c => !_configures.has(c));
+
 /**
  * Liste des champs du profil permanent à persister.
  * Les événements mensuels (nuits, absences, OTT...) sont exclus volontairement :
@@ -107,7 +150,7 @@ const CHAMPS_PROFIL = [
  * Appelée automatiquement à chaque recalcul.
  */
 function sauvegarderProfil() {
-  if (_initEnCours) return; // ne pas écraser pendant l'initialisation
+  if (_initEnCours) return;
   const profil = {};
   CHAMPS_PROFIL.forEach(({ id, type, name }) => {
     if (type === "radio") {
@@ -163,11 +206,25 @@ function restaurerProfil() {
   });
 
   // Resynchroniser les classes "selected" sur les listes RIST/ISQ
+  // + marquer ces champs comme configurés
+  const cleRistMap = {
+    "input-fonction":       "rist_fonctions",
+    "input-experience":     "rist_experience",
+    "input-isq-licence":    "rist_isq_licence",
+    "input-isq-complement": "rist_isq_complement",
+    "input-isq-majoration": "rist_isq_majoration",
+  };
   CONFIGS_RIST.forEach((cfg) => {
     const valeur = document.getElementById(cfg.inputId)?.value;
     document.querySelectorAll(`#${cfg.panelId} .rist-option`).forEach((div) => {
       div.classList.toggle("selected", div.dataset.value === valeur);
     });
+    if (cleRistMap[cfg.inputId]) marquerConfigure(cleRistMap[cfg.inputId]);
+  });
+
+  // Marquer les autres champs présents dans le profil sauvegardé
+  ["grade","echelon","enfants","nbi","taux_pas","ind_compensatrice_csg"].forEach(cle => {
+    marquerConfigure(cle);
   });
 
   return true;
@@ -179,6 +236,7 @@ function restaurerProfil() {
  */
 window.effacerProfil = function () {
   localStorage.removeItem(CLE_STOCKAGE);
+  localStorage.removeItem(CLE_CONFIGURES);
   location.reload();
 };
 
@@ -356,6 +414,15 @@ function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
     document.querySelectorAll(`#${panelId} .rist-option`).forEach((el) => el.classList.remove("selected"));
     document.querySelector(`#${panelId} .rist-option[data-value="${valeur}"]`)?.classList.add("selected");
     window[`resetHelper${nom}`]();
+    // Marquer ce champ RIST comme configuré
+    const cleMap = {
+      "input-fonction":        "rist_fonctions",
+      "input-experience":      "rist_experience",
+      "input-isq-licence":     "rist_isq_licence",
+      "input-isq-complement":  "rist_isq_complement",
+      "input-isq-majoration":  "rist_isq_majoration",
+    };
+    if (cleMap[inputId]) marquerConfigure(cleMap[inputId]);
     calculerPaie();
   };
 }
@@ -457,6 +524,19 @@ function mettreAJourEchelons() {
   const selectEchelon = document.getElementById("input-echelon");
   const echelonActuel = selectEchelon.value;
 
+  selectEchelon.innerHTML = "";
+
+  if (!grade) {
+    // Grade non sélectionné — placeholder
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.disabled = true;
+    opt.selected = true;
+    opt.textContent = "— Éch. —";
+    selectEchelon.appendChild(opt);
+    return;
+  }
+
   const echelons = Object.keys(baseDonnees.grilles_icna[grade] || {}).sort((a, b) => {
     const [nA, nB] = [parseInt(a), parseInt(b)];
     const [isA, isB] = [!isNaN(nA), !isNaN(nB)];
@@ -466,7 +546,11 @@ function mettreAJourEchelons() {
     return a.localeCompare(b);
   });
 
-  selectEchelon.innerHTML = "";
+  // Placeholder en tête
+  const ph = document.createElement("option");
+  ph.value = ""; ph.disabled = true; ph.textContent = "— Éch. —";
+  selectEchelon.appendChild(ph);
+
   echelons.forEach((ech) => {
     const opt = document.createElement("option");
     opt.value = ech;
@@ -474,7 +558,7 @@ function mettreAJourEchelons() {
     selectEchelon.appendChild(opt);
   });
 
-  selectEchelon.value = echelons.includes(echelonActuel) ? echelonActuel : echelons[0] || "";
+  selectEchelon.value = echelons.includes(echelonActuel) ? echelonActuel : "";
 }
 
 /**
@@ -1027,9 +1111,49 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       ajouterLigne("", `&nbsp;&nbsp;&nbsp;&nbsp;${detailAbs}`, null, null, null);
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Helper badge "À configurer" ───────────────────────────────────────────
+  const badgeSiVierge = (cle, panelCible, titreCible) => {
+    if (!nonConfigure(cle)) return null;
+    return `<span class="badge-configurer" onclick="ouvrirModal('${panelCible}','${titreCible}')">⚙ À configurer</span>`;
+  };
 
-  // ── Synthèse des absences ─────────────────────────────────────────────────────
+  function ajouterLigneAvecBadge(code, libelle, cle, valeur, colonne, panelCible, titreCible, opts = {}) {
+    const badge = badgeSiVierge(cle, panelCible, titreCible);
+    if (badge) {
+      const tr = document.createElement("tr");
+      if (code) tr.id = `row-${code}`;
+      tr.innerHTML = `
+        <td class="col-code">${code}</td>
+        <td class="col-libelle label"><span>${libelle}</span></td>
+        ${colonne === 2 ? `<td class="col-amount">${badge}</td><td class="col-amount"></td><td class="col-amount"></td>` : ""}
+        ${colonne === 3 ? `<td class="col-amount"></td><td class="col-amount">${badge}</td><td class="col-amount"></td>` : ""}
+      `;
+      tbody.appendChild(tr);
+    } else {
+      const aPayer   = colonne === 2 ? valeur : null;
+      const aDeduire = colonne === 3 ? valeur : null;
+      if (valeur > 0) ajouterLigne(code, libelle, aPayer, aDeduire, null, null, null, null, opts);
+    }
+  }
+
+  function ajouterLigneRistAvecBadge(code, libelle, cle, montantA, absence, panelCible, titreCible, montantB = 0) {
+    const badge = badgeSiVierge(cle, panelCible, titreCible);
+    if (badge && !enComparaison) {
+      const tr = document.createElement("tr");
+      tr.id = `row-${code}`;
+      tr.innerHTML = `
+        <td class="col-code">${code}</td>
+        <td class="col-libelle label"><span>${libelle}</span></td>
+        <td class="col-amount">${badge}</td>
+        <td class="col-amount"></td>
+        <td class="col-amount"></td>
+      `;
+      tbody.appendChild(tr);
+    } else {
+      ajouterLigneRist(code, libelle, montantA, absence, montantB);
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
   if (m.joursAbs > 0) {
     const totalAbsDed = m.absTraitement + m.absNbi + m.absResidence + m.absRistFct + m.absRistExp + m.absRistIsq + m.absRistCplt + m.absRistMaj + m.absIndCsg;
     const baseTotale  = m.traitementBrut + m.montantNbi + m.indemniteResidence + p.primes.rist_fonctions + p.primes.rist_exper_prof + p.primes.rist_lic_isq + p.primes.rist_cplt_lic_isq + p.primes.rist_maj_isq + p.primes.ind_compensatrice_csg;
@@ -1037,7 +1161,8 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   }
 
   // ── Traitement brut & NBI ─────────────────────────────────────────────────────
-  ajouterLigne("101000", "TRAITEMENT BRUT", m.traitementBrut, null, null, null, null, null,
+  ajouterLigneAvecBadge("101000", "TRAITEMENT BRUT", "grade", m.traitementBrut, 2,
+    "panel-grade", "Grade &amp; Échelon",
     { delta: deltaVal(m.traitementBrut, mB?.traitementBrut), deltaCol: 2 });
 
   const nbiA = m.montantNbi; const nbiB = mB?.montantNbi ?? 0;
@@ -1062,7 +1187,8 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   }
 
   // ── Indemnité de résidence ────────────────────────────────────────────────────
-  ajouterLigne("102000", "INDEMNITE DE RESIDENCE", m.indemniteResidence, null, null, null, null, null,
+  ajouterLigneAvecBadge("102000", "INDEMNITE DE RESIDENCE", "grade", m.indemniteResidence, 2,
+    "panel-residence", "Zone de Résidence",
     { delta: deltaVal(m.indemniteResidence, mB?.indemniteResidence), deltaCol: 2 });
 
   // ── Éléments variables ────────────────────────────────────────────────────────
@@ -1079,12 +1205,12 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       { delta: deltaVal(inflA, inflB), deltaCol: 2, isGhost: estGhost(inflA, inflB) });
 
   // ── RIST (5 composantes) ──────────────────────────────────────────────────────
-  ajouterLigneRist("201958", "RIST PART FONCTIONS",      p.primes.rist_fonctions,    m.absRistFct,  pB?.primes.rist_fonctions    ?? 0);
-  ajouterLigneRist("201959", "RIST PART EXPER. PROF.",   p.primes.rist_exper_prof,   m.absRistExp,  pB?.primes.rist_exper_prof   ?? 0);
-  ajouterLigneRist("201960", "RIST PART LIC-ISQ (ICNA)", p.primes.rist_lic_isq,      m.absRistIsq,  pB?.primes.rist_lic_isq      ?? 0);
-  ajouterLigneRist("201961", "RIST CPLT PART LIC-ISQ",   p.primes.rist_cplt_lic_isq, m.absRistCplt, pB?.primes.rist_cplt_lic_isq ?? 0);
-  ajouterLigneRist("201962", "MAJORATION CPLT ISQ",      p.primes.rist_maj_isq,      m.absRistMaj,  pB?.primes.rist_maj_isq      ?? 0);
-  ajouterLigneRist("202206", "IND. COMPENSATRICE CSG",   p.primes.ind_compensatrice_csg, m.absIndCsg, pB?.primes.ind_compensatrice_csg ?? 0);
+  ajouterLigneRistAvecBadge("201958", "RIST PART FONCTIONS",      "rist_fonctions",       p.primes.rist_fonctions,        m.absRistFct,  "panel-rist-fonctions",      "Ristourne Part Fonctions",    pB?.primes.rist_fonctions    ?? 0);
+  ajouterLigneRistAvecBadge("201959", "RIST PART EXPER. PROF.",   "rist_experience",      p.primes.rist_exper_prof,       m.absRistExp,  "panel-rist-experience",     "Ristourne Part Expérience",   pB?.primes.rist_exper_prof   ?? 0);
+  ajouterLigneRistAvecBadge("201960", "RIST PART LIC-ISQ (ICNA)", "rist_isq_licence",     p.primes.rist_lic_isq,          m.absRistIsq,  "panel-rist-isq-licence",    "Ristourne Part LIC-ISQ",      pB?.primes.rist_lic_isq      ?? 0);
+  ajouterLigneRistAvecBadge("201961", "RIST CPLT PART LIC-ISQ",   "rist_isq_complement",  p.primes.rist_cplt_lic_isq,     m.absRistCplt, "panel-rist-isq-complement", "Ristourne CPLT Part LIC-ISQ", pB?.primes.rist_cplt_lic_isq ?? 0);
+  ajouterLigneRistAvecBadge("201962", "MAJORATION CPLT ISQ",      "rist_isq_majoration",  p.primes.rist_maj_isq,          m.absRistMaj,  "panel-rist-isq-majoration", "Majoration Complément ISQ",   pB?.primes.rist_maj_isq      ?? 0);
+  ajouterLigneRistAvecBadge("202206", "IND. COMPENSATRICE CSG",   "ind_compensatrice_csg",p.primes.ind_compensatrice_csg, m.absIndCsg,   "panel-csg",                 "Indemnité Compensatrice CSG", pB?.primes.ind_compensatrice_csg ?? 0);
 
   // ── PSC ───────────────────────────────────────────────────────────────────────
   const pscA = m.psc; const pscB = mB?.psc ?? 0;
@@ -1156,7 +1282,19 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, m.netSocial);
   ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, m.impotSource, null, null, null, null,
     { delta: deltaVal(m.impotSource, mB?.impotSource), deltaCol: 3 });
-  ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(p.taux_pas * 100)}%)`, null, null, null, null, null, "row-taux-impot");
+  if (nonConfigure("taux_pas")) {
+    const tr = document.createElement("tr");
+    tr.id = "row-taux-impot";
+    tr.innerHTML = `
+      <td class="col-code"></td>
+      <td class="col-libelle label" colspan="4">
+        <span class="badge-configurer" onclick="ouvrirModal('panel-impots','Prélèvement à la Source')">⚙ Taux PAS à configurer</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  } else {
+    ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(p.taux_pas * 100)}%)`, null, null, null, null, null, "row-taux-impot");
+  }
 
   // ── Ligne d'ajout d'éléments variables ──────────────────────────────────────
   const trAjout = document.createElement("tr");
@@ -1242,6 +1380,19 @@ function calculerPaie() {
 
   dessinerFiche(profilA, mA, profilB, mB);
   majDeltaNet(mA, mB);
+
+  // Badges "À configurer" sur les champs de l'info-table
+  const champInfoTable = {
+    "grade":   "input-grade",
+    "echelon": "input-echelon",
+    "enfants": "input-enfants",
+    "nbi":     "nbi-cell",
+  };
+  Object.entries(champInfoTable).forEach(([cle, elId]) => {
+    const el = document.getElementById(elId);
+    if (el) el.classList.toggle("champ-non-configure", nonConfigure(cle));
+  });
+
   sauvegarderProfil();
 }
 
@@ -1325,11 +1476,27 @@ async function initialiserApplication() {
       if (echelonSauve) document.getElementById("input-echelon").value = echelonSauve;
     }
 
-    // Changement de grade → échelons + recalcul
+    // Changement de grade → échelons + recalcul + marquer configuré
     document.getElementById("input-grade").addEventListener("input", () => {
+      marquerConfigure("grade");
       mettreAJourEchelons();
       calculerPaie();
     });
+
+    // Échelon → marquer configuré
+    document.getElementById("input-echelon").addEventListener("change", () => marquerConfigure("echelon"));
+
+    // Enfants → marquer configuré
+    document.getElementById("input-enfants").addEventListener("change", () => marquerConfigure("enfants"));
+
+    // NBI → marquer configuré
+    document.getElementById("input-nbi-checkbox").addEventListener("change", () => marquerConfigure("nbi"));
+
+    // Taux PAS → marquer configuré dès saisie
+    document.getElementById("input-pas").addEventListener("input", () => marquerConfigure("taux_pas"));
+
+    // Ind. compensatrice CSG → marquer configuré dès saisie
+    document.getElementById("input-ind-csg").addEventListener("input", () => marquerConfigure("ind_compensatrice_csg"));
 
     // Tous les champs du formulaire principal déclenchent un recalcul
     document.querySelectorAll(".magic-modal select, .magic-modal input, .info-table select, .info-table input").forEach((input) => input.addEventListener("input", calculerPaie));

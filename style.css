@@ -1538,3 +1538,37 @@ body.navigation-clavier .resultat-item:focus {
   color: var(--color-text-muted, #888);
   white-space: nowrap;
 }
+
+/* ── Badge "À configurer" (onboarding profil vierge) ── */
+.badge-configurer {
+  display: inline-block;
+  background-color: #fd7e14;
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+  font-family: var(--font-main);
+}
+.badge-configurer:hover {
+  background-color: #d9640d;
+}
+
+/* ── Champs info-table non configurés (onboarding) ── */
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(253, 126, 20, 0.6); }
+  50%       { box-shadow: 0 0 0 5px rgba(253, 126, 20, 0); }
+}
+.champ-non-configure {
+  outline: 2px solid #fd7e14 !important;
+  border-radius: 4px;
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
+select.champ-non-configure {
+  background-color: #fff5ec !important;
+  color: #b85c00 !important;
+}
