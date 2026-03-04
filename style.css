@@ -921,6 +921,7 @@ body.navigation-clavier .resultat-item:focus {
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
+  margin-top: -14px;
 }
 .foot-summary-wide {
   width: 140px;
@@ -1303,27 +1304,24 @@ body.navigation-clavier .resultat-item:focus {
   color: #721c24;
 }
 
-/* NET À PAYER deux lignes en mode comparaison */
+/* NET À PAYER ligne B en mode comparaison — inline pour ne pas agrandir la boîte */
 .delta-net-b {
   display: block;
   font-family: var(--font-numbers);
   font-size: 11px;
   font-weight: normal;
-  margin-top: 3px;
+  margin-top: 2px;
   text-align: right;
   white-space: nowrap;
+  line-height: 1;
 }
 .delta-net-b .delta-badge {
   font-size: 8px;
-  margin-left: 4px;
+  margin-left: 3px;
   vertical-align: middle;
 }
-.delta-net-b.delta-pos {
-  color: #155724;
-}
-.delta-net-b.delta-neg {
-  color: #721c24;
-}
+.delta-net-b.delta-pos { color: #155724; }
+.delta-net-b.delta-neg { color: #721c24; }
 
 @media print {
   .btn-comparer-flottant,

@@ -1537,6 +1537,11 @@ function majDeltaNet(mA, mB) {
     return;
   }
   const delta   = arrondir(mB.netFinal - mA.netFinal);
+  if (delta === 0) {
+    elB.innerHTML = "";
+    elB.className = "delta-net-b hidden";
+    return;
+  }
   const signe   = delta >= 0 ? "+" : "";
   const couleur = delta >= 0 ? "delta-pos" : "delta-neg";
   elB.innerHTML = `${formaterMontant(mB.netFinal)} € <span class="delta-badge ${couleur}">${signe}${formaterMontant(delta)} €</span>`;
