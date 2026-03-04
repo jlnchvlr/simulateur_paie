@@ -314,7 +314,11 @@ function arrondir(valeur) {
  * @returns {number}
  */
 function lireFloat(id) {
-  return parseFloat(document.getElementById(id)?.value) || 0;
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  const v = el.value;
+  if (v === "" || v === null) return 0;
+  return parseFloat(v) || 0;
 }
 
 /**
@@ -1161,8 +1165,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   }
 
   // ── Traitement brut & NBI ─────────────────────────────────────────────────────
-  ajouterLigneAvecBadge("101000", "TRAITEMENT BRUT", "grade", m.traitementBrut, 2,
-    "panel-grade", "Grade &amp; Échelon",
+  ajouterLigne("101000", "TRAITEMENT BRUT", m.traitementBrut || 0, null, null, null, null, null,
     { delta: deltaVal(m.traitementBrut, mB?.traitementBrut), deltaCol: 2 });
 
   const nbiA = m.montantNbi; const nbiB = mB?.montantNbi ?? 0;
@@ -1187,8 +1190,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   }
 
   // ── Indemnité de résidence ────────────────────────────────────────────────────
-  ajouterLigneAvecBadge("102000", "INDEMNITE DE RESIDENCE", "grade", m.indemniteResidence, 2,
-    "panel-residence", "Zone de Résidence",
+  ajouterLigne("102000", "INDEMNITE DE RESIDENCE", m.indemniteResidence || 0, null, null, null, null, null,
     { delta: deltaVal(m.indemniteResidence, mB?.indemniteResidence), deltaCol: 2 });
 
   // ── Éléments variables ────────────────────────────────────────────────────────
@@ -1317,12 +1319,20 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   tbody.appendChild(trRessort);
 
   // ── Totaux dans le pied de page ───────────────────────────────────────────────
+  const pending = configurationIncomplete();
+  const showEl  = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? "" : "none"; };
+  showEl("footer-config-pending", pending);
+  showEl("footer-real-1", !pending);
+  showEl("footer-real-2", !pending);
+  showEl("footer-real-3", !pending);
 
-  document.getElementById("ui-total-a-payer").textContent = formaterMontant(m.totalAPayer);
-  document.getElementById("ui-total-a-deduire").textContent = formaterMontant(m.totalADeduire);
-  document.getElementById("ui-cout-employeur").textContent = formaterMontant(m.coutTotalEmployeur);
-  document.getElementById("ui-net-a-payer").textContent = (m.netFinal === 0 ? "0,00" : formaterMontant(m.netFinal)) + " €";
-  document.getElementById("ui-net-imposable").textContent = m.netImposableFinal === 0 ? "0,00" : formaterMontant(m.netImposableFinal);
+  if (!pending) {
+    document.getElementById("ui-total-a-payer").textContent    = formaterMontant(m.totalAPayer);
+    document.getElementById("ui-total-a-deduire").textContent  = formaterMontant(m.totalADeduire);
+    document.getElementById("ui-cout-employeur").textContent   = formaterMontant(m.coutTotalEmployeur);
+    document.getElementById("ui-net-a-payer").textContent      = (m.netFinal === 0 ? "0,00" : formaterMontant(m.netFinal)) + " €";
+    document.getElementById("ui-net-imposable").textContent    = m.netImposableFinal === 0 ? "0,00" : formaterMontant(m.netImposableFinal);
+  }
 
   // ── Injection des lignes fantômes après repaint (requestAnimationFrame) ───────
   requestAnimationFrame(() => {
@@ -1483,11 +1493,12 @@ async function initialiserApplication() {
       calculerPaie();
     });
 
-    // Échelon → marquer configuré
+    // Échelon → marquer configuré dès qu'on choisit (change + mousedown pour valeur identique)
     document.getElementById("input-echelon").addEventListener("change", () => marquerConfigure("echelon"));
 
-    // Enfants → marquer configuré
-    document.getElementById("input-enfants").addEventListener("change", () => marquerConfigure("enfants"));
+    // Enfants → marquer configuré dès la première interaction (mousedown pour capturer "0 enfants")
+    document.getElementById("input-enfants").addEventListener("mousedown", () => marquerConfigure("enfants"));
+    document.getElementById("input-enfants").addEventListener("change",    () => marquerConfigure("enfants"));
 
     // NBI → marquer configuré
     document.getElementById("input-nbi-checkbox").addEventListener("change", () => marquerConfigure("nbi"));

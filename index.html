@@ -63,7 +63,7 @@
         <div id="panel-rist-fonctions" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Part Fonctions (RIST)</label>
-          <input type="hidden" id="input-fonction" value="Niveau 10" />
+          <input type="hidden" id="input-fonction" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperRist()"></div>
           <div id="rist-helper-text" class="helper-text">Sélectionnez un niveau pour voir les fonctions...</div>
           <div class="preview-amount">
@@ -78,7 +78,7 @@
         <div id="panel-rist-experience" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Part Expérience Professionnelle</label>
-          <input type="hidden" id="input-experience" value="Niveau 4" />
+          <input type="hidden" id="input-experience" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperExp()"></div>
           <div id="exp-helper-text" class="helper-text">Sélectionnez un niveau pour voir les grades correspondants...</div>
           <div class="preview-amount">
@@ -93,7 +93,7 @@
         <div id="panel-rist-isq-licence" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Licence ISQ</label>
-          <input type="hidden" id="input-isq-licence" value="Niveau 5" />
+          <input type="hidden" id="input-isq-licence" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqLicence()"></div>
           <div id="isq-licence-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
           <div class="preview-amount">
@@ -108,7 +108,7 @@
         <div id="panel-rist-isq-complement" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau du Complément ISQ</label>
-          <input type="hidden" id="input-isq-complement" value="Niveau 7" />
+          <input type="hidden" id="input-isq-complement" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqComplement()"></div>
           <div id="isq-complement-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
           <div class="preview-amount">
@@ -306,7 +306,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-impots" class="setting-panel">
           <label>Taux de Prélèvement à la Source (%)</label>
-          <input type="number" id="input-pas" value="19.6" step="0.1" />
+          <input type="number" id="input-pas" value="" placeholder="ex : 7.5" step="0.1" min="0" max="100" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -315,7 +315,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-csg" class="setting-panel">
           <label>Indemnité Compensatrice CSG (€)</label>
-          <input type="number" id="input-ind-csg" value="115.18" step="0.01" />
+          <input type="number" id="input-ind-csg" value="" placeholder="ex : 115.18" step="0.01" min="0" />
           <p class="panel-footnote">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -504,6 +504,7 @@
             <td id="ui-indice">0462</td>
             <td id="nbi-cell">
               <input type="checkbox" id="input-nbi-checkbox" class="nbi-checkbox" title="Activer/Désactiver la NBI" />
+              <button type="button" id="nbi-sans-btn" class="nbi-sans-btn" title="Je n'ai pas la NBI" onclick="marquerConfigure('nbi'); calculerPaie()">✕</button>
             </td>
             <td>&nbsp;</td>
           </tr>
@@ -523,10 +524,19 @@
         <tbody id="lignes-paie"></tbody>
 
         <tfoot class="pay-table-foot">
-          <tr>
+          <!-- Placeholder affiché tant que la configuration est incomplète -->
+          <tr id="footer-config-pending" style="display:none;">
+            <td colspan="5" class="footer-pending-cell">
+              <div class="footer-pending-msg">
+                <span class="footer-pending-icon">⚙</span>
+                Complétez votre profil pour afficher les totaux
+              </div>
+            </td>
+          </tr>
+          <tr id="footer-real-1">
             <td colspan="5" class="foot-spacer"></td>
           </tr>
-          <tr>
+          <tr id="footer-real-2">
             <td colspan="2" rowspan="2" class="no-bg foot-meta">
               <div class="foot-meta-inner">
                 <div class="summary-box foot-summary-wide">
@@ -552,7 +562,7 @@
               <div class="amount-cell"><span>€</span><span id="ui-charges-patronales">0,00</span></div>
             </td>
           </tr>
-          <tr>
+          <tr id="footer-real-3">
             <td colspan="2" class="no-bg foot-net-meta">
               <div class="foot-net-wrap">
                 <div class="foot-net-label">NET À PAYER</div>

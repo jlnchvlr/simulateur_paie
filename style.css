@@ -1572,3 +1572,43 @@ select.champ-non-configure {
   background-color: #fff5ec !important;
   color: #b85c00 !important;
 }
+
+/* ── Bouton NBI "Je ne l'ai pas" ── */
+.nbi-sans-btn {
+  display: none;
+  font-size: 9px;
+  background: transparent;
+  border: 1px solid #fd7e14;
+  color: #fd7e14;
+  border-radius: 3px;
+  padding: 1px 4px;
+  cursor: pointer;
+  margin-left: 3px;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+#nbi-cell.champ-non-configure .nbi-sans-btn {
+  display: inline-block;
+}
+
+/* ── Footer — config en attente ── */
+.footer-pending-cell {
+  padding: 8px 12px !important;
+  background: #fff8f3 !important;
+  border-top: 2px solid #fd7e14 !important;
+}
+.footer-pending-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: bold;
+  color: #b85c00;
+  letter-spacing: 0.3px;
+}
+.footer-pending-icon {
+  font-size: 14px;
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
