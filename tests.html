@@ -428,6 +428,142 @@
           eq("netFinal", m.netFinal, 3006.34); // ← corrigé (était 3011.96)
         });
 
+        // ── T12 : PSC seule ───────────────────────────────────────────────────────────
+        suite("T12 — PSC seule (15 €)", () => {
+          const m = calculerMontants(
+            profil({
+              primes: {
+                forfait_mobilites: 0,
+                rist_fonctions: 0,
+                rist_exper_prof: 0,
+                rist_lic_isq: 0,
+                rist_cplt_lic_isq: 0,
+                rist_maj_isq: 0,
+                attractivite: 0,
+                fidelisation: 0,
+                inflation: 0,
+                ind_compensatrice_csg: 0,
+                psc: 15,
+              },
+            }),
+          );
+          // La PSC n'alimente pas les primes soumises à cotisations ni le RAFP
+          eq("psc stockée telle quelle", m.psc, 15);
+          eq("totalPrimesSoumises inchangé (0)", m.totalPrimesSoumises, 0);
+          eq("cotisationRafp reste nulle", m.cotisationRafp, 0);
+          // La PSC est incluse dans la base CSG/CRDS
+          eq("csgDeductible avec PSC 15 €", m.csgDeductible, 150.78);
+          eq("csgNonDeductible avec PSC 15 €", m.csgNonDeductible, 53.22);
+          eq("crds avec PSC 15 €", m.crds, 11.09);
+          // Et le Net social est diminué du montant PSC
+          eq("netSocial = netAPayerAvantImpot − PSC", m.netSocial, m.netAPayerAvantImpot - 15);
+        });
+
+        // ── T13 : Forfait Mobilités seul ──────────────────────────────────────────────
+        suite("T13 — Forfait Mobilités seul (200 €)", () => {
+          const m = calculerMontants(
+            profil({
+              primes: {
+                forfait_mobilites: 200,
+                rist_fonctions: 0,
+                rist_exper_prof: 0,
+                rist_lic_isq: 0,
+                rist_cplt_lic_isq: 0,
+                rist_maj_isq: 0,
+                attractivite: 0,
+                fidelisation: 0,
+                inflation: 0,
+                ind_compensatrice_csg: 0,
+                psc: 0,
+              },
+            }),
+          );
+          // Le FMD ne compte pas dans les primes soumises à cotisations ni dans la base CSG
+          eq("totalPrimesSoumises reste 0", m.totalPrimesSoumises, 0);
+          eq("cotisationRafp toujours nulle", m.cotisationRafp, 0);
+          eq("csgDeductible identique à T1", m.csgDeductible, 149.78);
+          eq("csgNonDeductible identique à T1", m.csgNonDeductible, 52.86);
+          eq("crds identique à T1", m.crds, 11.01);
+          // Le Net social exclut le FMD
+          eq("netSocial = netAPayerAvantImpot − FMD", m.netSocial, m.netAPayerAvantImpot - 200);
+        });
+
+        // ── T14 : Attractivité + Fidélisation ────────────────────────────────────────
+        suite("T14 — Attractivité 150 € + Fidélisation 300 €", () => {
+          const m = calculerMontants(
+            profil({
+              primes: {
+                forfait_mobilites: 0,
+                rist_fonctions: 0,
+                rist_exper_prof: 0,
+                rist_lic_isq: 0,
+                rist_cplt_lic_isq: 0,
+                rist_maj_isq: 0,
+                attractivite: 150,
+                fidelisation: 300,
+                inflation: 0,
+                ind_compensatrice_csg: 0,
+                psc: 0,
+              },
+            }),
+          );
+          // Ces deux primes sont intégralement soumises à cotisations et RAFP
+          eq("totalPrimesSoumises = 150 + 300", m.totalPrimesSoumises, 450);
+          // Plafond RAFP : baseSoumisePC × 20% = 2274.32 × 0.2 = 454.864 > 450 → pas de plafonnement
+          eq("cotisationRafp = 450 × 5%", m.cotisationRafp, 22.5);
+        });
+
+        // ── T15 : Absences combinées ────────────────────────────────────────────────
+        suite("T15 — Absences combinées (grève + carence + maladie 90% + 50%)", () => {
+          const m = calculerMontants(
+            profil({
+              evenements: {
+                nuits: 0,
+                soirees: 0,
+                jours_greve: 2,
+                jours_carence: 1,
+                jours_maladie_90: 3,
+                jours_maladie_50: 4,
+                prime_performance: 0,
+                ott_pf: 0,
+                ott_pv_globale: 0,
+                ott_pv_opt32: 0,
+              },
+            }),
+          );
+          // joursAbs = 2 + 1 + 3 + 4 = 10
+          eq("joursAbs = somme brute des jours", m.joursAbs, 10);
+          // joursRetenus = grève(100%) + carence(100%) + 0.1×maladie90 + 0.5×maladie50 = 2 + 1 + 0.3 + 2 = 5.3
+          eq("joursRetenus pondérés", m.joursRetenus, 5.3);
+          // absTraitement = arrondir(2274.32 / 30 × 5.3)
+          eq("absTraitement (règle du 1/30e pondéré)", m.absTraitement, 401.8);
+          eq("baseTraitementReel = traitementBrut − absTraitement", m.baseTraitementReel, m.traitementBrut - 401.8);
+        });
+
+        // ── T16 : Protocole OTT (PF + PV) ───────────────────────────────────────────
+        suite("T16 — Protocole OTT (PF 345 € + PV 1000 € + PV Opt32 200 €)", () => {
+          const m = calculerMontants(
+            profil({
+              evenements: {
+                nuits: 0,
+                soirees: 0,
+                jours_greve: 0,
+                jours_carence: 0,
+                jours_maladie_90: 0,
+                jours_maladie_50: 0,
+                prime_performance: 0,
+                ott_pf: 345,
+                ott_pv_globale: 1000,
+                ott_pv_opt32: 200,
+              },
+            }),
+          );
+          // Les trois composantes OTT alimentent les primes soumises à RAFP
+          eq("totalPrimesSoumises = 345 + 1000 + 200", m.totalPrimesSoumises, 1545);
+          // Plafond RAFP : baseSoumisePC × 20% = 454.864 < 1545 → plafonné
+          eq("cotisationRafp plafonnée = baseSoumisePC×20%×5%", m.cotisationRafp, 22.74);
+        });
+
         // ── Rendu ─────────────────────────────────────────────────────────────
         afficherResultats();
       }
