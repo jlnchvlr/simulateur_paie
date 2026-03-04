@@ -272,13 +272,61 @@
              ══════════════════════════════════════ -->
         <div id="panel-fmd" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Montant du Forfait Mobilités Durables</label>
-          <select id="input-fmd" class="select-light">
-            <option value="0">-- Aucun --</option>
-            <option value="100">100 € (30 à 59 jours)</option>
-            <option value="200">200 € (60 à 99 jours)</option>
-            <option value="300">300 € (100 jours et plus)</option>
-          </select>
+          <p class="panel-notice">
+            Le Forfait Mobilités Durables est versé en une ou plusieurs fois dans l'année.<br />
+            <strong>0 € :</strong> Non bénéficiaire ce mois-ci.<br />
+            <strong>100 € :</strong> 30 à 59 jours de trajet vélo/covoiturage.<br />
+            <strong>200 € :</strong> 60 à 99 jours.<br />
+            <strong>300 € :</strong> 100 jours et plus.
+          </p>
+          <div class="ir-tabs">
+            <input
+              type="radio"
+              id="fmd-0"
+              name="fmd-zone"
+              value="0"
+              checked
+              onchange="
+                document.getElementById('input-fmd').value = this.value;
+                calculerPaie();
+              "
+            />
+            <label for="fmd-0"><strong>0 €</strong><br /><small>Aucun</small></label>
+            <input
+              type="radio"
+              id="fmd-100"
+              name="fmd-zone"
+              value="100"
+              onchange="
+                document.getElementById('input-fmd').value = this.value;
+                calculerPaie();
+              "
+            />
+            <label for="fmd-100"><strong>100 €</strong><br /><small>30–59 j.</small></label>
+            <input
+              type="radio"
+              id="fmd-200"
+              name="fmd-zone"
+              value="200"
+              onchange="
+                document.getElementById('input-fmd').value = this.value;
+                calculerPaie();
+              "
+            />
+            <label for="fmd-200"><strong>200 €</strong><br /><small>60–99 j.</small></label>
+            <input
+              type="radio"
+              id="fmd-300"
+              name="fmd-zone"
+              value="300"
+              onchange="
+                document.getElementById('input-fmd').value = this.value;
+                calculerPaie();
+              "
+            />
+            <label for="fmd-300"><strong>300 €</strong><br /><small>100+ j.</small></label>
+          </div>
+          <input type="hidden" id="input-fmd" value="0" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
