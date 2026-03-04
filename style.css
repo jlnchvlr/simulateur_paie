@@ -921,7 +921,7 @@ body.navigation-clavier .resultat-item:focus {
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
-  margin-top: -16px;
+  margin-top: -14px;
 }
 .foot-summary-wide {
   width: 140px;
@@ -1097,10 +1097,7 @@ body.navigation-clavier .resultat-item:focus {
   font-family: var(--font-main);
   font-size: 14px;
   font-weight: bold;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
   z-index: 1000;
 }
 .btn-comparer-flottant:hover {
@@ -1323,16 +1320,221 @@ body.navigation-clavier .resultat-item:focus {
   margin-left: 3px;
   vertical-align: middle;
 }
-.delta-net-b.delta-pos {
-  color: #155724;
-}
-.delta-net-b.delta-neg {
-  color: #721c24;
-}
+.delta-net-b.delta-pos { color: #155724; }
+.delta-net-b.delta-neg { color: #721c24; }
 
 @media print {
   .btn-comparer-flottant,
-  #panneau-comparaison {
-    display: none !important;
-  }
+  #panneau-comparaison { display: none !important; }
+}
+
+/* =========================================
+   PROJECTION ANNUELLE
+   ========================================= */
+
+/* Bouton flottant "Annuel" — bas gauche, au-dessus de "Comparer" */
+.btn-projection-flottant {
+  position: fixed;
+  bottom: 82px;
+  left: 30px;
+  background-color: var(--dgfip-medium);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 14px;
+  font-weight: bold;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+  z-index: 1000;
+}
+.btn-projection-flottant:hover {
+  background-color: var(--dgfip-dark);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Inputs ponctuels */
+.proj-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+.proj-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.proj-row label {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--color-text);
+  flex: 1;
+  margin: 0;
+}
+.proj-row input[type="number"] {
+  width: 110px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  text-align: right;
+}
+
+/* Lignes libres */
+.proj-libre-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+}
+.proj-libre-row .proj-libre-lib {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--font-main);
+}
+.proj-libre-row .proj-libre-val {
+  width: 100px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  text-align: right;
+}
+.proj-libre-row button {
+  background: transparent;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+/* Bouton ajout ligne libre */
+.proj-add-btn {
+  background: transparent;
+  border: 1px dashed var(--dgfip-medium);
+  color: var(--dgfip-medium);
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 12px;
+  width: 100%;
+  margin-top: 6px;
+  transition: all 0.15s;
+}
+.proj-add-btn:hover {
+  background: var(--color-blue-tint);
+  border-color: var(--dgfip-dark);
+  color: var(--dgfip-dark);
+}
+
+/* Tableau résultats */
+.proj-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-main);
+  font-size: 12px;
+  margin-top: 4px;
+}
+.proj-table th {
+  background: var(--dgfip-dark);
+  color: white;
+  padding: 6px 8px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: bold;
+}
+.proj-table th:first-child {
+  text-align: left;
+}
+.proj-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--dgfip-light);
+  text-align: right;
+  font-family: var(--font-numbers);
+  font-size: 12px;
+}
+.proj-table td:first-child {
+  text-align: left;
+  font-family: var(--font-main);
+  color: var(--color-text);
+}
+.proj-table tr:nth-child(even) td {
+  background: var(--color-surface);
+}
+.proj-row-brut td {
+  font-weight: bold;
+  background: var(--color-blue-tint) !important;
+}
+.proj-row-net td {
+  background: #d4edda !important;
+  color: #155724 !important;
+}
+.proj-total-cell {
+  font-weight: bold;
+  font-size: 13px !important;
+}
+.proj-mensuel-note {
+  text-align: right !important;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  padding-top: 8px !important;
+  font-family: var(--font-main) !important;
+}
+.proj-mensuel-note strong {
+  font-family: var(--font-numbers);
+  color: var(--dgfip-dark);
+}
+.proj-table-sm td {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+@media print {
+  .btn-projection-flottant { display: none !important; }
+}
+
+/* Projection annuelle — modale plus large + padding forcé */
+.magic-modal:has(#panel-projection.active) {
+  max-width: 620px;
+}
+#panel-projection {
+  padding: 0 20px 20px;
+}
+
+/* Hint moyenne sous le label nuits/soirées */
+.proj-hint-moy {
+  display: block;
+  font-size: 10px;
+  font-weight: normal;
+  color: var(--color-text-muted, #888);
+  margin-top: 1px;
+  font-style: italic;
+}
+
+/* Champ + unité sur la même ligne */
+.proj-input-unit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.proj-input-unit input[type="number"] {
+  width: 80px;
+}
+.proj-unit {
+  font-size: 11px;
+  color: var(--color-text-muted, #888);
+  white-space: nowrap;
 }

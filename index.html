@@ -10,6 +10,7 @@
   <body>
     <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">💡 Comment ça marche ?</button>
   <button class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
+  <button class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
 
     <dialog id="magic-modal" class="magic-modal">
       <div class="modal-header">
@@ -319,6 +320,126 @@
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
       </div>
+        <!-- ============================================================
+             PANNEAU PROJECTION ANNUELLE
+             ============================================================ -->
+        <div id="panel-projection" class="setting-panel">
+
+          <h3 class="panel-subhead">Éléments ponctuels sur l'année</h3>
+          <p class="panel-hint">
+            La base récurrente (traitement, RIST, ISQ, OTT PF…) est automatiquement multipliée × 12.
+            Saisissez ici les éléments variables sur l'année.
+          </p>
+
+          <div class="proj-inputs">
+            <div class="proj-row">
+              <label>
+                Vacation de nuit
+                <span class="proj-hint-moy">~28 / an (hors congés)</span>
+              </label>
+              <div class="proj-input-unit">
+                <input type="number" id="proj-nuits"   value="28" min="0" step="1" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <span class="proj-unit">nuits / an</span>
+              </div>
+            </div>
+            <div class="proj-row">
+              <label>
+                Vacation de S2
+                <span class="proj-hint-moy">~28 / an (hors congés)</span>
+              </label>
+              <div class="proj-input-unit">
+                <input type="number" id="proj-soirees" value="28" min="0" step="1" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <span class="proj-unit">S2 / an</span>
+              </div>
+            </div>
+            <div class="proj-row">
+              <label>OTT Part Variable globale</label>
+              <div class="proj-input-unit">
+                <input type="number" id="proj-ottPv"   value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <span class="proj-unit">€</span>
+              </div>
+            </div>
+            <div class="proj-row">
+              <label>OTT PV Opt 3-1 / 3-2</label>
+              <div class="proj-input-unit">
+                <input type="number" id="proj-ottPv32" value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <span class="proj-unit">€</span>
+              </div>
+            </div>
+            <div class="proj-row">
+              <label>Prime Partage Performance</label>
+              <div class="proj-input-unit">
+                <input type="number" id="proj-ppp"     value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <span class="proj-unit">€</span>
+              </div>
+            </div>
+            <div class="proj-row">
+              <label>Forfait Mobilités Durables</label>
+              <div class="proj-input-unit">
+                <input type="number" id="proj-fmd"     value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <span class="proj-unit">€</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="proj-lignes-libres"></div>
+          <button type="button" class="proj-add-btn" onclick="ajouterLigneLibre()">+ Ajouter une prime / rappel</button>
+
+          <!-- Résultats -->
+          <h3 class="panel-subhead" style="margin-top:16px;">Résultats annuels</h3>
+          <table class="proj-table">
+            <thead>
+              <tr><th></th><th>Total annuel</th><th>Mensuel moyen</th></tr>
+            </thead>
+            <tbody>
+              <tr class="proj-row-brut">
+                <td>Brut total</td>
+                <td id="proj-res-brut" class="proj-total-cell">—</td>
+                <td id="proj-moy-brut">—</td>
+              </tr>
+              <tr>
+                <td>Net imposable</td>
+                <td id="proj-res-imposable">—</td>
+                <td id="proj-moy-imposable">—</td>
+              </tr>
+              <tr>
+                <td>Net avant impôt</td>
+                <td id="proj-res-net-avant">—</td>
+                <td id="proj-moy-net-avant">—</td>
+              </tr>
+              <tr>
+                <td>PAS versé</td>
+                <td id="proj-res-pas">—</td>
+                <td id="proj-moy-pas">—</td>
+              </tr>
+              <tr class="proj-row-net">
+                <td><strong>Net après impôt</strong></td>
+                <td id="proj-res-net-apres" class="proj-total-cell">—</td>
+                <td id="proj-moy-net-apres">—</td>
+              </tr>
+              <tr>
+                <td>Coût total employeur</td>
+                <td id="proj-res-cout">—</td>
+                <td id="proj-moy-cout">—</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3 class="panel-subhead" style="margin-top:12px;">Détail des ponctuels</h3>
+          <table class="proj-table proj-table-sm">
+            <tbody id="proj-ponctuels-detail">
+              <tr><td colspan="2" style="text-align:center;color:#999;font-style:italic;">Aucun élément ponctuel saisi</td></tr>
+            </tbody>
+          </table>
+
+          <p class="panel-notice" style="margin-top:12px;">
+            Les ponctuels sont intégrés dans le calcul via un équivalent mensuel moyen (÷12), ce qui permet d'inclure les cotisations correctement.
+          </p>
+
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Fermer ↵</button>
+        </div>
+        <!-- /#panel-projection -->
+
       <!-- /.modal-body -->
     </dialog>
 
@@ -554,6 +675,7 @@
       </div>
     </div>
     <!-- /#panneau-comparaison -->
+
 
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script src="engine.js"></script>

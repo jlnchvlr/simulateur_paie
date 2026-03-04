@@ -65,6 +65,13 @@ const CALC = {
 const CLE_STOCKAGE = "icna_profil_v1";
 
 /**
+ * Flag : true tant que l'initialisation n'est pas terminée.
+ * Empêche sauvegarderProfil() d'écraser le localStorage avec les valeurs
+ * par défaut HTML avant que restaurerProfil() ait eu le temps de s'exécuter.
+ */
+let _initEnCours = true;
+
+/**
  * Liste des champs du profil permanent à persister.
  * Les événements mensuels (nuits, absences, OTT...) sont exclus volontairement :
  * ils sont ressaisis chaque mois.
@@ -100,6 +107,7 @@ const CHAMPS_PROFIL = [
  * Appelée automatiquement à chaque recalcul.
  */
 function sauvegarderProfil() {
+  if (_initEnCours) return; // ne pas écraser pendant l'initialisation
   const profil = {};
   CHAMPS_PROFIL.forEach(({ id, type, name }) => {
     if (type === "radio") {
@@ -1452,6 +1460,7 @@ async function initialiserApplication() {
     document.addEventListener("mousemove", () => document.body.classList.remove("navigation-clavier"));
 
     // Premier affichage
+    _initEnCours = false; // à partir d'ici sauvegarderProfil() est autorisée
     calculerPaie();
     CONFIGS_RIST.forEach((cfg) => window[`resetHelper${cfg.nom}`]());
   } catch (erreur) {
@@ -1462,7 +1471,215 @@ async function initialiserApplication() {
 window.onload = initialiserApplication;
 
 // =============================================================================
-// 12. COMPARATEUR DE SCÉNARIOS
+// 12. PROJECTION ANNUELLE
+// =============================================================================
+
+/**
+ * Calcule la projection annuelle en construisant un profil mensuel moyen
+ * qui intègre récurrents + ponctuels/12, puis appelle calculerMontants()
+ * une seule fois pour obtenir des cotisations correctes sur l'ensemble.
+ *
+ * @param {{nuitsAnnuelles, soireesAnnuelles, ottPv, ottPv32, ppp, fmd, libres[]}} saisis
+ * @returns {{annuel, mensuelMoyen, moisRecurrent, detail}}
+ */
+function calculerAnnuel(saisis) {
+  const profilBase = getProfilDepuisInterface();
+
+  // ── Profil mois récurrent (sans ponctuels) ────────────────────────────────
+  const profilRec = {
+    ...profilBase,
+    evenements: {
+      nuits: 0, soirees: 0,
+      jours_greve: 0, jours_carence: 0, jours_maladie_90: 0, jours_maladie_50: 0,
+      prime_performance: 0,
+      ott_pf: profilBase.evenements.ott_pf,
+      ott_pv_globale: 0, ott_pv_opt32: 0,
+    },
+    primes: { ...profilBase.primes, forfait_mobilites: 0 },
+  };
+  const mRec = calculerMontants(profilRec);
+
+  // ── Montant nuits annuel calculé depuis les compteurs ────────────────────
+  const montantNuitsAnnuel = arrondir(
+    (saisis.nuitsAnnuelles   || 0) * CALC.TAUX_NUIT  +
+    (saisis.soireesAnnuelles || 0) * CALC.TAUX_SOIREE
+  );
+
+  // Total libres annuels
+  const totalLibresAnnuel = arrondir(
+    (saisis.libres || []).reduce((s, l) => s + (parseFloat(l.montant) || 0), 0)
+  );
+
+  // ── Profil mensuel moyen = récurrents + ponctuels÷12 ─────────────────────
+  // On divise les ponctuels par 12 pour obtenir l'équivalent mensuel moyen,
+  // puis on multiplie le résultat par 12 → cotisations correctement calculées
+  const profilMoyen = {
+    ...profilRec,
+    evenements: {
+      ...profilRec.evenements,
+      nuits:            0,
+      soirees:          0,
+      ott_pv_globale:   arrondir((saisis.ottPv  || 0) / 12),
+      ott_pv_opt32:     arrondir((saisis.ottPv32|| 0) / 12),
+      prime_performance:arrondir(((saisis.ppp   || 0) + totalLibresAnnuel) / 12),
+      // nuits intégrées via indemnité mensuelle moyenne
+    },
+    primes: {
+      ...profilRec.primes,
+      forfait_mobilites: arrondir((saisis.fmd || 0) / 12),
+    },
+  };
+
+  // Les nuits sont un cas spécial — on les ajoute au profil moyen via les compteurs
+  profilMoyen.evenements.nuits   = arrondir((saisis.nuitsAnnuelles   || 0) / 12);
+  profilMoyen.evenements.soirees = arrondir((saisis.soireesAnnuelles || 0) / 12);
+
+  const mMoyen = calculerMontants(profilMoyen);
+
+  // ── Résultats ×12 ─────────────────────────────────────────────────────────
+  const annuel = {
+    brut:          arrondir(mMoyen.totalAPayer       * 12),
+    netImposable:  arrondir(mMoyen.netImposableFinal * 12),
+    netAvantImpot: arrondir(mMoyen.netAPayerAvantImpot * 12),
+    pasVerse:      arrondir(mMoyen.impotSource       * 12),
+    netApresImpot: arrondir(mMoyen.netFinal          * 12),
+    coutEmployeur: arrondir(mMoyen.coutTotalEmployeur* 12),
+  };
+
+  const mensuelMoyen = {
+    brut:          mMoyen.totalAPayer,
+    netImposable:  mMoyen.netImposableFinal,
+    netAvantImpot: mMoyen.netAPayerAvantImpot,
+    pasVerse:      mMoyen.impotSource,
+    netApresImpot: mMoyen.netFinal,
+    coutEmployeur: mMoyen.coutTotalEmployeur,
+  };
+
+  // ── Détail des ponctuels (pour le tableau informatif) ────────────────────
+  const detail = [];
+  if (montantNuitsAnnuel > 0)        detail.push({ libelle: `Nuits (${saisis.nuitsAnnuelles || 0} N + ${saisis.soireesAnnuelles || 0} S2)`, montant: montantNuitsAnnuel });
+  if (saisis.ottPv   > 0)            detail.push({ libelle: "OTT Part Variable globale",      montant: saisis.ottPv });
+  if (saisis.ottPv32 > 0)            detail.push({ libelle: "OTT PV Opt 3-1/3-2",             montant: saisis.ottPv32 });
+  if (saisis.ppp     > 0)            detail.push({ libelle: "Prime Partage Performance",       montant: saisis.ppp });
+  if (saisis.fmd     > 0)            detail.push({ libelle: "Forfait Mobilités Durables",      montant: saisis.fmd });
+  (saisis.libres || []).forEach(l => {
+    if ((parseFloat(l.montant) || 0) > 0)
+      detail.push({ libelle: l.libelle || "Prime exceptionnelle", montant: parseFloat(l.montant) });
+  });
+
+  return { annuel, mensuelMoyen, moisRecurrent: mRec, detail };
+}
+
+/**
+ * Lit les saisies dans la modale et met à jour le tableau de résultats.
+ */
+window.calculerEtAfficherProjection = function () {
+  const lire = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+  const libres = [];
+  document.querySelectorAll(".proj-libre-row").forEach((row) => {
+    libres.push({
+      libelle: row.querySelector(".proj-libre-lib")?.value?.trim() || "",
+      montant: parseFloat(row.querySelector(".proj-libre-val")?.value) || 0,
+    });
+  });
+
+  const saisis = {
+    nuitsAnnuelles:   lire("proj-nuits"),
+    soireesAnnuelles: lire("proj-soirees"),
+    ottPv:            lire("proj-ottPv"),
+    ottPv32:          lire("proj-ottPv32"),
+    ppp:              lire("proj-ppp"),
+    fmd:              lire("proj-fmd"),
+    libres,
+  };
+
+  // Sauvegarde automatique
+  try { localStorage.setItem("icna_projection", JSON.stringify(saisis)); } catch (_) {}
+
+  const { annuel, mensuelMoyen, detail } = calculerAnnuel(saisis);
+
+  const fmt = (v) => v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  set("proj-res-brut",          fmt(annuel.brut));
+  set("proj-res-imposable",     fmt(annuel.netImposable));
+  set("proj-res-net-avant",     fmt(annuel.netAvantImpot));
+  set("proj-res-pas",           fmt(annuel.pasVerse));
+  set("proj-res-net-apres",     fmt(annuel.netApresImpot));
+  set("proj-res-cout",          fmt(annuel.coutEmployeur));
+  set("proj-moy-brut",          fmt(mensuelMoyen.brut));
+  set("proj-moy-imposable",     fmt(mensuelMoyen.netImposable));
+  set("proj-moy-net-avant",     fmt(mensuelMoyen.netAvantImpot));
+  set("proj-moy-pas",           fmt(mensuelMoyen.pasVerse));
+  set("proj-moy-net-apres",     fmt(mensuelMoyen.netApresImpot));
+  set("proj-moy-cout",          fmt(mensuelMoyen.coutEmployeur));
+
+  // Détail ponctuels
+  const tbody = document.getElementById("proj-ponctuels-detail");
+  if (tbody) {
+    tbody.innerHTML = detail.length === 0
+      ? `<tr><td colspan="2" style="text-align:center;color:#999;font-style:italic;">Aucun élément ponctuel saisi</td></tr>`
+      : detail.map(d => `<tr><td>${d.libelle}</td><td>${fmt(d.montant)}</td></tr>`).join("");
+  }
+};
+
+/**
+ * Ouvre la modale projection et pré-remplit depuis le profil courant.
+ */
+window.ouvrirProjectionAnnuelle = function () {
+  const p = getProfilDepuisInterface();
+
+  // Restauration depuis localStorage, sinon valeurs par défaut
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem("icna_projection")); } catch (_) {}
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  set("proj-nuits",   saved?.nuitsAnnuelles   ?? (p.evenements.nuits   > 0 ? p.evenements.nuits   : 28));
+  set("proj-soirees", saved?.soireesAnnuelles ?? (p.evenements.soirees > 0 ? p.evenements.soirees : 28));
+  set("proj-ottPv",   saved?.ottPv            ?? p.evenements.ott_pv_globale);
+  set("proj-ottPv32", saved?.ottPv32          ?? p.evenements.ott_pv_opt32);
+  set("proj-ppp",     saved?.ppp              ?? p.evenements.prime_performance);
+  set("proj-fmd",     saved?.fmd              ?? p.primes.forfait_mobilites);
+
+  // Restauration des lignes libres
+  const container = document.getElementById("proj-lignes-libres");
+  if (container && saved?.libres?.length) {
+    container.innerHTML = "";
+    saved.libres.forEach(({ libelle, montant }) => {
+      if (!montant) return;
+      const row = document.createElement("div");
+      row.className = "proj-libre-row";
+      row.innerHTML = `
+        <input type="text"   class="proj-libre-lib" placeholder="Libellé (ex: Rappel RIST)" value="${libelle}" />
+        <input type="number" class="proj-libre-val" placeholder="0.00" step="10" value="${montant}" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+        <button type="button" onclick="this.parentElement.remove(); calculerEtAfficherProjection()">✖</button>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  ouvrirModal("panel-projection", "📅 Projection Annuelle");
+  window.calculerEtAfficherProjection();
+};
+
+/**
+ * Ajoute une ligne libre dans la section ponctuels.
+ */
+window.ajouterLigneLibre = function () {
+  const container = document.getElementById("proj-lignes-libres");
+  if (!container) return;
+  const row = document.createElement("div");
+  row.className = "proj-libre-row";
+  row.innerHTML = `
+    <input type="text"   class="proj-libre-lib" placeholder="Libellé (ex: Rappel RIST)" />
+    <input type="number" class="proj-libre-val" placeholder="0.00" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+    <button type="button" onclick="this.parentElement.remove(); calculerEtAfficherProjection()">✖</button>
+  `;
+  container.appendChild(row);
+};
+
+// =============================================================================
+// 13. COMPARATEUR DE SCÉNARIOS
 // =============================================================================
 
 /**
