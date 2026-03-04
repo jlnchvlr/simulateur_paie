@@ -83,13 +83,28 @@ const CHAMPS_PROFIL = [
   { id: "input-isq-licence", type: "value" },
   { id: "input-isq-complement", type: "value" },
   { id: "input-isq-majoration", type: "value" },
-  // Primes mensuelles fixes
+  // Primes mensuelles récurrentes
   { id: "input-attractivite", type: "select" },
   { id: "input-fidelisation", type: "select" },
+  { id: "input-inflation", type: "value" },
   // PSC (cases à cocher cumulables)
   { id: "psc-15", type: "checkbox" },
   { id: "psc-7", type: "checkbox" },
   { id: "psc-5", type: "checkbox" },
+  // OTT Part Fixe (configuration du centre — stable d'un mois à l'autre)
+  { id: "pf-opt1-l16", type: "checkbox" },
+  { id: "pf-opt1-cdg", type: "checkbox" },
+  { id: "pf-opt1-l711", type: "checkbox" },
+  { id: "pf-opt1-l911", type: "checkbox" },
+  { id: "pf-opt1-plus-n1", type: "checkbox" },
+  { id: "pf-opt1-plus-n2", type: "checkbox" },
+  { id: "pf-opt2-1", type: "checkbox" },
+  { id: "pf-opt2-2", type: "checkbox" },
+  { id: "pf-opt2-bis", type: "checkbox" },
+  { id: "pf-opt4", type: "checkbox" },
+  { id: "pf-opt1-enac", type: "checkbox" },
+  { id: "pf-opt1-plus-enac", type: "checkbox" },
+  { id: "pf-manuel", type: "value" },
 ];
 
 /**
