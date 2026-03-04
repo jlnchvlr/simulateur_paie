@@ -65,6 +65,13 @@ const CALC = {
 const CLE_STOCKAGE = "icna_profil_v1";
 
 /**
+ * Flag : true tant que l'initialisation n'est pas terminée.
+ * Empêche sauvegarderProfil() d'écraser le localStorage avec les valeurs
+ * par défaut HTML avant que restaurerProfil() ait eu le temps de s'exécuter.
+ */
+let _initEnCours = true;
+
+/**
  * Liste des champs du profil permanent à persister.
  * Les événements mensuels (nuits, absences, OTT...) sont exclus volontairement :
  * ils sont ressaisis chaque mois.
@@ -100,6 +107,7 @@ const CHAMPS_PROFIL = [
  * Appelée automatiquement à chaque recalcul.
  */
 function sauvegarderProfil() {
+  if (_initEnCours) return; // ne pas écraser pendant l'initialisation
   const profil = {};
   CHAMPS_PROFIL.forEach(({ id, type, name }) => {
     if (type === "radio") {
@@ -1452,6 +1460,7 @@ async function initialiserApplication() {
     document.addEventListener("mousemove", () => document.body.classList.remove("navigation-clavier"));
 
     // Premier affichage
+    _initEnCours = false; // à partir d'ici sauvegarderProfil() est autorisée
     calculerPaie();
     CONFIGS_RIST.forEach((cfg) => window[`resetHelper${cfg.nom}`]());
   } catch (erreur) {
