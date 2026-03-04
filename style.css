@@ -1252,6 +1252,16 @@ body.navigation-clavier .resultat-item:focus {
   padding: 4px !important;
 }
 
+/* Lignes présentes dans le scénario B uniquement (ghost rows) */
+.ligne-fantome-b td {
+  background-color: #f0fff4 !important;
+  font-style: italic;
+  opacity: 0.9;
+}
+.ligne-fantome-b .col-amount {
+  color: #155724 !important;
+}
+
 /* Badges delta inline sur la fiche */
 .delta-badge {
   display: inline-block;
