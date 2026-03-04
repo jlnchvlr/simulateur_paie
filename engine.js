@@ -30,6 +30,9 @@ window.isTourActive = false;
 /** @type {number|undefined} Étape de la visite sauvegardée lors de l'ouverture d'une modale */
 window.tourSavedStep = undefined;
 
+/** @type {boolean} Vrai si le mode comparaison de scénarios est actif */
+let modeComparaison = false;
+
 /**
  * Constantes de calcul "figées" par textes réglementaires.
  * Séparées de data.json car elles ne sont pas configurables par l'utilisateur.
@@ -83,28 +86,13 @@ const CHAMPS_PROFIL = [
   { id: "input-isq-licence", type: "value" },
   { id: "input-isq-complement", type: "value" },
   { id: "input-isq-majoration", type: "value" },
-  // Primes mensuelles récurrentes
+  // Primes mensuelles fixes
   { id: "input-attractivite", type: "select" },
   { id: "input-fidelisation", type: "select" },
-  { id: "input-inflation", type: "value" },
   // PSC (cases à cocher cumulables)
   { id: "psc-15", type: "checkbox" },
   { id: "psc-7", type: "checkbox" },
   { id: "psc-5", type: "checkbox" },
-  // OTT Part Fixe (configuration du centre — stable d'un mois à l'autre)
-  { id: "pf-opt1-l16", type: "checkbox" },
-  { id: "pf-opt1-cdg", type: "checkbox" },
-  { id: "pf-opt1-l711", type: "checkbox" },
-  { id: "pf-opt1-l911", type: "checkbox" },
-  { id: "pf-opt1-plus-n1", type: "checkbox" },
-  { id: "pf-opt1-plus-n2", type: "checkbox" },
-  { id: "pf-opt2-1", type: "checkbox" },
-  { id: "pf-opt2-2", type: "checkbox" },
-  { id: "pf-opt2-bis", type: "checkbox" },
-  { id: "pf-opt4", type: "checkbox" },
-  { id: "pf-opt1-enac", type: "checkbox" },
-  { id: "pf-opt1-plus-enac", type: "checkbox" },
-  { id: "pf-manuel", type: "value" },
 ];
 
 /**
@@ -909,6 +897,7 @@ const ROUTAGE_MODAL = {
   203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
   604958: { cible: "panel-absences", titre: "Absences et Carence" },
   604959: { cible: "panel-absences", titre: "Absences et Carence" },
+  558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
   202206: { cible: "panel-csg", titre: "Indemnité Compensatrice CSG" },
   202354: { cible: "panel-psc", titre: "Participation à la PSC" },
   202558: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
@@ -1196,7 +1185,13 @@ function calculerPaie() {
   majPreview("preview-rist-isq-complement", profilAgent.primes.rist_cplt_lic_isq);
   majPreview("preview-rist-isq-majoration", profilAgent.primes.rist_maj_isq);
   dessinerFiche(profilAgent, m);
-  sauvegarderProfil(); // ← ajouter
+  sauvegarderProfil();
+  // Si mode comparaison actif, recalculer les deltas après le rendu
+  if (modeComparaison) {
+    const profilB = getProfilComparaisonDepuisPanneau();
+    const mB = calculerMontants(profilB);
+    afficherDeltas(profilAgent, m, profilB, mB);
+  }
 }
 
 // =============================================================================
@@ -1213,8 +1208,6 @@ function calculerPaie() {
 function attacherNavigationClavier(modal, input) {
   modal.addEventListener("keydown", (e) => {
     if (document.activeElement === input) return;
-    // Si un input numérique a le focus, ne pas intercepter — laisser le navigateur gérer
-    if (document.activeElement?.tagName === "INPUT") return;
     if (e.key === "Backspace") {
       e.preventDefault();
       input.focus();
@@ -1267,6 +1260,9 @@ async function initialiserApplication() {
       genererListeRist(cfg);
       creerMenuInteractif(cfg.nom, cfg.inputId, cfg.helperId, cfg.panelId, baseDonnees.rist[cfg.dataKey].descriptions);
     });
+
+    // Initialisation du panneau comparateur de scénarios
+    initialiserComparateur();
 
     // Restauration du profil sauvegardé (après peuplement des listes)
     const profilRestauré = restaurerProfil();
@@ -1423,7 +1419,305 @@ async function initialiserApplication() {
 window.onload = initialiserApplication;
 
 // =============================================================================
-// 12. VISITE GUIDÉE (Driver.js)
+// 12. COMPARATEUR DE SCÉNARIOS
+// =============================================================================
+
+/**
+ * Construit le profil du scénario B depuis le panneau de comparaison.
+ * Les champs conjoncturels (nuits, absences, PAS, enfants, CSG) sont hérités du profil A.
+ *
+ * @returns {ProfilAgent}
+ */
+function getProfilComparaisonDepuisPanneau() {
+  const profilA = getProfilDepuisInterface();
+
+  // OTT Part Fixe scénario B
+  let pfTotal = parseFloat(document.getElementById("cmp-pf-manuel")?.value) || 0;
+  document.querySelectorAll(".cmp-pf-checkbox").forEach((cb) => {
+    if (cb.checked) pfTotal += parseFloat(cb.value);
+  });
+
+  // PSC scénario B
+  let pscTotal = 0;
+  document.querySelectorAll(".cmp-psc-checkbox").forEach((cb) => {
+    if (cb.checked) pscTotal += parseFloat(cb.value);
+  });
+
+  const ristKey = document.getElementById("cmp-input-fonction")?.value;
+  const expKey = document.getElementById("cmp-input-experience")?.value;
+  const licKey = document.getElementById("cmp-input-isq-licence")?.value;
+  const cpltKey = document.getElementById("cmp-input-isq-complement")?.value;
+  const majKey = document.getElementById("cmp-input-isq-majoration")?.value;
+
+  return {
+    grade: document.getElementById("cmp-grade")?.value || profilA.grade,
+    echelon: document.getElementById("cmp-echelon")?.value || profilA.echelon,
+    zone: document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
+    taux_pas: profilA.taux_pas,
+    points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
+    enfants: profilA.enfants,
+
+    evenements: {
+      ...profilA.evenements,
+      ott_pf: pfTotal,
+      ott_pv_globale: parseFloat(document.getElementById("cmp-pv-globale")?.value) || 0,
+      ott_pv_opt32: parseFloat(document.getElementById("cmp-pv-opt32")?.value) || 0,
+    },
+
+    primes: {
+      ...profilA.primes,
+      rist_fonctions: baseDonnees.rist?.fonctions?.montants?.[ristKey] || 0,
+      rist_exper_prof: baseDonnees.rist?.experience?.montants?.[expKey] || 0,
+      rist_lic_isq: baseDonnees.rist?.isq_licence?.montants?.[licKey] || 0,
+      rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.montants?.[cpltKey] || 0,
+      rist_maj_isq: baseDonnees.rist?.isq_majoration?.montants?.[majKey] || 0,
+      attractivite: parseFloat(document.getElementById("cmp-attractivite")?.value) || 0,
+      fidelisation: parseFloat(document.getElementById("cmp-fidelisation")?.value) || 0,
+      psc: pscTotal,
+    },
+  };
+}
+
+/**
+ * Ajoute des badges Δ sur les lignes de la fiche dont la valeur diffère entre A et B.
+ * Pour les colonnes "À déduire", la couleur est inversée (hausse = rouge).
+ *
+ * @param {ProfilAgent}      profilA
+ * @param {MontantsCalcules} mA
+ * @param {ProfilAgent}      profilB
+ * @param {MontantsCalcules} mB
+ */
+function afficherDeltas(profilA, mA, profilB, mB) {
+  effacerDeltas();
+
+  // [rowId, deltaValue, colIndex (2=àPayer, 3=àDéduire, 4=pourInfo)]
+  const entrees = [
+    ["row-101000", mB.traitementBrut - mA.traitementBrut, 2],
+    ["row-101070", mB.montantNbi - mB.absNbi - (mA.montantNbi - mA.absNbi), 2],
+    ["row-101050", mB.retenuePC - mA.retenuePC, 3],
+    ["row-101080", mB.retenuePcNbi - mA.retenuePcNbi, 3],
+    ["row-102000", mB.indemniteResidence - mA.indemniteResidence, 2],
+    ["row-201958", profilB.primes.rist_fonctions - profilA.primes.rist_fonctions, 2],
+    ["row-201959", profilB.primes.rist_exper_prof - profilA.primes.rist_exper_prof, 2],
+    ["row-201960", profilB.primes.rist_lic_isq - profilA.primes.rist_lic_isq, 2],
+    ["row-201961", profilB.primes.rist_cplt_lic_isq - profilA.primes.rist_cplt_lic_isq, 2],
+    ["row-201962", profilB.primes.rist_maj_isq - profilA.primes.rist_maj_isq, 2],
+    ["row-203001", profilB.primes.fidelisation - profilA.primes.fidelisation, 2],
+    ["row-203002", profilB.primes.attractivite - profilA.primes.attractivite, 2],
+    ["row-401201", mB.csgNonDeductible - mA.csgNonDeductible, 3],
+    ["row-401301", mB.csgDeductible - mA.csgDeductible, 3],
+    ["row-401501", mB.crds - mA.crds, 3],
+    ["row-501080", mB.cotisationRafp - mA.cotisationRafp, 3],
+    ["row-604970", mB.transfertPrimes - mA.transfertPrimes, 3],
+    ["row-751095", mB.retenueIsq - mA.retenueIsq, 3],
+    // OTT (lignes conditionnelles — présentes seulement si profilA > 0)
+    ["row-202558", profilB.evenements.ott_pv_globale - profilA.evenements.ott_pv_globale, 2],
+    ["row-202559", profilB.evenements.ott_pf - profilA.evenements.ott_pf, 2],
+    ["row-202560", profilB.evenements.ott_pv_opt32 - profilA.evenements.ott_pv_opt32, 2],
+    // PSC
+    ["row-202354", mB.psc - mA.psc, 2],
+    ["row-011100", mB.netAPayerAvantImpot - mA.netAPayerAvantImpot, 4],
+  ];
+
+  entrees.forEach(([rowId, delta, colIdx]) => {
+    if (Math.abs(delta) < 0.005) return;
+    const tr = document.getElementById(rowId);
+    if (!tr) return;
+    const td = tr.querySelectorAll("td")[colIdx];
+    if (!td) return;
+
+    // Pour les déductions (col 3), une hausse est défavorable → inverser la couleur
+    const estDeduction = colIdx === 3;
+    const estPositif = estDeduction ? delta < 0 : delta > 0;
+
+    const badge = document.createElement("span");
+    badge.className = "delta-badge " + (estPositif ? "delta-pos" : "delta-neg");
+    badge.textContent = (delta > 0 ? "+" : "") + delta.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    td.appendChild(badge);
+  });
+
+  // Barre de synthèse
+  const deltaNet = arrondir(mB.netFinal - mA.netFinal);
+  const signe = deltaNet >= 0 ? "+" : "";
+  const elA = document.getElementById("cmp-syn-a");
+  const elB = document.getElementById("cmp-syn-b");
+  const elDelta = document.getElementById("cmp-syn-delta");
+  if (elA) elA.textContent = formaterMontant(mA.netFinal) + " €";
+  if (elB) elB.textContent = formaterMontant(mB.netFinal) + " €";
+  if (elDelta) {
+    elDelta.textContent = signe + formaterMontant(Math.abs(deltaNet)) + " €";
+    elDelta.className = "cmp-syn-delta " + (deltaNet >= 0 ? "delta-pos" : "delta-neg");
+  }
+  const synthese = document.getElementById("comparateur-synthese");
+  if (synthese) synthese.style.display = "flex";
+}
+
+/** Supprime tous les badges Δ et masque la barre de synthèse. */
+function effacerDeltas() {
+  document.querySelectorAll(".delta-badge").forEach((el) => el.remove());
+  const synthese = document.getElementById("comparateur-synthese");
+  if (synthese) synthese.style.display = "none";
+}
+
+/**
+ * Met à jour les échelons disponibles dans le select grade du panneau B.
+ * Miroir de mettreAJourEchelons() pour le panneau comparateur.
+ */
+function mettreAJourEchelonsB() {
+  const grade = document.getElementById("cmp-grade")?.value;
+  const select = document.getElementById("cmp-echelon");
+  if (!select || !baseDonnees.grilles_icna) return;
+  const echelons = baseDonnees.grilles_icna[grade] || {};
+  const current = select.value;
+  select.innerHTML = "";
+  Object.keys(echelons).forEach((ech) => select.add(new Option(ech, ech)));
+  if (current && echelons[current]) select.value = current;
+}
+
+/**
+ * Recalcule le scénario B et met à jour les deltas.
+ * Appelée à chaque interaction dans le panneau comparateur.
+ */
+function calculerPaieComparaison() {
+  if (!modeComparaison) return;
+  const profilA = getProfilDepuisInterface();
+  const mA = calculerMontants(profilA);
+  const profilB = getProfilComparaisonDepuisPanneau();
+  const mB = calculerMontants(profilB);
+  afficherDeltas(profilA, mA, profilB, mB);
+}
+
+/**
+ * Active le mode comparaison :
+ * - Affiche le panneau B
+ * - Initialise ses champs avec les valeurs du profil A courant
+ * - Déclenche un premier calcul de delta
+ */
+window.activerComparaison = function () {
+  modeComparaison = true;
+  const panneau = document.getElementById("panneau-comparaison");
+  if (panneau) panneau.classList.add("visible");
+
+  const profilA = getProfilDepuisInterface();
+
+  // Grade + échelon
+  const cmpGrade = document.getElementById("cmp-grade");
+  if (cmpGrade) {
+    cmpGrade.value = profilA.grade;
+    mettreAJourEchelonsB();
+    document.getElementById("cmp-echelon").value = profilA.echelon;
+  }
+
+  // NBI
+  const cmpNbi = document.getElementById("cmp-nbi-checkbox");
+  if (cmpNbi) cmpNbi.checked = profilA.points_nbi > 0;
+
+  // Zone de résidence
+  const radio = document.querySelector(`input[name="cmp-zone"][value="${profilA.zone}"]`);
+  if (radio) radio.checked = true;
+
+  // RIST / ISQ — recherche inverse montant → niveau
+  const cle = (dataKey, montant) => {
+    const montants = baseDonnees.rist?.[dataKey]?.montants || {};
+    return Object.entries(montants).find(([, v]) => v === montant)?.[0] || "";
+  };
+  document.getElementById("cmp-input-fonction").value = cle("fonctions", profilA.primes.rist_fonctions);
+  document.getElementById("cmp-input-experience").value = cle("experience", profilA.primes.rist_exper_prof);
+  document.getElementById("cmp-input-isq-licence").value = cle("isq_licence", profilA.primes.rist_lic_isq);
+  document.getElementById("cmp-input-isq-complement").value = cle("isq_complement", profilA.primes.rist_cplt_lic_isq);
+  document.getElementById("cmp-input-isq-majoration").value = cle("isq_majoration", profilA.primes.rist_maj_isq);
+
+  // Attractivité + Fidélisation
+  document.getElementById("cmp-attractivite").value = profilA.primes.attractivite;
+  document.getElementById("cmp-fidelisation").value = profilA.primes.fidelisation;
+
+  // OTT Part Fixe — miroir des checkboxes principales
+  ["pf-opt1-l16", "pf-opt1-cdg", "pf-opt1-l711", "pf-opt1-l911", "pf-opt1-plus-n1", "pf-opt1-plus-n2", "pf-opt2-1", "pf-opt2-2", "pf-opt2-bis", "pf-opt4", "pf-opt1-enac", "pf-opt1-plus-enac"].forEach(
+    (id) => {
+      const src = document.getElementById(id);
+      const dst = document.getElementById("cmp-" + id);
+      if (src && dst) dst.checked = src.checked;
+    },
+  );
+  const srcManuel = document.getElementById("pf-manuel");
+  const dstManuel = document.getElementById("cmp-pf-manuel");
+  if (srcManuel && dstManuel) dstManuel.value = srcManuel.value;
+
+  // OTT Part Variable
+  document.getElementById("cmp-pv-globale").value = document.getElementById("pv-globale")?.value || "0";
+  document.getElementById("cmp-pv-opt32").value = document.getElementById("pv-opt32")?.value || "0";
+
+  // PSC
+  document.querySelectorAll(".psc-checkbox").forEach((src) => {
+    const dst = document.getElementById("cmp-" + src.id);
+    if (dst) dst.checked = src.checked;
+  });
+
+  calculerPaie(); // redessine la fiche + déclenche les deltas
+};
+
+/** Désactive le mode comparaison et nettoie l'affichage. */
+window.desactiverComparaison = function () {
+  modeComparaison = false;
+  const panneau = document.getElementById("panneau-comparaison");
+  if (panneau) panneau.classList.remove("visible");
+  effacerDeltas();
+};
+
+/**
+ * Initialise le panneau comparateur après le chargement de data.json :
+ * peuple les selects grade, RIST, attractivité, fidélisation du panneau B.
+ * Appelée une seule fois depuis initialiserApplication().
+ */
+function initialiserComparateur() {
+  // Grade select B
+  const cmpGrade = document.getElementById("cmp-grade");
+  if (cmpGrade && baseDonnees.grilles_icna) {
+    cmpGrade.innerHTML = "";
+    Object.keys(baseDonnees.grilles_icna).forEach((g) => cmpGrade.add(new Option(g, g)));
+    cmpGrade.addEventListener("change", () => {
+      mettreAJourEchelonsB();
+      calculerPaieComparaison();
+    });
+  }
+  mettreAJourEchelonsB();
+
+  // RIST / ISQ selects B
+  [
+    { id: "cmp-input-fonction", dataKey: "fonctions" },
+    { id: "cmp-input-experience", dataKey: "experience" },
+    { id: "cmp-input-isq-licence", dataKey: "isq_licence" },
+    { id: "cmp-input-isq-complement", dataKey: "isq_complement" },
+    { id: "cmp-input-isq-majoration", dataKey: "isq_majoration" },
+  ].forEach(({ id, dataKey }) => {
+    const select = document.getElementById(id);
+    if (!select || !baseDonnees.rist?.[dataKey]) return;
+    select.innerHTML = "";
+    Object.entries(baseDonnees.rist[dataKey].montants).forEach(([niveau, montant]) => {
+      select.add(new Option(`${niveau} — ${montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €`, niveau));
+    });
+  });
+
+  // Attractivité + Fidélisation selects B
+  ["attractivite", "fidelisation"].forEach((cle) => {
+    const select = document.getElementById(`cmp-${cle}`);
+    if (select && baseDonnees[cle]) {
+      select.innerHTML = "";
+      baseDonnees[cle].forEach((opt) => select.add(new Option(opt.label, opt.valeur)));
+    }
+  });
+
+  // Tous les champs du panneau B déclenchent calculerPaieComparaison
+  document.querySelectorAll("#panneau-comparaison select, #panneau-comparaison input:not([name='cmp-zone'])").forEach((el) => {
+    el.addEventListener("input", calculerPaieComparaison);
+    el.addEventListener("change", calculerPaieComparaison);
+  });
+  // Radios zone séparément (pas interceptés par le sélecteur ci-dessus)
+  document.querySelectorAll("input[name='cmp-zone']").forEach((r) => r.addEventListener("change", calculerPaieComparaison));
+}
+
+// =============================================================================
+// 13. VISITE GUIDÉE (Driver.js)
 // =============================================================================
 
 /**
