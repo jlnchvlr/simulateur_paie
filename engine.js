@@ -912,108 +912,132 @@ const ROUTAGE_MODAL = {
  * @param {ProfilAgent}      p - Profil de l'agent
  * @param {MontantsCalcules} m - Résultat de `calculerMontants(p)`
  */
-function dessinerFiche(p, m) {
+/**
+ * Dessine la fiche de paie complète.
+ * En mode comparaison (pB/mB fournis), affiche les lignes présentes dans A OU B :
+ * — lignes A normales avec badge Δ si la valeur diffère
+ * — lignes présentes dans B uniquement (ghost) en fond vert pâle
+ *
+ * @param {ProfilAgent}           p  - Profil A (affiché)
+ * @param {MontantsCalcules}      m  - Résultat calculerMontants(p)
+ * @param {ProfilAgent|null}      pB - Profil B (comparaison) ou null
+ * @param {MontantsCalcules|null} mB - Résultat calculerMontants(pB) ou null
+ */
+function dessinerFiche(p, m, pB = null, mB = null) {
   const tbody = document.getElementById("lignes-paie");
   tbody.innerHTML = "";
+  const enComparaison = pB !== null && mB !== null;
 
-  // Label de détail des absences (ex. "GREVE 2J // MAL 90% 3J")
   const detailAbs = [m.joursGreve > 0 && `GREVE ${m.joursGreve}J`, m.joursCarence > 0 && `CAR ${m.joursCarence}J`, m.jours90 > 0 && `MAL 90% ${m.jours90}J`, m.jours50 > 0 && `MAL 50% ${m.jours50}J`]
     .filter(Boolean)
     .join(" // ");
 
-  /** Raccourci : génère le tooltip d'absence pour un montant de base donné */
   const tip = (base) => genererTooltipAbsence(base, m.joursGreve, m.joursCarence, m.jours90, m.jours50);
+
+  // ── Helpers comparaison ───────────────────────────────────────────────────────
+  /** Calcule le delta B-A, ou null si pas en mode comparaison */
+  const deltaVal = (vA, vB) => enComparaison ? arrondir((vB ?? 0) - (vA ?? 0)) : null;
+  /** Vrai si la ligne n'existe que dans B */
+  const estGhost = (vA, vB) => enComparaison && !(vA > 0) && (vB > 0);
+  /** Valeur à afficher : A si non nul, sinon B (ghost) */
+  const affVal = (vA, vB) => (vA > 0) ? vA : (enComparaison && vB > 0 ? vB : vA);
 
   // ─────────────────────────────────────────────────────────────────────────────
   /**
-   * Ajoute une ligne `<tr>` dans le tableau de la fiche de paie.
-   * Si un routage est défini pour le code, la ligne devient cliquable.
-   *
-   * @param {string}      code             - Code comptable (ex. "101000"). Vide pour les lignes de détail.
-   * @param {string}      libelle          - Libellé de la ligne
-   * @param {number|null} aPayer           - Montant créditeur (colonne "À payer")
-   * @param {number|null} aDeduire         - Montant débiteur (colonne "À déduire")
-   * @param {number|null} pourInfo         - Montant indicatif (colonne "Pour info")
-   * @param {string[]}    [inputsAReset]   - IDs à remettre à zéro (affiche ✖)
-   * @param {string}      [tooltipMontant] - Texte tooltip affiché sur le montant
-   * @param {string}      [customId]       - ID `<tr>` personnalisé (outrepasse `row-{code}`)
+   * Ajoute une ligne <tr> dans le tableau.
+   * opts.delta / opts.deltaCol : badge Δ inline dans la colonne désignée (2/3/4)
+   * opts.isGhost : fond vert pâle — ligne présente dans B uniquement
    */
-  function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo, inputsAReset = null, tooltipMontant = null, customId = null) {
+  function ajouterLigne(code, libelle, aPayer, aDeduire, pourInfo, inputsAReset = null, tooltipMontant = null, customId = null, opts = {}) {
+    const { delta = null, deltaCol = null, isGhost = false } = opts;
     const tr = document.createElement("tr");
     if (customId) tr.id = customId;
     else if (code) tr.id = `row-${code}`;
 
+    const classes = [];
     const route = ROUTAGE_MODAL[code];
-    if (route) {
-      tr.className = "clickable-row";
+    if (route && !isGhost) {
+      classes.push("clickable-row");
       tr.title = "Cliquez pour modifier";
       tr.onclick = () => ouvrirModal(route.cible, route.titre);
-    } else if (libelle.includes("TAUX PERSONNALISE")) {
-      tr.className = "clickable-row";
+    } else if (libelle.includes("TAUX PERSONNALISE") && !isGhost) {
+      classes.push("clickable-row");
       tr.onclick = () => ouvrirModal("panel-impots", "Prélèvement à la Source");
     }
+    if (isGhost) classes.push("ligne-fantome-b");
+    if (classes.length) tr.className = classes.join(" ");
 
     const isBold = code === "011100" || code === "011300";
-    const euroSymbol = aPayer || aDeduire || pourInfo ? `<span style="float:right;font-weight:normal;color:#555;">€</span>` : "";
-    const croix = inputsAReset ? `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${JSON.stringify(inputsAReset).replace(/"/g, "'")})">✖</span>` : "";
-    const fmtCell = (val) => {
-      if (!val) return "";
+    const hasValue = aPayer || aDeduire || pourInfo;
+    const euroSymbol = hasValue ? `<span style="float:right;font-weight:normal;color:#555;">€</span>` : "";
+    const croix = (inputsAReset && !isGhost)
+      ? `<span class="delete-btn" title="Retirer cet élément" onclick="window.effacerValeurs(event, ${JSON.stringify(inputsAReset).replace(/"/g, "'")})">✖</span>`
+      : "";
+
+    const renderDeltaBadge = (col) => {
+      // Pas de badge sur les lignes fantômes (le fond vert suffit) ni hors mode comparaison
+      if (isGhost || !enComparaison || delta === null || Math.abs(delta) < 0.005 || deltaCol !== col) return "";
+      const estDeduction = col === 3;
+      const estPositif   = estDeduction ? delta < 0 : delta > 0;
+      const signe        = delta > 0 ? "+" : "";
+      return `<span class="delta-badge ${estPositif ? "delta-pos" : "delta-neg"}">${signe}${delta.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`;
+    };
+
+    const fmtCell = (val, col) => {
+      const badge = renderDeltaBadge(col);
+      if (!val) return badge;
       const txt = formaterMontant(val);
-      return tooltipMontant ? `<span title="${tooltipMontant}" style="cursor:help;border-bottom:1px dotted var(--dgfip-medium);">${txt}</span>` : txt;
+      const displayed = tooltipMontant
+        ? `<span title="${tooltipMontant}" style="cursor:help;border-bottom:1px dotted var(--dgfip-medium);">${txt}</span>`
+        : txt;
+      return displayed + badge;
     };
 
     tr.innerHTML = `
       <td class="col-code">${code || ""}</td>
       <td class="col-libelle label${isBold ? " font-large" : ""}"><span>${libelle}</span>${croix} ${euroSymbol}</td>
-      <td class="col-amount">${fmtCell(aPayer)}</td>
-      <td class="col-amount">${fmtCell(aDeduire)}</td>
-      <td class="col-amount">${fmtCell(pourInfo)}</td>
+      <td class="col-amount">${fmtCell(aPayer, 2)}</td>
+      <td class="col-amount">${fmtCell(aDeduire, 3)}</td>
+      <td class="col-amount">${fmtCell(pourInfo, 4)}</td>
     `;
     tbody.appendChild(tr);
   }
 
   /**
-   * Ajoute une ligne de prime RIST et, si des absences existent,
-   * les deux lignes de détail associées (retenue calculée + description).
-   *
-   * @param {string} code     - Code comptable de la prime
-   * @param {string} libelle  - Libellé
-   * @param {number} montant  - Montant mensuel brut de la prime
-   * @param {number} absence  - Retenue d'absence précalculée
+   * Ajoute une ligne RIST avec gestion du delta comparaison et des lignes d'absence.
+   * Supporte les lignes fantômes (présentes dans B uniquement).
    */
-  function ajouterLigneRist(code, libelle, montant, absence) {
-    ajouterLigne(code, libelle, montant, null, null);
-    if (m.joursAbs > 0) {
-      ajouterLigne(code, libelle, -absence, null, null, null, tip(montant));
+  function ajouterLigneRist(code, libelle, montantA, absence, montantB = 0) {
+    const montantAff = affVal(montantA, montantB);
+    const delta      = deltaVal(montantA, montantB);
+    const isGhost    = estGhost(montantA, montantB);
+    // N'affiche rien si les deux scénarios sont à 0
+    if (!montantAff && !isGhost) return;
+    ajouterLigne(code, libelle, montantAff, null, null, null, null, null, { delta, deltaCol: 2, isGhost });
+    if (m.joursAbs > 0 && !isGhost) {
+      ajouterLigne(code, libelle, -absence, null, null, null, tip(montantA));
       ajouterLigne("", `&nbsp;&nbsp;&nbsp;&nbsp;${detailAbs}`, null, null, null);
     }
   }
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // ── Synthèse des absences (en tête, avant le traitement brut) ────────────────
+  // ── Synthèse des absences ─────────────────────────────────────────────────────
   if (m.joursAbs > 0) {
     const totalAbsDed = m.absTraitement + m.absNbi + m.absResidence + m.absRistFct + m.absRistExp + m.absRistIsq + m.absRistCplt + m.absRistMaj + m.absIndCsg;
-    const baseTotale =
-      m.traitementBrut +
-      m.montantNbi +
-      m.indemniteResidence +
-      p.primes.rist_fonctions +
-      p.primes.rist_exper_prof +
-      p.primes.rist_lic_isq +
-      p.primes.rist_cplt_lic_isq +
-      p.primes.rist_maj_isq +
-      p.primes.ind_compensatrice_csg;
-
+    const baseTotale  = m.traitementBrut + m.montantNbi + m.indemniteResidence + p.primes.rist_fonctions + p.primes.rist_exper_prof + p.primes.rist_lic_isq + p.primes.rist_cplt_lic_isq + p.primes.rist_maj_isq + p.primes.ind_compensatrice_csg;
     ajouterLigne("604958", `SERVICE NON FAIT / ABSENCE (${m.joursAbs} J)`, null, null, totalAbsDed, ["input-greve", "input-carence", "input-maladie-90", "input-maladie-50"], tip(baseTotale));
   }
 
   // ── Traitement brut & NBI ─────────────────────────────────────────────────────
-  ajouterLigne("101000", "TRAITEMENT BRUT", m.traitementBrut, null, null);
+  ajouterLigne("101000", "TRAITEMENT BRUT", m.traitementBrut, null, null, null, null, null,
+    { delta: deltaVal(m.traitementBrut, mB?.traitementBrut), deltaCol: 2 });
 
-  if (m.montantNbi > 0) {
-    ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", m.montantNbi, null, null);
-    if (m.joursAbs > 0) {
-      ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", -m.absNbi, null, null, null, tip(m.montantNbi));
+  const nbiA = m.montantNbi; const nbiB = mB?.montantNbi ?? 0;
+  if (nbiA > 0 || estGhost(nbiA, nbiB)) {
+    ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", affVal(nbiA, nbiB), null, null, null, null, null,
+      { delta: deltaVal(nbiA, nbiB), deltaCol: 2, isGhost: estGhost(nbiA, nbiB) });
+    if (m.joursAbs > 0 && nbiA > 0) {
+      ajouterLigne("101070", "TRAITEMENT BRUT N.B.I.", -m.absNbi, null, null, null, tip(nbiA));
       ajouterLigne("", `&nbsp;&nbsp;&nbsp;&nbsp;${detailAbs}`, null, null, null);
     }
   }
@@ -1021,89 +1045,109 @@ function dessinerFiche(p, m) {
   if (m.montantSFT > 0) ajouterLigne("200200", "SUPPLEMENT FAMILIAL DE TRAITEMENT", m.montantSFT, null, null);
 
   // ── Retenues PC ──────────────────────────────────────────────────────────────
-  ajouterLigne("101050", "RETENUE PC", null, m.retenuePC, null);
-  if (m.montantNbi > 0) ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, m.retenuePcNbi, null);
+  ajouterLigne("101050", "RETENUE PC", null, m.retenuePC, null, null, null, null,
+    { delta: deltaVal(m.retenuePC, mB?.retenuePC), deltaCol: 3 });
+  const pcNbiA = m.retenuePcNbi; const pcNbiB = mB?.retenuePcNbi ?? 0;
+  if (pcNbiA > 0 || estGhost(pcNbiA, pcNbiB)) {
+    ajouterLigne("101080", "RET P.C. SUR N.B.I.", null, affVal(pcNbiA, pcNbiB), null, null, null, null,
+      { delta: deltaVal(pcNbiA, pcNbiB), deltaCol: 3, isGhost: estGhost(pcNbiA, pcNbiB) });
+  }
 
-  // ── Indemnité de résidence ───────────────────────────────────────────────────
-  ajouterLigne("102000", "INDEMNITE DE RESIDENCE", m.indemniteResidence, null, null);
+  // ── Indemnité de résidence ────────────────────────────────────────────────────
+  ajouterLigne("102000", "INDEMNITE DE RESIDENCE", m.indemniteResidence, null, null, null, null, null,
+    { delta: deltaVal(m.indemniteResidence, mB?.indemniteResidence), deltaCol: 2 });
 
-  // ── Éléments variables (affichés uniquement si non nuls) ─────────────────────
+  // ── Éléments variables ────────────────────────────────────────────────────────
   if (m.nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", m.nuit, null, null, ["input-nuit-n", "input-nuit-s2"]);
 
-  if (p.primes.forfait_mobilites > 0) ajouterLigne("200041", "FORF. MOBILITES DURABLES", p.primes.forfait_mobilites, null, null, ["input-fmd"]);
+  const fmdA = p.primes.forfait_mobilites; const fmdB = pB?.primes.forfait_mobilites ?? 0;
+  if (fmdA > 0 || estGhost(fmdA, fmdB))
+    ajouterLigne("200041", "FORF. MOBILITES DURABLES", affVal(fmdA, fmdB), null, null, ["input-fmd"], null, null,
+      { delta: deltaVal(fmdA, fmdB), deltaCol: 2, isGhost: estGhost(fmdA, fmdB) });
 
-  if (p.primes.inflation > 0) ajouterLigne("201000", "INDEM. GARANTIE POUVOIR D'ACHAT", p.primes.inflation, null, null, ["input-inflation"]);
+  const inflA = p.primes.inflation; const inflB = pB?.primes.inflation ?? 0;
+  if (inflA > 0 || estGhost(inflA, inflB))
+    ajouterLigne("201000", "INDEM. GARANTIE POUVOIR D'ACHAT", affVal(inflA, inflB), null, null, ["input-inflation"], null, null,
+      { delta: deltaVal(inflA, inflB), deltaCol: 2, isGhost: estGhost(inflA, inflB) });
 
-  // ── RIST (5 composantes, chacune avec déduction absence intégrée) ─────────────
-  ajouterLigneRist("201958", "RIST PART FONCTIONS", p.primes.rist_fonctions, m.absRistFct);
-  ajouterLigneRist("201959", "RIST PART EXPER. PROF.", p.primes.rist_exper_prof, m.absRistExp);
-  ajouterLigneRist("201960", "RIST PART LIC-ISQ (ICNA)", p.primes.rist_lic_isq, m.absRistIsq);
-  ajouterLigneRist("201961", "RIST CPLT PART LIC-ISQ", p.primes.rist_cplt_lic_isq, m.absRistCplt);
-  ajouterLigneRist("201962", "MAJORATION CPLT ISQ", p.primes.rist_maj_isq, m.absRistMaj);
-  ajouterLigneRist("202206", "IND. COMPENSATRICE CSG", p.primes.ind_compensatrice_csg, m.absIndCsg);
+  // ── RIST (5 composantes) ──────────────────────────────────────────────────────
+  ajouterLigneRist("201958", "RIST PART FONCTIONS",      p.primes.rist_fonctions,    m.absRistFct,  pB?.primes.rist_fonctions    ?? 0);
+  ajouterLigneRist("201959", "RIST PART EXPER. PROF.",   p.primes.rist_exper_prof,   m.absRistExp,  pB?.primes.rist_exper_prof   ?? 0);
+  ajouterLigneRist("201960", "RIST PART LIC-ISQ (ICNA)", p.primes.rist_lic_isq,      m.absRistIsq,  pB?.primes.rist_lic_isq      ?? 0);
+  ajouterLigneRist("201961", "RIST CPLT PART LIC-ISQ",   p.primes.rist_cplt_lic_isq, m.absRistCplt, pB?.primes.rist_cplt_lic_isq ?? 0);
+  ajouterLigneRist("201962", "MAJORATION CPLT ISQ",      p.primes.rist_maj_isq,      m.absRistMaj,  pB?.primes.rist_maj_isq      ?? 0);
+  ajouterLigneRist("202206", "IND. COMPENSATRICE CSG",   p.primes.ind_compensatrice_csg, m.absIndCsg, pB?.primes.ind_compensatrice_csg ?? 0);
 
-  // ── PSC, PPP, OTT, Fidélisation, Attractivité ─────────────────────────────────
-  if (m.psc > 0) ajouterLigne("202354", "PARTICIPATION A LA PSC", m.psc, null, null, ["psc-15", "psc-7", "psc-5"]);
+  // ── PSC ───────────────────────────────────────────────────────────────────────
+  const pscA = m.psc; const pscB = mB?.psc ?? 0;
+  if (pscA > 0 || estGhost(pscA, pscB))
+    ajouterLigne("202354", "PARTICIPATION A LA PSC", affVal(pscA, pscB), null, null, ["psc-15", "psc-7", "psc-5"], null, null,
+      { delta: deltaVal(pscA, pscB), deltaCol: 2, isGhost: estGhost(pscA, pscB) });
 
   if (p.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", p.evenements.prime_performance, null, null, ["input-perf"]);
 
-  if (p.evenements.ott_pv_globale > 0) ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PV)", p.evenements.ott_pv_globale, null, null, ["pv-globale"]);
+  // ── OTT ───────────────────────────────────────────────────────────────────────
+  const pvA = p.evenements.ott_pv_globale; const pvB = pB?.evenements.ott_pv_globale ?? 0;
+  if (pvA > 0 || estGhost(pvA, pvB))
+    ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PV)", affVal(pvA, pvB), null, null, ["pv-globale"], null, null,
+      { delta: deltaVal(pvA, pvB), deltaCol: 2, isGhost: estGhost(pvA, pvB) });
 
-  if (p.evenements.ott_pf > 0)
-    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", p.evenements.ott_pf, null, null, [
-      "pf-manuel",
-      "pf-opt1-l16",
-      "pf-opt1-cdg",
-      "pf-opt1-l711",
-      "pf-opt1-l911",
-      "pf-opt1-plus-n1",
-      "pf-opt1-plus-n2",
-      "pf-opt2-1",
-      "pf-opt2-2",
-      "pf-opt2-bis",
-      "pf-opt4",
-      "pf-opt1-enac",
-      "pf-opt1-plus-enac",
-    ]);
+  const pfA = p.evenements.ott_pf; const pfB = pB?.evenements.ott_pf ?? 0;
+  if (pfA > 0 || estGhost(pfA, pfB))
+    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", affVal(pfA, pfB), null, null,
+      ["pf-manuel","pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1","pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4","pf-opt1-enac","pf-opt1-plus-enac"], null, null,
+      { delta: deltaVal(pfA, pfB), deltaCol: 2, isGhost: estGhost(pfA, pfB) });
 
-  if (p.evenements.ott_pv_opt32 > 0) ajouterLigne("202560", "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", p.evenements.ott_pv_opt32, null, null, ["pv-opt32"]);
+  const pv32A = p.evenements.ott_pv_opt32; const pv32B = pB?.evenements.ott_pv_opt32 ?? 0;
+  if (pv32A > 0 || estGhost(pv32A, pv32B))
+    ajouterLigne("202560", "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", affVal(pv32A, pv32B), null, null, ["pv-opt32"], null, null,
+      { delta: deltaVal(pv32A, pv32B), deltaCol: 2, isGhost: estGhost(pv32A, pv32B) });
 
-  if (p.primes.fidelisation > 0) ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", p.primes.fidelisation, null, null, ["input-fidelisation"]);
+  // ── Fidélisation & Attractivité ───────────────────────────────────────────────
+  const fidA = p.primes.fidelisation; const fidB = pB?.primes.fidelisation ?? 0;
+  if (fidA > 0 || estGhost(fidA, fidB))
+    ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", affVal(fidA, fidB), null, null, ["input-fidelisation"], null, null,
+      { delta: deltaVal(fidA, fidB), deltaCol: 2, isGhost: estGhost(fidA, fidB) });
 
-  if (p.primes.attractivite > 0) ajouterLigne("203002", "ATTRACTIVITE GEOGRAPHIQUE", p.primes.attractivite, null, null, ["input-attractivite"]);
+  const attrA = p.primes.attractivite; const attrB = pB?.primes.attractivite ?? 0;
+  if (attrA > 0 || estGhost(attrA, attrB))
+    ajouterLigne("203002", "ATTRACTIVITE GEOGRAPHIQUE", affVal(attrA, attrB), null, null, ["input-attractivite"], null, null,
+      { delta: deltaVal(attrA, attrB), deltaCol: 2, isGhost: estGhost(attrA, attrB) });
 
   // Previews des totaux OTT dans le panneau de configuration
   majPreview("preview-ott-pf", p.evenements.ott_pf);
   majPreview("preview-ott-pv", p.evenements.ott_pv_globale + p.evenements.ott_pv_opt32);
 
-  // ── Cotisations (CSG/CRDS + charges patronales) ───────────────────────────────
-  ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE", null, m.csgNonDeductible, null);
-  ajouterLigne("401301", "C.S.G. DEDUCTIBLE", null, m.csgDeductible, null);
-  ajouterLigne("401501", "C.R.D.S.", null, m.crds, null);
+  // ── Cotisations ───────────────────────────────────────────────────────────────
+  ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE",     null, m.csgNonDeductible, null, null, null, null, { delta: deltaVal(m.csgNonDeductible, mB?.csgNonDeductible), deltaCol: 3 });
+  ajouterLigne("401301", "C.S.G. DEDUCTIBLE",         null, m.csgDeductible,    null, null, null, null, { delta: deltaVal(m.csgDeductible,    mB?.csgDeductible),    deltaCol: 3 });
+  ajouterLigne("401501", "C.R.D.S.",                  null, m.crds,             null, null, null, null, { delta: deltaVal(m.crds,             mB?.crds),             deltaCol: 3 });
   ajouterLigne("403301", "COTIS PATRON. ALLOC FAMIL", null, null, m.charges.patAllocFam);
-  ajouterLigne("403397", "COT PAT AF MAJORATION", null, null, m.charges.patAfMajor);
-  ajouterLigne("403501", "COT PAT FNAL DEPLAFONNEE", null, null, m.charges.patFnal);
+  ajouterLigne("403397", "COT PAT AF MAJORATION",     null, null, m.charges.patAfMajor);
+  ajouterLigne("403501", "COT PAT FNAL DEPLAFONNEE",  null, null, m.charges.patFnal);
   ajouterLigne("403801", "CONT SOLIDARITE AUTONOMIE", null, null, m.charges.patCsa);
-  ajouterLigne("404001", "COT PAT MALADIE DEPLAFON", null, null, m.charges.patMaladie);
-  ajouterLigne("411050", "CONTRIB.PC", null, null, m.charges.patPensions);
-  ajouterLigne("411058", "CONTRIBUTION ATI", null, null, m.charges.patAti);
-  ajouterLigne("501080", "COT SAL RAFP", null, m.cotisationRafp, null);
-  ajouterLigne("501180", "COT PAT RAFP", null, null, m.charges.patRafp);
-  ajouterLigne("554500", "COT PAT VST MOBILITE", null, null, m.charges.patMobilite);
+  ajouterLigne("404001", "COT PAT MALADIE DEPLAFON",  null, null, m.charges.patMaladie);
+  ajouterLigne("411050", "CONTRIB.PC",                null, null, m.charges.patPensions);
+  ajouterLigne("411058", "CONTRIBUTION ATI",          null, null, m.charges.patAti);
+  ajouterLigne("501080", "COT SAL RAFP",              null, m.cotisationRafp,   null, null, null, null, { delta: deltaVal(m.cotisationRafp, mB?.cotisationRafp), deltaCol: 3 });
+  ajouterLigne("501180", "COT PAT RAFP",              null, null, m.charges.patRafp);
+  ajouterLigne("554500", "COT PAT VST MOBILITE",      null, null, m.charges.patMobilite);
 
   if (m.joursAbs > 0) {
-    ajouterLigne("604958", "PREC. CARENCE REM. PR.", null, m.absTraitement, null, null, tip(m.traitementBrut));
-    ajouterLigne("604959", "PREC. CARENCE IND. RESID.", null, m.absResidence, null, null, tip(m.indemniteResidence));
+    ajouterLigne("604958", "PREC. CARENCE REM. PR.",    null, m.absTraitement, null, null, tip(m.traitementBrut));
+    ajouterLigne("604959", "PREC. CARENCE IND. RESID.", null, m.absResidence,  null, null, tip(m.indemniteResidence));
   }
 
-  ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, m.transfertPrimes, null);
-  ajouterLigne("751095", "24,6% ISQ", null, m.retenueIsq, null);
+  ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, m.transfertPrimes, null, null, null, null, { delta: deltaVal(m.transfertPrimes, mB?.transfertPrimes), deltaCol: 3 });
+  ajouterLigne("751095", "24,6% ISQ",                 null, m.retenueIsq,      null, null, null, null, { delta: deltaVal(m.retenueIsq,      mB?.retenueIsq),      deltaCol: 3 });
 
-  // ── Nets ─────────────────────────────────────────────────────────────────────
+  // ── Nets ──────────────────────────────────────────────────────────────────────
   ajouterLigne("", "", null, null, null);
-  ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, m.netAPayerAvantImpot);
+  ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, m.netAPayerAvantImpot, null, null, null,
+    { delta: deltaVal(m.netAPayerAvantImpot, mB?.netAPayerAvantImpot), deltaCol: 4 });
   ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, m.netSocial);
-  ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, m.impotSource, null);
+  ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, m.impotSource, null, null, null, null,
+    { delta: deltaVal(m.impotSource, mB?.impotSource), deltaCol: 3 });
   ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(p.taux_pas * 100)}%)`, null, null, null, null, null, "row-taux-impot");
 
   // ── Ligne d'ajout d'éléments variables ──────────────────────────────────────
@@ -1176,22 +1220,21 @@ function dessinerFiche(p, m) {
  * Appelée à chaque modification d'un champ du formulaire.
  */
 function calculerPaie() {
-  const profilAgent = getProfilDepuisInterface();
-  const m = calculerMontants(profilAgent);
-  majPreview("preview-nuits", m.nuit);
-  majPreview("preview-rist-fonctions", profilAgent.primes.rist_fonctions);
-  majPreview("preview-rist-experience", profilAgent.primes.rist_exper_prof);
-  majPreview("preview-rist-isq-licence", profilAgent.primes.rist_lic_isq);
-  majPreview("preview-rist-isq-complement", profilAgent.primes.rist_cplt_lic_isq);
-  majPreview("preview-rist-isq-majoration", profilAgent.primes.rist_maj_isq);
-  dessinerFiche(profilAgent, m);
+  const profilA = getProfilDepuisInterface();
+  const mA      = calculerMontants(profilA);
+  majPreview("preview-nuits",              mA.nuit);
+  majPreview("preview-rist-fonctions",     profilA.primes.rist_fonctions);
+  majPreview("preview-rist-experience",    profilA.primes.rist_exper_prof);
+  majPreview("preview-rist-isq-licence",   profilA.primes.rist_lic_isq);
+  majPreview("preview-rist-isq-complement",profilA.primes.rist_cplt_lic_isq);
+  majPreview("preview-rist-isq-majoration",profilA.primes.rist_maj_isq);
+
+  const profilB = modeComparaison ? getProfilComparaisonDepuisPanneau() : null;
+  const mB      = profilB ? calculerMontants(profilB) : null;
+
+  dessinerFiche(profilA, mA, profilB, mB);
+  majDeltaNet(mA, mB);
   sauvegarderProfil();
-  // Si mode comparaison actif, recalculer les deltas après le rendu
-  if (modeComparaison) {
-    const profilB = getProfilComparaisonDepuisPanneau();
-    const mB = calculerMontants(profilB);
-    afficherDeltas(profilAgent, m, profilB, mB);
-  }
 }
 
 // =============================================================================
@@ -1444,119 +1487,65 @@ function getProfilComparaisonDepuisPanneau() {
   });
 
   const ristKey = document.getElementById("cmp-input-fonction")?.value;
-  const expKey = document.getElementById("cmp-input-experience")?.value;
-  const licKey = document.getElementById("cmp-input-isq-licence")?.value;
+  const expKey  = document.getElementById("cmp-input-experience")?.value;
+  const licKey  = document.getElementById("cmp-input-isq-licence")?.value;
   const cpltKey = document.getElementById("cmp-input-isq-complement")?.value;
-  const majKey = document.getElementById("cmp-input-isq-majoration")?.value;
+  const majKey  = document.getElementById("cmp-input-isq-majoration")?.value;
 
   return {
-    grade: document.getElementById("cmp-grade")?.value || profilA.grade,
-    echelon: document.getElementById("cmp-echelon")?.value || profilA.echelon,
-    zone: document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
-    taux_pas: profilA.taux_pas,
+    grade:      document.getElementById("cmp-grade")?.value   || profilA.grade,
+    echelon:    document.getElementById("cmp-echelon")?.value || profilA.echelon,
+    zone:       document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
+    taux_pas:   profilA.taux_pas,
     points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
-    enfants: profilA.enfants,
+    enfants:    parseInt(document.getElementById("cmp-enfants")?.value) || profilA.enfants,
 
     evenements: {
       ...profilA.evenements,
-      ott_pf: pfTotal,
+      ott_pf:         pfTotal,
       ott_pv_globale: parseFloat(document.getElementById("cmp-pv-globale")?.value) || 0,
-      ott_pv_opt32: parseFloat(document.getElementById("cmp-pv-opt32")?.value) || 0,
+      ott_pv_opt32:   parseFloat(document.getElementById("cmp-pv-opt32")?.value)   || 0,
     },
 
     primes: {
       ...profilA.primes,
-      rist_fonctions: baseDonnees.rist?.fonctions?.montants?.[ristKey] || 0,
-      rist_exper_prof: baseDonnees.rist?.experience?.montants?.[expKey] || 0,
-      rist_lic_isq: baseDonnees.rist?.isq_licence?.montants?.[licKey] || 0,
-      rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.montants?.[cpltKey] || 0,
-      rist_maj_isq: baseDonnees.rist?.isq_majoration?.montants?.[majKey] || 0,
-      attractivite: parseFloat(document.getElementById("cmp-attractivite")?.value) || 0,
-      fidelisation: parseFloat(document.getElementById("cmp-fidelisation")?.value) || 0,
-      psc: pscTotal,
+      rist_fonctions:    baseDonnees.rist?.fonctions?.montants?.[ristKey]       || 0,
+      rist_exper_prof:   baseDonnees.rist?.experience?.montants?.[expKey]       || 0,
+      rist_lic_isq:      baseDonnees.rist?.isq_licence?.montants?.[licKey]      || 0,
+      rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.montants?.[cpltKey]  || 0,
+      rist_maj_isq:      baseDonnees.rist?.isq_majoration?.montants?.[majKey]   || 0,
+      attractivite:      parseFloat(document.getElementById("cmp-attractivite")?.value) || 0,
+      fidelisation:      parseFloat(document.getElementById("cmp-fidelisation")?.value) || 0,
+      psc:               pscTotal,
     },
   };
 }
 
 /**
- * Ajoute des badges Δ sur les lignes de la fiche dont la valeur diffère entre A et B.
- * Pour les colonnes "À déduire", la couleur est inversée (hausse = rouge).
+ * Affiche le NET À PAYER du scénario B sur une seconde ligne sous le montant A.
+ * Si mB est null (hors mode comparaison), masque la ligne B.
  *
- * @param {ProfilAgent}      profilA
- * @param {MontantsCalcules} mA
- * @param {ProfilAgent}      profilB
- * @param {MontantsCalcules} mB
+ * @param {MontantsCalcules}      mA
+ * @param {MontantsCalcules|null} mB
  */
-function afficherDeltas(profilA, mA, profilB, mB) {
-  effacerDeltas();
-
-  // [rowId, deltaValue, colIndex (2=àPayer, 3=àDéduire, 4=pourInfo)]
-  const entrees = [
-    ["row-101000", mB.traitementBrut - mA.traitementBrut, 2],
-    ["row-101070", mB.montantNbi - mB.absNbi - (mA.montantNbi - mA.absNbi), 2],
-    ["row-101050", mB.retenuePC - mA.retenuePC, 3],
-    ["row-101080", mB.retenuePcNbi - mA.retenuePcNbi, 3],
-    ["row-102000", mB.indemniteResidence - mA.indemniteResidence, 2],
-    ["row-201958", profilB.primes.rist_fonctions - profilA.primes.rist_fonctions, 2],
-    ["row-201959", profilB.primes.rist_exper_prof - profilA.primes.rist_exper_prof, 2],
-    ["row-201960", profilB.primes.rist_lic_isq - profilA.primes.rist_lic_isq, 2],
-    ["row-201961", profilB.primes.rist_cplt_lic_isq - profilA.primes.rist_cplt_lic_isq, 2],
-    ["row-201962", profilB.primes.rist_maj_isq - profilA.primes.rist_maj_isq, 2],
-    ["row-203001", profilB.primes.fidelisation - profilA.primes.fidelisation, 2],
-    ["row-203002", profilB.primes.attractivite - profilA.primes.attractivite, 2],
-    ["row-401201", mB.csgNonDeductible - mA.csgNonDeductible, 3],
-    ["row-401301", mB.csgDeductible - mA.csgDeductible, 3],
-    ["row-401501", mB.crds - mA.crds, 3],
-    ["row-501080", mB.cotisationRafp - mA.cotisationRafp, 3],
-    ["row-604970", mB.transfertPrimes - mA.transfertPrimes, 3],
-    ["row-751095", mB.retenueIsq - mA.retenueIsq, 3],
-    // OTT (lignes conditionnelles — présentes seulement si profilA > 0)
-    ["row-202558", profilB.evenements.ott_pv_globale - profilA.evenements.ott_pv_globale, 2],
-    ["row-202559", profilB.evenements.ott_pf - profilA.evenements.ott_pf, 2],
-    ["row-202560", profilB.evenements.ott_pv_opt32 - profilA.evenements.ott_pv_opt32, 2],
-    // PSC
-    ["row-202354", mB.psc - mA.psc, 2],
-    ["row-011100", mB.netAPayerAvantImpot - mA.netAPayerAvantImpot, 4],
-  ];
-
-  entrees.forEach(([rowId, delta, colIdx]) => {
-    if (Math.abs(delta) < 0.005) return;
-    const tr = document.getElementById(rowId);
-    if (!tr) return;
-    const td = tr.querySelectorAll("td")[colIdx];
-    if (!td) return;
-
-    // Pour les déductions (col 3), une hausse est défavorable → inverser la couleur
-    const estDeduction = colIdx === 3;
-    const estPositif = estDeduction ? delta < 0 : delta > 0;
-
-    const badge = document.createElement("span");
-    badge.className = "delta-badge " + (estPositif ? "delta-pos" : "delta-neg");
-    badge.textContent = (delta > 0 ? "+" : "") + delta.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    td.appendChild(badge);
-  });
-
-  // Barre de synthèse
-  const deltaNet = arrondir(mB.netFinal - mA.netFinal);
-  const signe = deltaNet >= 0 ? "+" : "";
-  const elA = document.getElementById("cmp-syn-a");
-  const elB = document.getElementById("cmp-syn-b");
-  const elDelta = document.getElementById("cmp-syn-delta");
-  if (elA) elA.textContent = formaterMontant(mA.netFinal) + " €";
-  if (elB) elB.textContent = formaterMontant(mB.netFinal) + " €";
-  if (elDelta) {
-    elDelta.textContent = signe + formaterMontant(Math.abs(deltaNet)) + " €";
-    elDelta.className = "cmp-syn-delta " + (deltaNet >= 0 ? "delta-pos" : "delta-neg");
+function majDeltaNet(mA, mB) {
+  const elB = document.getElementById("delta-net-b");
+  if (!elB) return;
+  if (!mB) {
+    elB.innerHTML = "";
+    elB.className = "delta-net-b hidden";
+    return;
   }
-  const synthese = document.getElementById("comparateur-synthese");
-  if (synthese) synthese.style.display = "flex";
-}
-
-/** Supprime tous les badges Δ et masque la barre de synthèse. */
-function effacerDeltas() {
-  document.querySelectorAll(".delta-badge").forEach((el) => el.remove());
-  const synthese = document.getElementById("comparateur-synthese");
-  if (synthese) synthese.style.display = "none";
+  const delta   = arrondir(mB.netFinal - mA.netFinal);
+  if (delta === 0) {
+    elB.innerHTML = "";
+    elB.className = "delta-net-b hidden";
+    return;
+  }
+  const signe   = delta >= 0 ? "+" : "";
+  const couleur = delta >= 0 ? "delta-pos" : "delta-neg";
+  elB.innerHTML = `${formaterMontant(mB.netFinal)} € <span class="delta-badge ${couleur}">${signe}${formaterMontant(delta)} €</span>`;
+  elB.className = `delta-net-b ${couleur}`;
 }
 
 /**
@@ -1564,27 +1553,23 @@ function effacerDeltas() {
  * Miroir de mettreAJourEchelons() pour le panneau comparateur.
  */
 function mettreAJourEchelonsB() {
-  const grade = document.getElementById("cmp-grade")?.value;
+  const grade  = document.getElementById("cmp-grade")?.value;
   const select = document.getElementById("cmp-echelon");
   if (!select || !baseDonnees.grilles_icna) return;
   const echelons = baseDonnees.grilles_icna[grade] || {};
-  const current = select.value;
+  const current  = select.value;
   select.innerHTML = "";
   Object.keys(echelons).forEach((ech) => select.add(new Option(ech, ech)));
   if (current && echelons[current]) select.value = current;
 }
 
 /**
- * Recalcule le scénario B et met à jour les deltas.
- * Appelée à chaque interaction dans le panneau comparateur.
+ * Recalcule la fiche complète depuis le panneau comparateur.
+ * Simple délégation à calculerPaie() qui gère désormais nativement le mode comparaison.
  */
 function calculerPaieComparaison() {
   if (!modeComparaison) return;
-  const profilA = getProfilDepuisInterface();
-  const mA = calculerMontants(profilA);
-  const profilB = getProfilComparaisonDepuisPanneau();
-  const mB = calculerMontants(profilB);
-  afficherDeltas(profilA, mA, profilB, mB);
+  calculerPaie();
 }
 
 /**
@@ -1612,6 +1597,10 @@ window.activerComparaison = function () {
   const cmpNbi = document.getElementById("cmp-nbi-checkbox");
   if (cmpNbi) cmpNbi.checked = profilA.points_nbi > 0;
 
+  // Enfants
+  const cmpEnfants = document.getElementById("cmp-enfants");
+  if (cmpEnfants) cmpEnfants.value = profilA.enfants;
+
   // Zone de résidence
   const radio = document.querySelector(`input[name="cmp-zone"][value="${profilA.zone}"]`);
   if (radio) radio.checked = true;
@@ -1621,31 +1610,31 @@ window.activerComparaison = function () {
     const montants = baseDonnees.rist?.[dataKey]?.montants || {};
     return Object.entries(montants).find(([, v]) => v === montant)?.[0] || "";
   };
-  document.getElementById("cmp-input-fonction").value = cle("fonctions", profilA.primes.rist_fonctions);
-  document.getElementById("cmp-input-experience").value = cle("experience", profilA.primes.rist_exper_prof);
-  document.getElementById("cmp-input-isq-licence").value = cle("isq_licence", profilA.primes.rist_lic_isq);
-  document.getElementById("cmp-input-isq-complement").value = cle("isq_complement", profilA.primes.rist_cplt_lic_isq);
-  document.getElementById("cmp-input-isq-majoration").value = cle("isq_majoration", profilA.primes.rist_maj_isq);
+  document.getElementById("cmp-input-fonction").value           = cle("fonctions",      profilA.primes.rist_fonctions);
+  document.getElementById("cmp-input-experience").value         = cle("experience",     profilA.primes.rist_exper_prof);
+  document.getElementById("cmp-input-isq-licence").value        = cle("isq_licence",    profilA.primes.rist_lic_isq);
+  document.getElementById("cmp-input-isq-complement").value     = cle("isq_complement", profilA.primes.rist_cplt_lic_isq);
+  document.getElementById("cmp-input-isq-majoration").value     = cle("isq_majoration", profilA.primes.rist_maj_isq);
 
   // Attractivité + Fidélisation
   document.getElementById("cmp-attractivite").value = profilA.primes.attractivite;
   document.getElementById("cmp-fidelisation").value = profilA.primes.fidelisation;
 
   // OTT Part Fixe — miroir des checkboxes principales
-  ["pf-opt1-l16", "pf-opt1-cdg", "pf-opt1-l711", "pf-opt1-l911", "pf-opt1-plus-n1", "pf-opt1-plus-n2", "pf-opt2-1", "pf-opt2-2", "pf-opt2-bis", "pf-opt4", "pf-opt1-enac", "pf-opt1-plus-enac"].forEach(
-    (id) => {
-      const src = document.getElementById(id);
-      const dst = document.getElementById("cmp-" + id);
-      if (src && dst) dst.checked = src.checked;
-    },
-  );
+  ["pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1",
+   "pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4",
+   "pf-opt1-enac","pf-opt1-plus-enac"].forEach((id) => {
+    const src = document.getElementById(id);
+    const dst = document.getElementById("cmp-" + id);
+    if (src && dst) dst.checked = src.checked;
+  });
   const srcManuel = document.getElementById("pf-manuel");
   const dstManuel = document.getElementById("cmp-pf-manuel");
   if (srcManuel && dstManuel) dstManuel.value = srcManuel.value;
 
   // OTT Part Variable
   document.getElementById("cmp-pv-globale").value = document.getElementById("pv-globale")?.value || "0";
-  document.getElementById("cmp-pv-opt32").value = document.getElementById("pv-opt32")?.value || "0";
+  document.getElementById("cmp-pv-opt32").value   = document.getElementById("pv-opt32")?.value   || "0";
 
   // PSC
   document.querySelectorAll(".psc-checkbox").forEach((src) => {
@@ -1656,12 +1645,12 @@ window.activerComparaison = function () {
   calculerPaie(); // redessine la fiche + déclenche les deltas
 };
 
-/** Désactive le mode comparaison et nettoie l'affichage. */
+/** Désactive le mode comparaison et redessine la fiche sans scénario B. */
 window.desactiverComparaison = function () {
   modeComparaison = false;
   const panneau = document.getElementById("panneau-comparaison");
   if (panneau) panneau.classList.remove("visible");
-  effacerDeltas();
+  calculerPaie(); // redessine proprement sans pB/mB
 };
 
 /**
@@ -1675,20 +1664,17 @@ function initialiserComparateur() {
   if (cmpGrade && baseDonnees.grilles_icna) {
     cmpGrade.innerHTML = "";
     Object.keys(baseDonnees.grilles_icna).forEach((g) => cmpGrade.add(new Option(g, g)));
-    cmpGrade.addEventListener("change", () => {
-      mettreAJourEchelonsB();
-      calculerPaieComparaison();
-    });
+    cmpGrade.addEventListener("change", () => { mettreAJourEchelonsB(); calculerPaieComparaison(); });
   }
   mettreAJourEchelonsB();
 
   // RIST / ISQ selects B
   [
-    { id: "cmp-input-fonction", dataKey: "fonctions" },
-    { id: "cmp-input-experience", dataKey: "experience" },
-    { id: "cmp-input-isq-licence", dataKey: "isq_licence" },
-    { id: "cmp-input-isq-complement", dataKey: "isq_complement" },
-    { id: "cmp-input-isq-majoration", dataKey: "isq_majoration" },
+    { id: "cmp-input-fonction",           dataKey: "fonctions"      },
+    { id: "cmp-input-experience",         dataKey: "experience"     },
+    { id: "cmp-input-isq-licence",        dataKey: "isq_licence"    },
+    { id: "cmp-input-isq-complement",     dataKey: "isq_complement" },
+    { id: "cmp-input-isq-majoration",     dataKey: "isq_majoration" },
   ].forEach(({ id, dataKey }) => {
     const select = document.getElementById(id);
     if (!select || !baseDonnees.rist?.[dataKey]) return;
@@ -1709,7 +1695,7 @@ function initialiserComparateur() {
 
   // Tous les champs du panneau B déclenchent calculerPaieComparaison
   document.querySelectorAll("#panneau-comparaison select, #panneau-comparaison input:not([name='cmp-zone'])").forEach((el) => {
-    el.addEventListener("input", calculerPaieComparaison);
+    el.addEventListener("input",  calculerPaieComparaison);
     el.addEventListener("change", calculerPaieComparaison);
   });
   // Radios zone séparément (pas interceptés par le sélecteur ci-dessus)
