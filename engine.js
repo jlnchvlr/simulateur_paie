@@ -909,7 +909,6 @@ const ROUTAGE_MODAL = {
   203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
   604958: { cible: "panel-absences", titre: "Absences et Carence" },
   604959: { cible: "panel-absences", titre: "Absences et Carence" },
-  558000: { cible: "panel-impots", titre: "Prélèvement à la Source" },
   202206: { cible: "panel-csg", titre: "Indemnité Compensatrice CSG" },
   202354: { cible: "panel-psc", titre: "Participation à la PSC" },
   202558: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
