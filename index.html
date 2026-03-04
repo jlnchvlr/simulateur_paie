@@ -9,7 +9,7 @@
   </head>
   <body>
     <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">💡 Comment ça marche ?</button>
-    <button class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
+  <button class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
 
     <dialog id="magic-modal" class="magic-modal">
       <div class="modal-header">
@@ -434,7 +434,10 @@
             <td colspan="2" class="no-bg foot-net-meta">
               <div class="foot-net-wrap">
                 <div class="foot-net-label">NET À PAYER</div>
-                <div class="foot-net-value"><span id="ui-net-a-payer">0,00 €</span></div>
+                <div class="foot-net-value">
+                  <span id="ui-net-a-payer">0,00 €</span>
+                  <span id="delta-net-b" class="delta-net-b hidden"></span>
+                </div>
               </div>
             </td>
             <td class="no-bg foot-charges-meta">
@@ -464,6 +467,16 @@
         <select id="cmp-grade"></select>
         <label>Échelon</label>
         <select id="cmp-echelon"></select>
+        <label>Enfants à charge</label>
+        <select id="cmp-enfants">
+          <option value="0">0 enfant</option>
+          <option value="1">1 enfant</option>
+          <option value="2">2 enfants</option>
+          <option value="3">3 enfants</option>
+          <option value="4">4 enfants</option>
+          <option value="5">5 enfants</option>
+          <option value="6">6 enfants</option>
+        </select>
         <div class="cmp-nbi-row">
           <input type="checkbox" id="cmp-nbi-checkbox" />
           <label for="cmp-nbi-checkbox">NBI (+ 55 points)</label>
@@ -504,34 +517,28 @@
         <h3 class="panel-subhead">Participation PSC</h3>
         <div class="ir-tabs">
           <input type="checkbox" id="cmp-psc-15" class="cmp-psc-checkbox" value="15" />
-          <label for="cmp-psc-15"
-            ><strong>15 €</strong><br /><small>Jusqu'au<br />30/04/26</small></label
-          >
+          <label for="cmp-psc-15"><strong>15 €</strong><br /><small>Jusqu'au<br/>30/04/26</small></label>
           <input type="checkbox" id="cmp-psc-7" class="cmp-psc-checkbox" value="7" />
-          <label for="cmp-psc-7"
-            ><strong>7 €</strong><br /><small>MGAS<br />(Dès 05/26)</small></label
-          >
+          <label for="cmp-psc-7"><strong>7 €</strong><br /><small>MGAS<br/>(Dès 05/26)</small></label>
           <input type="checkbox" id="cmp-psc-5" class="cmp-psc-checkbox" value="5" />
-          <label for="cmp-psc-5"
-            ><strong>5 €</strong><br /><small>ALAN<br />(Dès 05/26)</small></label
-          >
+          <label for="cmp-psc-5"><strong>5 €</strong><br /><small>ALAN<br/>(Dès 05/26)</small></label>
         </div>
 
         <!-- OTT Part Fixe -->
         <h3 class="panel-subhead">OTT — Part Fixe</h3>
         <div class="cmp-ott-grid">
-          <input type="checkbox" id="cmp-pf-opt1-l16" class="cmp-pf-checkbox" value="345" /><label for="cmp-pf-opt1-l16" class="cmp-ott-card">Opt.1 L1–6<br />345 €</label>
-          <input type="checkbox" id="cmp-pf-opt1-cdg" class="cmp-pf-checkbox" value="379.50" /><label for="cmp-pf-opt1-cdg" class="cmp-ott-card">Opt.1 CDG<br />379,50 €</label>
-          <input type="checkbox" id="cmp-pf-opt1-l711" class="cmp-pf-checkbox" value="293.25" /><label for="cmp-pf-opt1-l711" class="cmp-ott-card">Opt.1 L7–8<br />293,25 €</label>
-          <input type="checkbox" id="cmp-pf-opt1-l911" class="cmp-pf-checkbox" value="241.50" /><label for="cmp-pf-opt1-l911" class="cmp-ott-card">Opt.1 L9–11<br />241,50 €</label>
-          <input type="checkbox" id="cmp-pf-opt1-plus-n1" class="cmp-pf-checkbox" value="80" /><label for="cmp-pf-opt1-plus-n1" class="cmp-ott-card">Opt.1+ N'≤2<br />80 €</label>
-          <input type="checkbox" id="cmp-pf-opt1-plus-n2" class="cmp-pf-checkbox" value="160" /><label for="cmp-pf-opt1-plus-n2" class="cmp-ott-card">Opt.1+ N'>2<br />160 €</label>
-          <input type="checkbox" id="cmp-pf-opt2-1" class="cmp-pf-checkbox" value="115" /><label for="cmp-pf-opt2-1" class="cmp-ott-card">Opt.2-1<br />115 €</label>
-          <input type="checkbox" id="cmp-pf-opt2-2" class="cmp-pf-checkbox" value="115" /><label for="cmp-pf-opt2-2" class="cmp-ott-card">Opt.2-2<br />115 €</label>
-          <input type="checkbox" id="cmp-pf-opt2-bis" class="cmp-pf-checkbox" value="57.50" /><label for="cmp-pf-opt2-bis" class="cmp-ott-card">Opt.2 Bis<br />57,50 €</label>
-          <input type="checkbox" id="cmp-pf-opt4" class="cmp-pf-checkbox" value="115" /><label for="cmp-pf-opt4" class="cmp-ott-card">Opt.4<br />115 €</label>
-          <input type="checkbox" id="cmp-pf-opt1-enac" class="cmp-pf-checkbox" value="216" /><label for="cmp-pf-opt1-enac" class="cmp-ott-card">Opt.1 ENAC<br />216 €</label>
-          <input type="checkbox" id="cmp-pf-opt1-plus-enac" class="cmp-pf-checkbox" value="80" /><label for="cmp-pf-opt1-plus-enac" class="cmp-ott-card">Opt.1+ ENAC<br />80 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-l16"       class="cmp-pf-checkbox" value="345"    /><label for="cmp-pf-opt1-l16"       class="cmp-ott-card">Opt.1 L1–6<br/>345 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-cdg"       class="cmp-pf-checkbox" value="379.50" /><label for="cmp-pf-opt1-cdg"       class="cmp-ott-card">Opt.1 CDG<br/>379,50 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-l711"      class="cmp-pf-checkbox" value="293.25" /><label for="cmp-pf-opt1-l711"      class="cmp-ott-card">Opt.1 L7–8<br/>293,25 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-l911"      class="cmp-pf-checkbox" value="241.50" /><label for="cmp-pf-opt1-l911"      class="cmp-ott-card">Opt.1 L9–11<br/>241,50 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-plus-n1"   class="cmp-pf-checkbox" value="80"     /><label for="cmp-pf-opt1-plus-n1"   class="cmp-ott-card">Opt.1+ N'≤2<br/>80 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-plus-n2"   class="cmp-pf-checkbox" value="160"    /><label for="cmp-pf-opt1-plus-n2"   class="cmp-ott-card">Opt.1+ N'>2<br/>160 €</label>
+          <input type="checkbox" id="cmp-pf-opt2-1"         class="cmp-pf-checkbox" value="115"    /><label for="cmp-pf-opt2-1"         class="cmp-ott-card">Opt.2-1<br/>115 €</label>
+          <input type="checkbox" id="cmp-pf-opt2-2"         class="cmp-pf-checkbox" value="115"    /><label for="cmp-pf-opt2-2"         class="cmp-ott-card">Opt.2-2<br/>115 €</label>
+          <input type="checkbox" id="cmp-pf-opt2-bis"       class="cmp-pf-checkbox" value="57.50"  /><label for="cmp-pf-opt2-bis"       class="cmp-ott-card">Opt.2 Bis<br/>57,50 €</label>
+          <input type="checkbox" id="cmp-pf-opt4"           class="cmp-pf-checkbox" value="115"    /><label for="cmp-pf-opt4"           class="cmp-ott-card">Opt.4<br/>115 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-enac"      class="cmp-pf-checkbox" value="216"    /><label for="cmp-pf-opt1-enac"      class="cmp-ott-card">Opt.1 ENAC<br/>216 €</label>
+          <input type="checkbox" id="cmp-pf-opt1-plus-enac" class="cmp-pf-checkbox" value="80"     /><label for="cmp-pf-opt1-plus-enac" class="cmp-ott-card">Opt.1+ ENAC<br/>80 €</label>
         </div>
         <div class="cmp-ott-manuel-row">
           <span>Autre / Manuel (€)</span>
@@ -544,23 +551,6 @@
         <input type="number" id="cmp-pv-globale" value="0" step="10" onfocus="this.select()" />
         <label>Part Variable Opt 3-1 / 3-2 (€)</label>
         <input type="number" id="cmp-pv-opt32" value="0" step="10" onfocus="this.select()" />
-      </div>
-
-      <!-- Barre de synthèse (sticky en bas du panneau) -->
-      <div id="comparateur-synthese">
-        <div class="cmp-syn-block">
-          <div class="cmp-syn-label">Scénario A</div>
-          <div class="cmp-syn-value"><span id="cmp-syn-a">—</span></div>
-        </div>
-        <div class="cmp-syn-arrow">→</div>
-        <div class="cmp-syn-block">
-          <div class="cmp-syn-label">Scénario B</div>
-          <div class="cmp-syn-value"><span id="cmp-syn-b">—</span></div>
-        </div>
-        <div class="cmp-syn-block">
-          <div class="cmp-syn-label">Différence</div>
-          <span id="cmp-syn-delta" class="cmp-syn-delta">—</span>
-        </div>
       </div>
     </div>
     <!-- /#panneau-comparaison -->

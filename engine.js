@@ -1146,7 +1146,8 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, m.netAPayerAvantImpot, null, null, null,
     { delta: deltaVal(m.netAPayerAvantImpot, mB?.netAPayerAvantImpot), deltaCol: 4 });
   ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, m.netSocial);
-  ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, m.impotSource, null);
+  ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, m.impotSource, null, null, null, null,
+    { delta: deltaVal(m.impotSource, mB?.impotSource), deltaCol: 3 });
   ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(p.taux_pas * 100)}%)`, null, null, null, null, null, "row-taux-impot");
 
   // ── Ligne d'ajout d'éléments variables ──────────────────────────────────────
@@ -1232,7 +1233,7 @@ function calculerPaie() {
   const mB      = profilB ? calculerMontants(profilB) : null;
 
   dessinerFiche(profilA, mA, profilB, mB);
-  majBarreSynthese(mA, mB);
+  majDeltaNet(mA, mB);
   sauvegarderProfil();
 }
 
@@ -1497,7 +1498,7 @@ function getProfilComparaisonDepuisPanneau() {
     zone:       document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
     taux_pas:   profilA.taux_pas,
     points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
-    enfants:    profilA.enfants,
+    enfants:    parseInt(document.getElementById("cmp-enfants")?.value) || profilA.enfants,
 
     evenements: {
       ...profilA.evenements,
@@ -1521,26 +1522,25 @@ function getProfilComparaisonDepuisPanneau() {
 }
 
 /**
- * Met à jour la barre de synthèse en bas du panneau comparateur.
- * Si mB est null (hors mode comparaison), masque la barre.
+ * Affiche le NET À PAYER du scénario B sur une seconde ligne sous le montant A.
+ * Si mB est null (hors mode comparaison), masque la ligne B.
  *
  * @param {MontantsCalcules}      mA
  * @param {MontantsCalcules|null} mB
  */
-function majBarreSynthese(mA, mB) {
-  const synthese = document.getElementById("comparateur-synthese");
-  if (!synthese) return;
-  if (!mB) { synthese.style.display = "none"; return; }
-
-  const deltaNet = arrondir(mB.netFinal - mA.netFinal);
-  const signe    = deltaNet >= 0 ? "+" : "";
-
-  document.getElementById("cmp-syn-a").textContent = formaterMontant(mA.netFinal) + " €";
-  document.getElementById("cmp-syn-b").textContent = formaterMontant(mB.netFinal) + " €";
-  const elDelta = document.getElementById("cmp-syn-delta");
-  elDelta.textContent = signe + formaterMontant(Math.abs(deltaNet)) + " €";
-  elDelta.className   = "cmp-syn-delta " + (deltaNet >= 0 ? "delta-pos" : "delta-neg");
-  synthese.style.display = "flex";
+function majDeltaNet(mA, mB) {
+  const elB = document.getElementById("delta-net-b");
+  if (!elB) return;
+  if (!mB) {
+    elB.innerHTML = "";
+    elB.className = "delta-net-b hidden";
+    return;
+  }
+  const delta   = arrondir(mB.netFinal - mA.netFinal);
+  const signe   = delta >= 0 ? "+" : "";
+  const couleur = delta >= 0 ? "delta-pos" : "delta-neg";
+  elB.innerHTML = `${formaterMontant(mB.netFinal)} € <span class="delta-badge ${couleur}">${signe}${formaterMontant(delta)} €</span>`;
+  elB.className = `delta-net-b ${couleur}`;
 }
 
 /**
@@ -1591,6 +1591,10 @@ window.activerComparaison = function () {
   // NBI
   const cmpNbi = document.getElementById("cmp-nbi-checkbox");
   if (cmpNbi) cmpNbi.checked = profilA.points_nbi > 0;
+
+  // Enfants
+  const cmpEnfants = document.getElementById("cmp-enfants");
+  if (cmpEnfants) cmpEnfants.value = profilA.enfants;
 
   // Zone de résidence
   const radio = document.querySelector(`input[name="cmp-zone"][value="${profilA.zone}"]`);
