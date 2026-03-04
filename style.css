@@ -921,7 +921,7 @@ body.navigation-clavier .resultat-item:focus {
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
-  margin-top: -14px;
+  margin-top: -16px;
 }
 .foot-summary-wide {
   width: 140px;
@@ -1097,7 +1097,10 @@ body.navigation-clavier .resultat-item:focus {
   font-family: var(--font-main);
   font-size: 14px;
   font-weight: bold;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s;
   z-index: 1000;
 }
 .btn-comparer-flottant:hover {
@@ -1320,10 +1323,16 @@ body.navigation-clavier .resultat-item:focus {
   margin-left: 3px;
   vertical-align: middle;
 }
-.delta-net-b.delta-pos { color: #155724; }
-.delta-net-b.delta-neg { color: #721c24; }
+.delta-net-b.delta-pos {
+  color: #155724;
+}
+.delta-net-b.delta-neg {
+  color: #721c24;
+}
 
 @media print {
   .btn-comparer-flottant,
-  #panneau-comparaison { display: none !important; }
+  #panneau-comparaison {
+    display: none !important;
+  }
 }
