@@ -608,9 +608,17 @@ body {
     min-height: 0 !important;
     padding: 8mm !important;
   }
-  .pay-table, .info-table { page-break-inside: avoid; }
-  .clickable-row { cursor: default !important; }
-  .clickable-row:hover td { background-color: inherit !important; box-shadow: none !important; }
+  .pay-table,
+  .info-table {
+    page-break-inside: avoid;
+  }
+  .clickable-row {
+    cursor: default !important;
+  }
+  .clickable-row:hover td {
+    background-color: inherit !important;
+    box-shadow: none !important;
+  }
 }
 /* =========================================
    FIX UX/UI POUR LES CHECKBOXES PSC (Façon Onglets)
@@ -977,7 +985,8 @@ body.navigation-clavier .resultat-item:focus {
   padding: 0;
 }
 .foot-meta {
-  padding: 5px 15px 0 0;
+  padding: 2px 15px 0 0 !important; /* !important pour passer au-dessus de .pay-table td */
+  height: auto !important; /* libère le height: 18px imposé */
   vertical-align: top;
 }
 .foot-meta-inner {
@@ -985,6 +994,7 @@ body.navigation-clavier .resultat-item:focus {
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
+  margin-top: -14px; /* ← compense le décalage */
 }
 .foot-summary-wide {
   width: 140px;
@@ -1044,7 +1054,8 @@ body.navigation-clavier .resultat-item:focus {
   width: 100%;
 }
 .foot-net-meta {
-  padding: 15px 5px 0 0;
+  padding: 15px 5px 0 0 !important;
+  height: auto !important;
   vertical-align: top;
 }
 .foot-net-wrap {
@@ -1071,7 +1082,8 @@ body.navigation-clavier .resultat-item:focus {
   text-align: right;
 }
 .foot-charges-meta {
-  padding: 15px 0 0 0;
+  padding: 15px 0 0 0 !important;
+  height: auto !important;
   vertical-align: top;
 }
 .foot-charges-label {
