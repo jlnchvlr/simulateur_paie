@@ -1214,6 +1214,8 @@ function calculerPaie() {
 function attacherNavigationClavier(modal, input) {
   modal.addEventListener("keydown", (e) => {
     if (document.activeElement === input) return;
+    // Si un input numérique a le focus, ne pas intercepter — laisser le navigateur gérer
+    if (document.activeElement?.tagName === "INPUT") return;
     if (e.key === "Backspace") {
       e.preventDefault();
       input.focus();
