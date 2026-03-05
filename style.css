@@ -1538,3 +1538,95 @@ body.navigation-clavier .resultat-item:focus {
   color: var(--color-text-muted, #888);
   white-space: nowrap;
 }
+
+/* ── Badge "À configurer" (onboarding profil vierge) ── */
+.badge-configurer {
+  display: inline-block;
+  background-color: #fd7e14;
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+  font-family: var(--font-main);
+}
+.badge-configurer:hover {
+  background-color: #d9640d;
+}
+
+/* ── Champs info-table non configurés (onboarding) ── */
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(253, 126, 20, 0.6); }
+  50%       { box-shadow: 0 0 0 5px rgba(253, 126, 20, 0); }
+}
+.champ-non-configure {
+  outline: 2px solid #fd7e14 !important;
+  border-radius: 4px;
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
+select.champ-non-configure {
+  background-color: #fff5ec !important;
+  color: #b85c00 !important;
+}
+
+/* ── Bouton NBI "Je ne l'ai pas" ── */
+.nbi-sans-btn {
+  display: none;
+  font-size: 9px;
+  background: transparent;
+  border: 1px solid #fd7e14;
+  color: #fd7e14;
+  border-radius: 3px;
+  padding: 1px 4px;
+  cursor: pointer;
+  margin-left: 3px;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+#nbi-cell.champ-non-configure .nbi-sans-btn {
+  display: inline-block;
+}
+
+/* ── Footer — config en attente ── */
+.footer-pending-cell {
+  padding: 8px 12px !important;
+  background: #fff8f3 !important;
+  border-top: 2px solid #fd7e14 !important;
+}
+.footer-pending-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: bold;
+  color: #b85c00;
+  letter-spacing: 0.3px;
+}
+.footer-pending-icon {
+  font-size: 14px;
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
+
+/* ── Boutons flottants désactivés (config incomplète) ── */
+.btn-flottant-disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.5);
+}
+.btn-flottant-disabled:hover {
+  transform: none !important;
+}
+
+/* ── Zone radios — outline orange si non configuré ── */
+#zone-radios-wrap.champ-non-configure {
+  outline: 2px solid #fd7e14;
+  border-radius: 6px;
+  padding: 4px;
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}

@@ -9,8 +9,8 @@
   </head>
   <body>
     <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">💡 Comment ça marche ?</button>
-  <button class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
-  <button class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
+  <button id="btn-comparer-flottant" class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
+  <button id="btn-projection-flottant" class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
 
     <dialog id="magic-modal" class="magic-modal">
       <div class="modal-header">
@@ -46,8 +46,8 @@
             <strong>Zone 2 (1%) :</strong> Grandes agglomérations (Lyon, Lille, Toulouse, Nice, etc.).<br />
             <strong>Zone 3 (0%) :</strong> Toutes les autres communes.
           </p>
-          <div class="ir-tabs">
-            <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" checked onchange="calculerPaie()" />
+          <div id="zone-radios-wrap" class="ir-tabs">
+            <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" onchange="calculerPaie()" />
             <label for="ir-zone1"><strong>3 %</strong><br /><small>Zone 1</small></label>
             <input type="radio" id="ir-zone2" name="ir-zone" value="Zone 2" onchange="calculerPaie()" />
             <label for="ir-zone2"><strong>1 %</strong><br /><small>Zone 2</small></label>
@@ -63,7 +63,7 @@
         <div id="panel-rist-fonctions" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Part Fonctions (RIST)</label>
-          <input type="hidden" id="input-fonction" value="Niveau 10" />
+          <input type="hidden" id="input-fonction" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperRist()"></div>
           <div id="rist-helper-text" class="helper-text">Sélectionnez un niveau pour voir les fonctions...</div>
           <div class="preview-amount">
@@ -78,7 +78,7 @@
         <div id="panel-rist-experience" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Part Expérience Professionnelle</label>
-          <input type="hidden" id="input-experience" value="Niveau 4" />
+          <input type="hidden" id="input-experience" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperExp()"></div>
           <div id="exp-helper-text" class="helper-text">Sélectionnez un niveau pour voir les grades correspondants...</div>
           <div class="preview-amount">
@@ -93,7 +93,7 @@
         <div id="panel-rist-isq-licence" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau de la Licence ISQ</label>
-          <input type="hidden" id="input-isq-licence" value="Niveau 5" />
+          <input type="hidden" id="input-isq-licence" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqLicence()"></div>
           <div id="isq-licence-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
           <div class="preview-amount">
@@ -108,7 +108,7 @@
         <div id="panel-rist-isq-complement" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Niveau du Complément ISQ</label>
-          <input type="hidden" id="input-isq-complement" value="Niveau 7" />
+          <input type="hidden" id="input-isq-complement" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqComplement()"></div>
           <div id="isq-complement-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
           <div class="preview-amount">
@@ -172,7 +172,7 @@
           <div class="ott-manual-row">
             <label class="ott-manual-label">
               <span>Autre Option / Saisie manuelle (€) :</span>
-              <input type="number" id="pf-manuel" class="ott-manual-input" value="0.00" step="10" oninput="calculerPaie()" />
+              <input type="number" id="pf-manuel" class="ott-manual-input" value="0.00" step="10" />
             </label>
           </div>
           <div class="preview-amount preview-amount--compact">
@@ -182,9 +182,9 @@
           <h3 class="panel-subhead">2. Mon Bonus Annuel (Part Variable)</h3>
           <p class="panel-hint-small">Remplissez ces champs uniquement les mois où la DGAC vous verse votre bonus.</p>
           <label>Montant Part Variable Globale (€)</label>
-          <input type="number" id="pv-globale" value="0.00" step="10" oninput="calculerPaie()" />
+          <input type="number" id="pv-globale" value="0.00" step="10" />
           <label>Montant Part Variable Option 3-1 / 3-2 (€)</label>
-          <input type="number" id="pv-opt32" value="0.00" step="10" oninput="calculerPaie()" />
+          <input type="number" id="pv-opt32" value="0.00" step="10" />
           <div class="preview-amount preview-amount--compact">
             Total Part Variable (Ce mois-ci) : <strong><span id="preview-ott-pv">0,00</span> €</strong>
           </div>
@@ -212,13 +212,13 @@
         <div id="panel-absences" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Service Non Fait / Grève (Retenue 100%)</label>
-          <input type="number" id="input-greve" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue d'un 1/30ème par jour" />
+          <input type="number" id="input-greve" value="0" min="0" max="31" title="Retenue d'un 1/30ème par jour" />
           <label>Jour(s) de Carence Maladie (Retenue 100%)</label>
-          <input type="number" id="input-carence" value="0" min="0" max="30" oninput="limiterAbsences(this)" />
+          <input type="number" id="input-carence" value="0" min="0" max="3" />
           <label>Jours de Maladie rémunérés à 90%</label>
-          <input type="number" id="input-maladie-90" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue de 10% d'un 1/30ème par jour" />
+          <input type="number" id="input-maladie-90" value="0" min="0" max="31" title="Retenue de 10% d'un 1/30ème par jour" />
           <label>Jours de Maladie à demi-traitement (50%)</label>
-          <input type="number" id="input-maladie-50" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue de 50% d'un 1/30ème par jour" />
+          <input type="number" id="input-maladie-50" value="0" min="0" max="31" title="Retenue de 50% d'un 1/30ème par jour" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -287,7 +287,7 @@
           <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <p class="panel-hint">Saisissez manuellement le montant de l'indemnité inflation / pouvoir d'achat.</p>
           <label>Montant de l'indemnité (€)</label>
-          <input type="number" id="input-inflation" value="0.00" step="10" oninput="calculerPaie()" />
+          <input type="number" id="input-inflation" value="0.00" step="10" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -306,7 +306,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-impots" class="setting-panel">
           <label>Taux de Prélèvement à la Source (%)</label>
-          <input type="number" id="input-pas" value="19.6" step="0.1" />
+          <input type="text" inputmode="decimal" id="input-pas" value="" placeholder="ex : 7.5" autocomplete="off" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -315,7 +315,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-csg" class="setting-panel">
           <label>Indemnité Compensatrice CSG (€)</label>
-          <input type="number" id="input-ind-csg" value="115.18" step="0.01" />
+          <input type="text" inputmode="decimal" id="input-ind-csg" value="" placeholder="ex : 115.18" autocomplete="off" />
           <p class="panel-footnote">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -338,7 +338,7 @@
                 <span class="proj-hint-moy">~28 / an (hors congés)</span>
               </label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-nuits"   value="28" min="0" step="1" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <input type="number" id="proj-nuits"   value="28" min="0" step="1" onfocus="this.select()" />
                 <span class="proj-unit">nuits / an</span>
               </div>
             </div>
@@ -348,35 +348,35 @@
                 <span class="proj-hint-moy">~28 / an (hors congés)</span>
               </label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-soirees" value="28" min="0" step="1" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <input type="number" id="proj-soirees" value="28" min="0" step="1" onfocus="this.select()" />
                 <span class="proj-unit">S2 / an</span>
               </div>
             </div>
             <div class="proj-row">
               <label>OTT Part Variable globale</label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-ottPv"   value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <input type="number" id="proj-ottPv"   value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
               <label>OTT PV Opt 3-1 / 3-2</label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-ottPv32" value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <input type="number" id="proj-ottPv32" value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
               <label>Prime Partage Performance</label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-ppp"     value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <input type="number" id="proj-ppp"     value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
               <label>Forfait Mobilités Durables</label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-fmd"     value="0" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
+                <input type="number" id="proj-fmd"     value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
@@ -481,14 +481,16 @@
           <tr>
             <td>
               <select id="input-grade" class="select-transparent" title="Cliquez pour changer de grade">
+                <option value="" disabled selected>— Grade —</option>
                 <option value="ING. EN CHEF CONT.NAV.AE">ING. CHEF CONT.NAV.AE</option>
-                <option value="ING.DIV. CONT.NAV.AE" selected>ING. DIV. CONT.NAV.AE</option>
+                <option value="ING.DIV. CONT.NAV.AE">ING. DIV. CONT.NAV.AE</option>
                 <option value="ING. CONT.NAV.AE">ING. NORM. CONT.NAV.AE</option>
                 <option value="ELEVE / STAGIAIRE ICNA">ELEVE / STAGIAIRE ICNA</option>
               </select>
             </td>
             <td>
               <select id="input-enfants" class="select-transparent" title="Nombre d'enfants à charge">
+                <option value="" disabled selected>XX</option>
                 <option value="0">00</option>
                 <option value="1">01</option>
                 <option value="2">02</option>
@@ -500,9 +502,10 @@
             <td>
               <select id="input-echelon" class="select-transparent" title="Choisissez votre échelon"></select>
             </td>
-            <td id="ui-indice">0462</td>
-            <td>
+            <td id="ui-indice">—</td>
+            <td id="nbi-cell">
               <input type="checkbox" id="input-nbi-checkbox" class="nbi-checkbox" title="Activer/Désactiver la NBI" />
+              <button type="button" id="nbi-sans-btn" class="nbi-sans-btn" title="Je n'ai pas la NBI" onclick="marquerConfigure('nbi'); calculerPaie()">✕</button>
             </td>
             <td>&nbsp;</td>
           </tr>
@@ -522,10 +525,19 @@
         <tbody id="lignes-paie"></tbody>
 
         <tfoot class="pay-table-foot">
-          <tr>
+          <!-- Placeholder affiché tant que la configuration est incomplète -->
+          <tr id="footer-config-pending" style="display:none;">
+            <td colspan="5" class="footer-pending-cell">
+              <div class="footer-pending-msg">
+                <span class="footer-pending-icon">⚙</span>
+                Complétez votre profil pour afficher les totaux
+              </div>
+            </td>
+          </tr>
+          <tr id="footer-real-1">
             <td colspan="5" class="foot-spacer"></td>
           </tr>
-          <tr>
+          <tr id="footer-real-2">
             <td colspan="2" rowspan="2" class="no-bg foot-meta">
               <div class="foot-meta-inner">
                 <div class="summary-box foot-summary-wide">
@@ -551,7 +563,7 @@
               <div class="amount-cell"><span>€</span><span id="ui-charges-patronales">0,00</span></div>
             </td>
           </tr>
-          <tr>
+          <tr id="footer-real-3">
             <td colspan="2" class="no-bg foot-net-meta">
               <div class="foot-net-wrap">
                 <div class="foot-net-label">NET À PAYER</div>
