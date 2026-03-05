@@ -9,8 +9,8 @@
   </head>
   <body>
     <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">💡 Comment ça marche ?</button>
-  <button class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
-  <button class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
+  <button id="btn-comparer-flottant" class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
+  <button id="btn-projection-flottant" class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
 
     <dialog id="magic-modal" class="magic-modal">
       <div class="modal-header">
@@ -46,7 +46,7 @@
             <strong>Zone 2 (1%) :</strong> Grandes agglomérations (Lyon, Lille, Toulouse, Nice, etc.).<br />
             <strong>Zone 3 (0%) :</strong> Toutes les autres communes.
           </p>
-          <div class="ir-tabs">
+          <div id="zone-radios-wrap" class="ir-tabs">
             <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" checked onchange="calculerPaie()" />
             <label for="ir-zone1"><strong>3 %</strong><br /><small>Zone 1</small></label>
             <input type="radio" id="ir-zone2" name="ir-zone" value="Zone 2" onchange="calculerPaie()" />

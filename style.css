@@ -1612,3 +1612,21 @@ select.champ-non-configure {
   font-size: 14px;
   animation: badge-pulse 1.8s ease-in-out infinite;
 }
+
+/* ── Boutons flottants désactivés (config incomplète) ── */
+.btn-flottant-disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.5);
+}
+.btn-flottant-disabled:hover {
+  transform: none !important;
+}
+
+/* ── Zone radios — outline orange si non configuré ── */
+#zone-radios-wrap.champ-non-configure {
+  outline: 2px solid #fd7e14;
+  border-radius: 6px;
+  padding: 4px;
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}

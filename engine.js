@@ -80,7 +80,7 @@ let _initEnCours = true;
  * Un badge "À configurer" s'affiche sur chaque champ absent de _configures.
  */
 const CHAMPS_REQUIS = new Set([
-  "grade", "echelon", "enfants", "nbi",
+  "grade", "echelon", "enfants", "nbi", "zone_residence",
   "rist_fonctions", "rist_experience", "rist_isq_licence",
   "rist_isq_complement", "rist_isq_majoration",
   "ind_compensatrice_csg", "taux_pas",
@@ -223,7 +223,7 @@ function restaurerProfil() {
   });
 
   // Marquer les autres champs présents dans le profil sauvegardé
-  ["grade","echelon","enfants","nbi","taux_pas","ind_compensatrice_csg"].forEach(cle => {
+  ["grade","echelon","enfants","nbi","zone_residence","taux_pas","ind_compensatrice_csg"].forEach(cle => {
     marquerConfigure(cle);
   });
 
@@ -1190,8 +1190,8 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   }
 
   // ── Indemnité de résidence ────────────────────────────────────────────────────
-  ajouterLigne("102000", "INDEMNITE DE RESIDENCE", m.indemniteResidence || 0, null, null, null, null, null,
-    { delta: deltaVal(m.indemniteResidence, mB?.indemniteResidence), deltaCol: 2 });
+  ajouterLigneRistAvecBadge("102000", "INDEMNITE DE RESIDENCE", "zone_residence", m.indemniteResidence, 0,
+    "panel-residence", "Zone de Résidence", mB?.indemniteResidence ?? 0);
 
   // ── Éléments variables ────────────────────────────────────────────────────────
   if (m.nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", m.nuit, null, null, ["input-nuit-n", "input-nuit-s2"]);
@@ -1393,15 +1393,36 @@ function calculerPaie() {
 
   // Badges "À configurer" sur les champs de l'info-table
   const champInfoTable = {
-    "grade":   "input-grade",
-    "echelon": "input-echelon",
-    "enfants": "input-enfants",
-    "nbi":     "nbi-cell",
+    "grade":          "input-grade",
+    "echelon":        "input-echelon",
+    "enfants":        "input-enfants",
+    "nbi":            "nbi-cell",
+    "zone_residence": "zone-radios-wrap",
   };
   Object.entries(champInfoTable).forEach(([cle, elId]) => {
     const el = document.getElementById(elId);
     if (el) el.classList.toggle("champ-non-configure", nonConfigure(cle));
   });
+
+  // Boutons flottants + add-row + Ctrl+K — désactivés si config incomplète
+  const pending = configurationIncomplete();
+  ["btn-comparer-flottant", "btn-projection-flottant"].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = pending;
+    btn.title = pending ? "Complétez votre profil pour accéder à cette fonctionnalité" : "";
+    btn.classList.toggle("btn-flottant-disabled", pending);
+  });
+  // Add-row : griser si pending
+  const addRow = document.querySelector(".add-row");
+  if (addRow) {
+    addRow.classList.toggle("add-row-disabled", pending);
+    addRow.style.pointerEvents = pending ? "none" : "";
+    addRow.style.opacity       = pending ? "0.35" : "";
+    addRow.title               = pending ? "Complétez votre profil pour ajouter des éléments variables" : "";
+  }
+  // Ctrl+K — flag lu dans le handler keydown
+  window._spotlightBloque = pending;
 
   sauvegarderProfil();
 }
@@ -1486,28 +1507,53 @@ async function initialiserApplication() {
       if (echelonSauve) document.getElementById("input-echelon").value = echelonSauve;
     }
 
-    // Changement de grade → échelons + recalcul + marquer configuré
+    // Changement de grade → marquer + échelons + recalcul
     document.getElementById("input-grade").addEventListener("input", () => {
       marquerConfigure("grade");
       mettreAJourEchelons();
       calculerPaie();
     });
 
-    // Échelon → marquer configuré dès qu'on choisit (change + mousedown pour valeur identique)
-    document.getElementById("input-echelon").addEventListener("change", () => marquerConfigure("echelon"));
+    // Échelon — marquer sur `input` (avant calculerPaie global) + rappel calculerPaie
+    document.getElementById("input-echelon").addEventListener("input", () => {
+      if (document.getElementById("input-echelon").value) {
+        marquerConfigure("echelon");
+        calculerPaie();
+      }
+    });
 
-    // Enfants → marquer configuré dès la première interaction (mousedown pour capturer "0 enfants")
-    document.getElementById("input-enfants").addEventListener("mousedown", () => marquerConfigure("enfants"));
-    document.getElementById("input-enfants").addEventListener("change",    () => marquerConfigure("enfants"));
+    // Enfants — focus suffit (même si valeur = "0") + change pour sûreté
+    document.getElementById("input-enfants").addEventListener("focus", () => {
+      marquerConfigure("enfants");
+      calculerPaie();
+    });
 
-    // NBI → marquer configuré
-    document.getElementById("input-nbi-checkbox").addEventListener("change", () => marquerConfigure("nbi"));
+    // NBI — auto-débadge à la coche, la croix est gérée via marquerConfigure('nbi') dans le HTML
+    document.getElementById("input-nbi-checkbox").addEventListener("input", () => {
+      marquerConfigure("nbi");
+      calculerPaie();
+    });
 
-    // Taux PAS → marquer configuré dès saisie
-    document.getElementById("input-pas").addEventListener("input", () => marquerConfigure("taux_pas"));
+    // Zone de résidence — marquer dès qu'un radio est cliqué
+    document.querySelectorAll("input[name='ir-zone']").forEach((radio) => {
+      radio.addEventListener("change", () => { marquerConfigure("zone_residence"); calculerPaie(); });
+    });
 
-    // Ind. compensatrice CSG → marquer configuré dès saisie
-    document.getElementById("input-ind-csg").addEventListener("input", () => marquerConfigure("ind_compensatrice_csg"));
+    // Taux PAS — marquer dès saisie (même partielle)
+    document.getElementById("input-pas").addEventListener("input", () => {
+      if (document.getElementById("input-pas").value !== "") {
+        marquerConfigure("taux_pas");
+        calculerPaie();
+      }
+    });
+
+    // Ind. compensatrice CSG — idem
+    document.getElementById("input-ind-csg").addEventListener("input", () => {
+      if (document.getElementById("input-ind-csg").value !== "") {
+        marquerConfigure("ind_compensatrice_csg");
+        calculerPaie();
+      }
+    });
 
     // Tous les champs du formulaire principal déclenchent un recalcul
     document.querySelectorAll(".magic-modal select, .magic-modal input, .info-table select, .info-table input").forEach((input) => input.addEventListener("input", calculerPaie));
@@ -1534,7 +1580,9 @@ async function initialiserApplication() {
       });
 
       champ.addEventListener("blur", function () {
-        if (this.value === "") {
+        // Ne pas forcer "0" sur les champs libres taux PAS et ind. CSG
+        const CHAMPS_LIBRES = ["input-pas", "input-ind-csg"];
+        if (this.value === "" && !CHAMPS_LIBRES.includes(this.id)) {
           this.value = this.step?.includes(".") ? "0.00" : "0";
           calculerPaie();
         }
@@ -1597,6 +1645,7 @@ async function initialiserApplication() {
       document.addEventListener("keydown", (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.key !== "k") return;
         e.preventDefault();
+        if (window._spotlightBloque) return; // config incomplète
         if (spotlightModal.open) {
           spotlightModal.close();
         } else {
