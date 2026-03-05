@@ -1564,10 +1564,15 @@ async function initialiserApplication() {
       "proj-ottPv32":      { min: 0, max: null, entier: false },
       "proj-ppp":          { min: 0, max: null, entier: false },
       "proj-fmd":          { min: 0, max: 300,  entier: false },
+      "pf-manuel":         { min: 0, max: null, entier: false },
+      "input-inflation":   { min: 0, max: null, entier: false },
     };
 
     document.querySelectorAll('.magic-modal input[type="number"]').forEach((champ) => {
       const borne = BORNES[champ.id] || { min: 0, max: null, entier: false };
+      const rappelCalcul = champ.id.startsWith("proj-")
+        ? () => window.calculerEtAfficherProjection?.()
+        : calculerPaie;
       champ.addEventListener("input", function () {
         if (this.value === "") return;
         let val = parseFloat(this.value);
@@ -1576,28 +1581,28 @@ async function initialiserApplication() {
         if (val < borne.min) val = borne.min;
         if (borne.max !== null && val > borne.max) val = borne.max;
         this.value = val;
-        calculerPaie();
+        rappelCalcul();
       });
       champ.addEventListener("blur", function () {
         if (this.value === "") {
           this.value = borne.entier ? "0" : "0.00";
-          calculerPaie();
+          rappelCalcul();
         }
       });
-      // Bloquer les lettres à la frappe
       champ.addEventListener("keydown", function (e) {
-        const ok = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End","-","."];
+        const ok = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End","."];
         if (ok.includes(e.key)) return;
         if (e.ctrlKey || e.metaKey) return;
-        if (!/^\d$/.test(e.key) && e.key !== ".") e.preventDefault();
+        if (!/^\d$/.test(e.key)) e.preventDefault();
       });
     });
 
     // Tous les champs du formulaire principal déclenchent un recalcul
-    // (exclure input-pas et input-ind-csg qui ont leur propre listener ci-dessous)
+    // (exclure input-pas, input-ind-csg et tous les type=number qui ont leur propre listener BORNES)
     document.querySelectorAll(".magic-modal select, .magic-modal input, .info-table select, .info-table input")
       .forEach((input) => {
         if (input.id === "input-pas" || input.id === "input-ind-csg") return;
+        if (input.type === "number") return; // géré par BORNES qui appelle calculerPaie après correction
         input.addEventListener("input", calculerPaie);
       });
 
