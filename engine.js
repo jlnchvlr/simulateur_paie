@@ -96,8 +96,6 @@ let _configures = (() => {
   try {
     const saved = localStorage.getItem(CLE_CONFIGURES);
     if (saved) return new Set(JSON.parse(saved));
-    // Migration : si un profil exist déjà, on considère tout configuré
-    if (localStorage.getItem(CLE_STOCKAGE)) return new Set(CHAMPS_REQUIS);
   } catch (_) {}
   return new Set();
 })();
@@ -206,25 +204,12 @@ function restaurerProfil() {
   });
 
   // Resynchroniser les classes "selected" sur les listes RIST/ISQ
-  // + marquer ces champs comme configurés
-  const cleRistMap = {
-    "input-fonction":       "rist_fonctions",
-    "input-experience":     "rist_experience",
-    "input-isq-licence":    "rist_isq_licence",
-    "input-isq-complement": "rist_isq_complement",
-    "input-isq-majoration": "rist_isq_majoration",
-  };
+  // _configures est déjà chargé depuis CLE_CONFIGURES au démarrage — on ne remar­que rien ici
   CONFIGS_RIST.forEach((cfg) => {
     const valeur = document.getElementById(cfg.inputId)?.value;
     document.querySelectorAll(`#${cfg.panelId} .rist-option`).forEach((div) => {
       div.classList.toggle("selected", div.dataset.value === valeur);
     });
-    if (cleRistMap[cfg.inputId]) marquerConfigure(cleRistMap[cfg.inputId]);
-  });
-
-  // Marquer les autres champs présents dans le profil sauvegardé
-  ["grade","echelon","enfants","nbi","zone_residence","taux_pas","ind_compensatrice_csg"].forEach(cle => {
-    marquerConfigure(cle);
   });
 
   return true;
@@ -237,6 +222,7 @@ function restaurerProfil() {
 window.effacerProfil = function () {
   localStorage.removeItem(CLE_STOCKAGE);
   localStorage.removeItem(CLE_CONFIGURES);
+  localStorage.removeItem("icna_projection");
   location.reload();
 };
 
@@ -318,7 +304,7 @@ function lireFloat(id) {
   if (!el) return 0;
   const v = el.value;
   if (v === "" || v === null) return 0;
-  return parseFloat(v) || 0;
+  return parseFloat(String(v).replace(",", ".")) || 0;
 }
 
 /**
@@ -602,10 +588,12 @@ function ouvrirModal(panelIds, titre) {
 
   modal.showModal();
 
-  // Scroll automatique sur la sélection active
+  // Auto-focus sur le champ principal si panel impôts ou CSG
   setTimeout(() => {
+    if (panelIds === "panel-impots") document.getElementById("input-pas")?.focus();
+    if (panelIds === "panel-csg")    document.getElementById("input-ind-csg")?.focus();
     document.querySelector(".setting-panel.active .rist-option.selected")?.scrollIntoView({ block: "center", behavior: "instant" });
-  }, 15);
+  }, 50);
 }
 
 /**
@@ -633,12 +621,6 @@ window.effacerValeurs = function (event, inputIds) {
  *
  * @param {HTMLInputElement} el - Champ d'absence modifié
  */
-window.limiterAbsences = function (el) {
-  if (parseInt(el.value) < 0) el.value = "0";
-  const total = lireInt("input-greve") + lireInt("input-carence") + lireInt("input-maladie-90") + lireInt("input-maladie-50");
-  if (total > 30) el.value = Math.max(0, (parseInt(el.value) || 0) - (total - 30));
-  calculerPaie();
-};
 
 // =============================================================================
 // 7. EXTRACTION DU PROFIL DEPUIS LE FORMULAIRE
@@ -1274,14 +1256,18 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     ajouterLigne("604959", "PREC. CARENCE IND. RESID.", null, m.absResidence,  null, null, tip(m.indemniteResidence));
   }
 
-  ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, m.transfertPrimes, null, null, null, null, { delta: deltaVal(m.transfertPrimes, mB?.transfertPrimes), deltaCol: 3 });
-  ajouterLigne("751095", "24,6% ISQ",                 null, m.retenueIsq,      null, null, null, null, { delta: deltaVal(m.retenueIsq,      mB?.retenueIsq),      deltaCol: 3 });
+  const gradeEchelonPrets = !nonConfigure("grade") && !nonConfigure("echelon");
 
-  // ── Nets ──────────────────────────────────────────────────────────────────────
-  ajouterLigne("", "", null, null, null);
-  ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, m.netAPayerAvantImpot, null, null, null,
-    { delta: deltaVal(m.netAPayerAvantImpot, mB?.netAPayerAvantImpot), deltaCol: 4 });
-  ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, m.netSocial);
+  if (gradeEchelonPrets) {
+    ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, m.transfertPrimes, null, null, null, null, { delta: deltaVal(m.transfertPrimes, mB?.transfertPrimes), deltaCol: 3 });
+    ajouterLigne("751095", "24,6% ISQ",                 null, m.retenueIsq,      null, null, null, null, { delta: deltaVal(m.retenueIsq,      mB?.retenueIsq),      deltaCol: 3 });
+
+    // ── Nets ──────────────────────────────────────────────────────────────────────
+    ajouterLigne("", "", null, null, null);
+    ajouterLigne("011100", "NET A PAYER AVANT IMPOT SUR LE REVENU", null, null, m.netAPayerAvantImpot, null, null, null,
+      { delta: deltaVal(m.netAPayerAvantImpot, mB?.netAPayerAvantImpot), deltaCol: 4 });
+    ajouterLigne("011300", "MONTANT NET SOCIAL", null, null, m.netSocial);
+  }
   ajouterLigne("558000", "IMPOT SUR LE REVENU PRELEVE A LA SOURCE", null, m.impotSource, null, null, null, null,
     { delta: deltaVal(m.impotSource, mB?.impotSource), deltaCol: 3 });
   if (nonConfigure("taux_pas")) {
@@ -1391,6 +1377,14 @@ function calculerPaie() {
   dessinerFiche(profilA, mA, profilB, mB);
   majDeltaNet(mA, mB);
 
+  // Indice — affiché seulement quand grade+échelon configurés
+  const elIndice = document.getElementById("ui-indice");
+  if (elIndice) {
+    elIndice.textContent = (!nonConfigure("grade") && !nonConfigure("echelon") && mA.indice)
+      ? String(mA.indice).padStart(4, "0")
+      : "—";
+  }
+
   // Badges "À configurer" sur les champs de l'info-table
   const champInfoTable = {
     "grade":          "input-grade",
@@ -1440,7 +1434,14 @@ function calculerPaie() {
  */
 function attacherNavigationClavier(modal, input) {
   modal.addEventListener("keydown", (e) => {
-    if (document.activeElement === input) return;
+    // Ne pas intercepter si le focus est sur n'importe quel champ éditable
+    const actif = document.activeElement;
+    const estEditable = actif && (
+      actif.tagName === "INPUT" ||
+      actif.tagName === "TEXTAREA" ||
+      actif.isContentEditable
+    );
+    if (estEditable) return;
     if (e.key === "Backspace") {
       e.preventDefault();
       input.focus();
@@ -1522,10 +1523,12 @@ async function initialiserApplication() {
       }
     });
 
-    // Enfants — focus suffit (même si valeur = "0") + change pour sûreté
-    document.getElementById("input-enfants").addEventListener("focus", () => {
-      marquerConfigure("enfants");
-      calculerPaie();
+    // Enfants — change uniquement (après sélection réelle d'une valeur)
+    document.getElementById("input-enfants").addEventListener("change", () => {
+      if (document.getElementById("input-enfants").value !== "") {
+        marquerConfigure("enfants");
+        calculerPaie();
+      }
     });
 
     // NBI — auto-débadge à la coche, la croix est gérée via marquerConfigure('nbi') dans le HTML
@@ -1539,55 +1542,86 @@ async function initialiserApplication() {
       radio.addEventListener("change", () => { marquerConfigure("zone_residence"); calculerPaie(); });
     });
 
-    // Taux PAS — marquer dès saisie (même partielle)
-    document.getElementById("input-pas").addEventListener("input", () => {
-      if (document.getElementById("input-pas").value !== "") {
-        marquerConfigure("taux_pas");
-        calculerPaie();
-      }
-    });
+    // ── Validation et restrictions de saisie ─────────────────────────────────
 
-    // Ind. compensatrice CSG — idem
-    document.getElementById("input-ind-csg").addEventListener("input", () => {
-      if (document.getElementById("input-ind-csg").value !== "") {
-        marquerConfigure("ind_compensatrice_csg");
-        calculerPaie();
-      }
-    });
+    // Table des bornes par champ number
+    const BORNES = {
+      "input-nuit-n":      { min: 0, max: 30,   entier: true  },
+      "input-nuit-s2":     { min: 0, max: 30,   entier: true  },
+      "input-greve":       { min: 0, max: 31,   entier: true  },
+      "input-carence":     { min: 0, max: 3,    entier: true  },
+      "input-maladie-90":  { min: 0, max: 31,   entier: true  },
+      "input-maladie-50":  { min: 0, max: 31,   entier: true  },
+      "input-perf":        { min: 0, max: null, entier: false },
+      "pv-globale":        { min: 0, max: null, entier: false },
+      "pv-opt32":          { min: 0, max: null, entier: false },
+      "cmp-pv-globale":    { min: 0, max: null, entier: false },
+      "cmp-pv-opt32":      { min: 0, max: null, entier: false },
+      // projection
+      "proj-nuits":        { min: 0, max: 30,  entier: true  },
+      "proj-soirees":      { min: 0, max: 30,  entier: true  },
+      "proj-ottPv":        { min: 0, max: null, entier: false },
+      "proj-ottPv32":      { min: 0, max: null, entier: false },
+      "proj-ppp":          { min: 0, max: null, entier: false },
+      "proj-fmd":          { min: 0, max: 300,  entier: false },
+    };
 
-    // Tous les champs du formulaire principal déclenchent un recalcul
-    document.querySelectorAll(".magic-modal select, .magic-modal input, .info-table select, .info-table input").forEach((input) => input.addEventListener("input", calculerPaie));
-
-    // Validation des champs numériques (bornes min/max spécifiques par champ)
     document.querySelectorAll('.magic-modal input[type="number"]').forEach((champ) => {
+      const borne = BORNES[champ.id] || { min: 0, max: null, entier: false };
       champ.addEventListener("input", function () {
         if (this.value === "") return;
-        const val = parseFloat(this.value);
-        let corrige = false;
-        if (val < 0) {
-          this.value = "0";
-          corrige = true;
-        }
-        if (this.id === "input-pas" && val > 100) {
-          this.value = "100";
-          corrige = true;
-        }
-        if ((this.id === "input-nuit-n" || this.id === "input-nuit-s2") && val > 30) {
-          this.value = "30";
-          corrige = true;
-        }
-        if (corrige) calculerPaie();
+        let val = parseFloat(this.value);
+        if (isNaN(val)) { this.value = "0"; return; }
+        if (borne.entier) val = Math.floor(val);
+        if (val < borne.min) val = borne.min;
+        if (borne.max !== null && val > borne.max) val = borne.max;
+        this.value = val;
+        calculerPaie();
       });
-
       champ.addEventListener("blur", function () {
-        // Ne pas forcer "0" sur les champs libres taux PAS et ind. CSG
-        const CHAMPS_LIBRES = ["input-pas", "input-ind-csg"];
-        if (this.value === "" && !CHAMPS_LIBRES.includes(this.id)) {
-          this.value = this.step?.includes(".") ? "0.00" : "0";
+        if (this.value === "") {
+          this.value = borne.entier ? "0" : "0.00";
           calculerPaie();
         }
       });
+      // Bloquer les lettres à la frappe
+      champ.addEventListener("keydown", function (e) {
+        const ok = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End","-","."];
+        if (ok.includes(e.key)) return;
+        if (e.ctrlKey || e.metaKey) return;
+        if (!/^\d$/.test(e.key) && e.key !== ".") e.preventDefault();
+      });
     });
+
+    // Tous les champs du formulaire principal déclenchent un recalcul
+    // (exclure input-pas et input-ind-csg qui ont leur propre listener ci-dessous)
+    document.querySelectorAll(".magic-modal select, .magic-modal input, .info-table select, .info-table input")
+      .forEach((input) => {
+        if (input.id === "input-pas" || input.id === "input-ind-csg") return;
+        input.addEventListener("input", calculerPaie);
+      });
+
+    // Taux PAS et Ind. CSG — type=text, listener unique backspace-safe
+    const creerListenerChampLibre = (id, cle, maxVal) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      // Bloquer les lettres à la frappe
+      el.addEventListener("keydown", function (e) {
+        const ok = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","Home","End"];
+        if (ok.includes(e.key)) return;
+        if (e.ctrlKey || e.metaKey) return;
+        if (!/[\d.,]/.test(e.key)) e.preventDefault();
+      });
+      el.addEventListener("input", function () {
+        const v = this.value.replace(",", ".");
+        const n = parseFloat(v);
+        if (maxVal !== null && !isNaN(n) && n > maxVal) this.value = String(maxVal);
+        if (!isNaN(n) && v !== "") marquerConfigure(cle);
+        calculerPaie();
+      });
+    };
+    creerListenerChampLibre("input-pas",     "taux_pas",             100);
+    creerListenerChampLibre("input-ind-csg", "ind_compensatrice_csg", null);
 
     // ── Modale principale ─────────────────────────────────────────────────────
     const modal = document.getElementById("magic-modal");

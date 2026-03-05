@@ -47,7 +47,7 @@
             <strong>Zone 3 (0%) :</strong> Toutes les autres communes.
           </p>
           <div id="zone-radios-wrap" class="ir-tabs">
-            <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" checked onchange="calculerPaie()" />
+            <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" onchange="calculerPaie()" />
             <label for="ir-zone1"><strong>3 %</strong><br /><small>Zone 1</small></label>
             <input type="radio" id="ir-zone2" name="ir-zone" value="Zone 2" onchange="calculerPaie()" />
             <label for="ir-zone2"><strong>1 %</strong><br /><small>Zone 2</small></label>
@@ -212,13 +212,13 @@
         <div id="panel-absences" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <label>Service Non Fait / Grève (Retenue 100%)</label>
-          <input type="number" id="input-greve" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue d'un 1/30ème par jour" />
+          <input type="number" id="input-greve" value="0" min="0" max="31" title="Retenue d'un 1/30ème par jour" />
           <label>Jour(s) de Carence Maladie (Retenue 100%)</label>
-          <input type="number" id="input-carence" value="0" min="0" max="30" oninput="limiterAbsences(this)" />
+          <input type="number" id="input-carence" value="0" min="0" max="3" />
           <label>Jours de Maladie rémunérés à 90%</label>
-          <input type="number" id="input-maladie-90" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue de 10% d'un 1/30ème par jour" />
+          <input type="number" id="input-maladie-90" value="0" min="0" max="31" title="Retenue de 10% d'un 1/30ème par jour" />
           <label>Jours de Maladie à demi-traitement (50%)</label>
-          <input type="number" id="input-maladie-50" value="0" min="0" max="30" oninput="limiterAbsences(this)" title="Retenue de 50% d'un 1/30ème par jour" />
+          <input type="number" id="input-maladie-50" value="0" min="0" max="31" title="Retenue de 50% d'un 1/30ème par jour" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -306,7 +306,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-impots" class="setting-panel">
           <label>Taux de Prélèvement à la Source (%)</label>
-          <input type="number" id="input-pas" value="" placeholder="ex : 7.5" step="0.1" min="0" max="100" />
+          <input type="text" inputmode="decimal" id="input-pas" value="" placeholder="ex : 7.5" autocomplete="off" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -315,7 +315,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-csg" class="setting-panel">
           <label>Indemnité Compensatrice CSG (€)</label>
-          <input type="number" id="input-ind-csg" value="" placeholder="ex : 115.18" step="0.01" min="0" />
+          <input type="text" inputmode="decimal" id="input-ind-csg" value="" placeholder="ex : 115.18" autocomplete="off" />
           <p class="panel-footnote">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -490,6 +490,7 @@
             </td>
             <td>
               <select id="input-enfants" class="select-transparent" title="Nombre d'enfants à charge">
+                <option value="" disabled selected>XX</option>
                 <option value="0">00</option>
                 <option value="1">01</option>
                 <option value="2">02</option>
@@ -501,7 +502,7 @@
             <td>
               <select id="input-echelon" class="select-transparent" title="Choisissez votre échelon"></select>
             </td>
-            <td id="ui-indice">0462</td>
+            <td id="ui-indice">—</td>
             <td id="nbi-cell">
               <input type="checkbox" id="input-nbi-checkbox" class="nbi-checkbox" title="Activer/Désactiver la NBI" />
               <button type="button" id="nbi-sans-btn" class="nbi-sans-btn" title="Je n'ai pas la NBI" onclick="marquerConfigure('nbi'); calculerPaie()">✕</button>
