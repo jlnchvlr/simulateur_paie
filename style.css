@@ -1692,17 +1692,16 @@ select.champ-non-configure {
   position: fixed;
   pointer-events: none;
   border-radius: 5px;
-  /* Le box-shadow crée le fond sombre autour de la zone illuminée */
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
   z-index: 9998;
-  /* Transitions fluides quand le spotlight se déplace */
   transition: top 0.32s cubic-bezier(0.4,0,0.2,1),
               left 0.32s cubic-bezier(0.4,0,0.2,1),
               width 0.32s cubic-bezier(0.4,0,0.2,1),
               height 0.32s cubic-bezier(0.4,0,0.2,1),
-              opacity 0.2s ease;
+              opacity 0.15s ease;
 }
-#tour-spotlight.tour-spotlight-hidden {
+/* Invisible mais présent dans le DOM → les transitions top/left/width/height jouent */
+#tour-spotlight.tour-spotlight-invisible {
   opacity: 0;
   pointer-events: none;
 }

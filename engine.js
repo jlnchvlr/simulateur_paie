@@ -402,7 +402,8 @@ function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
     document.querySelectorAll(`#${panelId} .rist-option`).forEach((el) => el.classList.remove("selected"));
     document.querySelector(`#${panelId} .rist-option[data-value="${valeur}"]`)?.classList.add("selected");
     window[`resetHelper${nom}`]();
-    // Marquer ce champ RIST comme configuré
+    // Marquer configuré immédiatement pour que la fiche de paie se mette à jour en temps réel.
+    // Le tour ne réagit pas car _tourPauseParModal=true pendant toute la durée de la modale.
     const cleMap = {
       "input-fonction":        "rist_fonctions",
       "input-experience":      "rist_experience",
@@ -557,9 +558,13 @@ function mettreAJourEchelons() {
  * @param {string}          titre    - Titre affiché dans l'en-tête de la modale
  */
 function ouvrirModal(panelIds, titre) {
-  // Pause de la visite guidée en cours
+  // Pause de la visite guidée en cours + masquer l'UI tour pendant la modale
   if (window.isTourActive) {
     window._tourPauseParModal = true;
+    const pop = document.getElementById("tour-popover");
+    const sp  = document.getElementById("tour-spotlight");
+    if (pop) pop.style.display = "none";
+    if (sp)  sp.classList.add("tour-spotlight-invisible");
   }
 
   const modal = document.getElementById("magic-modal");
@@ -582,6 +587,8 @@ function ouvrirModal(panelIds, titre) {
   document.getElementById("modal-title").textContent = titre;
   document.querySelectorAll(".setting-panel").forEach((p) => p.classList.remove("active"));
   (Array.isArray(panelIds) ? panelIds : [panelIds]).forEach((id) => document.getElementById(id)?.classList.add("active"));
+  // Mémoriser le panneau ouvert pour le gestionnaire de fermeture
+  modal.dataset.panelOuvert = Array.isArray(panelIds) ? panelIds[0] : panelIds;
 
   modal.showModal();
 
@@ -1343,39 +1350,23 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     }
 
     // Si la visite guidée est active, rafraîchir le positionnement du spotlight/popover
-    if (window.isTourActive) {
+    if (window.isTourActive && !window._tourPauseParModal) {
       setTimeout(() => {
+        if (!window.isTourActive || window._tourPauseParModal) return;
         const step = _tourSteps?.[window._tourEtapeIndex];
         if (!step) return;
-        // Étape RIST : pointer la ligne actuellement active, pas step.element (toujours row-201958)
-        let el;
+
         if (step.isRist) {
-          const prochain = _ristProchaineLigne();
-          if (!prochain) {
-            // Toutes faites : recalculer le spotlight groupe
-            const premiere = document.getElementById("row-201958");
-            const derniere = document.getElementById("row-201962");
-            if (premiere && derniere) {
-              const rTop = premiere.getBoundingClientRect();
-              const rBot = derniere.getBoundingClientRect();
-              const padding = 4;
-              const sp = _elSpotlight();
-              if (sp) {
-                sp.style.display = "";
-                sp.style.top    = (rTop.top    - padding) + "px";
-                sp.style.left   = (rTop.left   - padding) + "px";
-                sp.style.width  = (rTop.width  + padding * 2) + "px";
-                sp.style.height = (rBot.bottom - rTop.top + padding * 2) + "px";
-              }
-            }
-            return;
+          // RIST : repositionner uniquement sur l'élément déjà actif
+          if (_ristElActif) {
+            _tourSpotlightSur(_ristElActif);
+            _tourPositionnerPopover(_ristElActif);
           }
-          el = document.getElementById(prochain.rowId);
         } else {
-          el = step.element ? document.querySelector(step.element) : null;
+          const el = step.element ? document.querySelector(step.element) : null;
+          _tourSpotlightSur(el);
+          _tourPositionnerPopover(el);
         }
-        _tourSpotlightSur(el);
-        _tourPositionnerPopover(el);
       }, 50);
     }
   });
@@ -1671,8 +1662,20 @@ async function initialiserApplication() {
       }
     });
 
-    // Fermeture de la modale → reprise du tour custom
+    // Fermeture de la modale → marquer le champ RIST configuré si c'était un panneau RIST,
+    // puis reprendre le tour. Le marquage se fait ICI (pas au clic sur le niveau) pour que
+    // le tour ne réagisse jamais pendant que la modale est encore ouverte.
     modal.addEventListener("close", () => {
+      const RIST_PANEL_CLE = {
+        "panel-rist-fonctions":      "rist_fonctions",
+        "panel-rist-experience":     "rist_experience",
+        "panel-rist-isq-licence":    "rist_isq_licence",
+        "panel-rist-isq-complement": "rist_isq_complement",
+        "panel-rist-isq-majoration": "rist_isq_majoration",
+      };
+      const cle = RIST_PANEL_CLE[modal.dataset.panelOuvert];
+      if (cle) marquerConfigure(cle);
+
       if (!window._tourPauseParModal) return;
       window._tourPauseParModal = false;
       setTimeout(() => window._tourReprendreApresModal?.(), 150);
@@ -2267,19 +2270,25 @@ const TOUR_MARGE = 10; // px de marge screen edges
  * Déplace le spotlight sur un élément DOM.
  * padding : espace autour de l'élément (px)
  */
+/**
+ * Déplace le spotlight sur un élément DOM.
+ * Utilise opacity (pas display) pour préserver les transitions CSS top/left/width/height.
+ * display:none n'est utilisé que par _tourFermer (tour complètement inactif).
+ */
 function _tourSpotlightSur(el, padding = 6) {
   const sp = _elSpotlight();
   if (!sp) return;
   if (!el) {
-    sp.style.display = "none";
+    sp.classList.add("tour-spotlight-invisible");
     return;
   }
   const r = el.getBoundingClientRect();
-  sp.style.display = "";
+  // Positionner D'ABORD (pendant l'invisibilité si applicable), puis révéler
   sp.style.top    = (r.top    - padding) + "px";
   sp.style.left   = (r.left   - padding) + "px";
   sp.style.width  = (r.width  + padding * 2) + "px";
   sp.style.height = (r.height + padding * 2) + "px";
+  sp.classList.remove("tour-spotlight-invisible");
 }
 
 /**
@@ -2373,13 +2382,10 @@ function _tourMajContenu(step, index, total, opts = {}) {
     if (opts.postRender) opts.postRender();
 
     // Repositionner le popover avec le nouveau contenu
-    // Pour l'étape RIST, utiliser la ligne active (mise à jour par _ristDemarrer)
+    // Pour l'étape RIST, utiliser _ristElActif (mis à jour par _ristDemarrer)
     let elPos;
     if (step.isRist) {
-      const prochaine = _ristProchaineLigne();
-      elPos = prochaine
-        ? document.getElementById(prochaine.rowId)
-        : document.getElementById("row-201958"); // fallback (toutes faites)
+      elPos = _ristElActif || document.getElementById("row-201958");
     } else {
       elPos = step.element ? document.querySelector(step.element) : null;
     }
@@ -2448,10 +2454,17 @@ function _tourAfficherEtape(index) {
   // Élément DOM cible
   const el = step.element ? document.querySelector(step.element) : null;
 
-  // Déplacer le spotlight — sauf pour l'étape RIST qui gère son propre spotlight
-  // via _ristDemarrer() (appelé dans onRender) pour éviter un double saut visuel
+  // Déplacer le spotlight
   if (!step.isRist) {
     _tourSpotlightSur(el);
+  } else {
+    // RIST : cacher le spotlight immédiatement pour éviter qu'il reste
+    // sur la position précédente pendant le fade. _ristDemarrer() le
+    // RIST : rendre le spotlight invisible (pas display:none) pour que la transition
+    // top/left puisse jouer quand _ristDemarrer() le repositionne et le révèle.
+    _ristElActif = null;
+    const sp = _elSpotlight();
+    if (sp) sp.classList.add("tour-spotlight-invisible");
   }
 
   // NE PAS positionner le popover ici — il sera repositionné à l'intérieur du fade
@@ -2483,13 +2496,17 @@ function _tourDemarrer(steps, startIndex = 0, phase = "phase1") {
   const pop = _elPopover();
   const sp  = _elSpotlight();
 
-  // Placer hors-écran avant d'afficher pour éviter un flash à la position précédente
+  // Popover hors-écran avant affichage pour éviter flash à position précédente
   if (pop) {
-    pop.style.left = "-9999px";
-    pop.style.top  = "-9999px";
+    pop.style.left    = "-9999px";
+    pop.style.top     = "-9999px";
     pop.style.display = "";
   }
-  if (sp) sp.style.display = "none"; // sera activé par _tourAfficherEtape
+  // Spotlight visible mais transparent — la transition opacity jouera à la première étape
+  if (sp) {
+    sp.style.display = "";
+    sp.classList.add("tour-spotlight-invisible");
+  }
 
   _tourAfficherEtape(startIndex);
 }
@@ -2504,7 +2521,10 @@ function _tourFermer(pulserBadges = true) {
   const pop = _elPopover();
   const sp  = _elSpotlight();
   if (pop) pop.style.display = "none";
-  if (sp)  sp.style.display = "none";
+  if (sp) {
+    sp.style.display = "none";
+    sp.classList.remove("tour-spotlight-invisible");
+  }
 
   document.getElementById("btn-reset-profil")?.classList.remove("tour-highlight-reset");
   document.querySelectorAll(".tour-ligne-pulsante").forEach(el => el.classList.remove("tour-ligne-pulsante"));
@@ -2596,7 +2616,7 @@ function _tourInstallerRepriseApresModal(index, steps) {
     const pop = _elPopover();
     const sp  = _elSpotlight();
     if (pop) pop.style.display = "";
-    if (sp)  sp.style.display = "";
+    if (sp)  sp.classList.remove("tour-spotlight-invisible");
     const el = step.element ? document.querySelector(step.element) : null;
     _tourSpotlightSur(el);
     _tourPositionnerPopover(el);
@@ -2606,10 +2626,20 @@ function _tourInstallerRepriseApresModal(index, steps) {
 // ─── Étape RIST : logique spotlight mobile ────────────────────────────────────
 
 let _ristIndexActif = 0; // index dans RIST_KEYS de la ligne actuellement spotlightée
+let _ristElActif    = null; // nœud DOM actuellement spotlighté — seuls _ristDemarrer et _tourRistApresModal peuvent le changer
 
-/** Retourne la prochaine ligne RIST non configurée (ou null si toutes faites). */
+/**
+ * Retourne la prochaine ligne RIST non configurée (ou null si toutes faites).
+ * Une ligne "Aucune" dont la row est absente du DOM est considérée comme configurée
+ * (montant 0 → ligne masquée → pas besoin de la pointer).
+ */
 function _ristProchaineLigne() {
-  return RIST_KEYS.find(r => nonConfigure(r.cle)) || null;
+  return RIST_KEYS.find(r => {
+    if (!nonConfigure(r.cle)) return false;          // déjà configurée
+    const el = document.getElementById(r.rowId);
+    if (!el) return false;                            // ligne absente du DOM (montant 0) → skip
+    return true;
+  }) || null;
 }
 
 /** Met à jour la checklist RIST dans le corps du popover (DOM direct, pas de fade). */
@@ -2630,58 +2660,69 @@ function _ristMajChecklist(indexActif) {
   if (liste.innerHTML !== html) liste.innerHTML = html;
 }
 
-/** Pointage initial de la première ligne RIST. Appelé dans onEnter de l'étape 6. */
+/** Pointage initial de la première ligne RIST. Appelé dans onRender de l'étape 6. */
 function _ristDemarrer() {
   const prochaine = _ristProchaineLigne();
   if (!prochaine) {
-    // Toutes déjà configurées
-    _tourSignalerValidation();
-    return;
-  }
-  const idx = RIST_KEYS.indexOf(prochaine);
-  _ristIndexActif = idx;
-  const el = document.getElementById(prochaine.rowId);
-  _tourSpotlightSur(el);
-  _tourPositionnerPopover(el);
-  _ristMajChecklist(idx);
-}
-
-/** Appelé après fermeture d'une modale RIST. */
-function _tourRistApresModal() {
-  const pop = _elPopover();
-  const sp  = _elSpotlight();
-  if (pop) pop.style.display = "";
-  if (sp)  sp.style.display = "";
-
-  const prochaine = _ristProchaineLigne();
-  if (!prochaine) {
-    // Toutes configurées : spotlight sur le groupe entier des 5 lignes
-    const premiere = document.getElementById("row-201958");
-    const derniere = document.getElementById("row-201962");
-    if (premiere && derniere) {
-      const rTop = premiere.getBoundingClientRect();
-      const rBot = derniere.getBoundingClientRect();
-      const padding = 4;
-      const sp = _elSpotlight();
-      if (sp) {
-        sp.style.display = "";
-        sp.style.top    = (rTop.top    - padding) + "px";
-        sp.style.left   = (rTop.left   - padding) + "px";
-        sp.style.width  = (rTop.width  + padding * 2) + "px";
-        sp.style.height = (rBot.bottom - rTop.top + padding * 2) + "px";
-      }
-      // Positionner le popover au-dessus du groupe
-      _tourPositionnerPopover(premiere);
-    }
+    // Toutes déjà configurées (ex: retour via Précédent) → spotlight groupe entier
+    _ristSpotlightGroupe();
     _ristMajChecklist(-1);
     _tourSignalerValidation();
     return;
   }
   const idx = RIST_KEYS.indexOf(prochaine);
   _ristIndexActif = idx;
-  const el = document.getElementById(prochaine.rowId);
-  _tourSpotlightSur(el);
-  _tourPositionnerPopover(el);
+  _ristElActif    = document.getElementById(prochaine.rowId);
+  _tourSpotlightSur(_ristElActif);
+  _tourPositionnerPopover(_ristElActif);
+  _ristMajChecklist(idx);
+}
+
+/** Positionne le spotlight sur le groupe entier des 5 lignes RIST. */
+function _ristSpotlightGroupe() {
+  // Collecter uniquement les lignes RIST effectivement rendues dans le DOM
+  const lignesPresentes = RIST_KEYS
+    .map(r => document.getElementById(r.rowId))
+    .filter(el => el !== null);
+
+  if (lignesPresentes.length === 0) return;
+
+  const premiere = lignesPresentes[0];
+  const derniere = lignesPresentes[lignesPresentes.length - 1];
+  const rTop    = premiere.getBoundingClientRect();
+  const rBot    = derniere.getBoundingClientRect();
+  const padding = 4;
+  const sp = _elSpotlight();
+  if (sp) {
+    sp.style.top    = (rTop.top    - padding) + "px";
+    sp.style.left   = (rTop.left   - padding) + "px";
+    sp.style.width  = (rTop.width  + padding * 2) + "px";
+    sp.style.height = (rBot.bottom - rTop.top + padding * 2) + "px";
+    sp.classList.remove("tour-spotlight-invisible");
+  }
+  // Mémoriser comme élément actif pour le rafraîchissement
+  _ristElActif = premiere;
+  _tourPositionnerPopover(premiere);
+}
+
+/** Appelé après fermeture d'une modale RIST. */
+function _tourRistApresModal() {
+  const pop = _elPopover();
+  if (pop) pop.style.display = "";
+
+  const prochaine = _ristProchaineLigne();
+  if (!prochaine) {
+    // Toutes configurées : spotlight groupe entier
+    _ristSpotlightGroupe();
+    _ristMajChecklist(-1);
+    _tourSignalerValidation();
+    return;
+  }
+  const idx = RIST_KEYS.indexOf(prochaine);
+  _ristIndexActif = idx;
+  _ristElActif    = document.getElementById(prochaine.rowId);
+  _tourSpotlightSur(_ristElActif);
+  _tourPositionnerPopover(_ristElActif);
   _ristMajChecklist(idx);
 }
 
@@ -2786,7 +2827,11 @@ window.lancerVisiteGuidee = function (startIndex = 0) {
         `<strong>Cliquez sur chaque ligne</strong> pour configurer votre niveau.<br>` +
         `Le tutoriel vous guide ligne par ligne.<br>` +
         `<div class="tour-rist-checklist"></div>`,
-      blockedBy: () => !RIST_KEYS.every(r => !nonConfigure(r.cle)),
+      blockedBy: () => !RIST_KEYS.every(r => {
+        if (!nonConfigure(r.cle)) return true;       // configurée → OK
+        if (!document.getElementById(r.rowId)) return true; // absente du DOM → skip
+        return false;                                 // présente et non configurée → bloque
+      }),
       watchFn:   null, // géré par reprise post-modale
       isRist:    true,
       onEnter: () => {
