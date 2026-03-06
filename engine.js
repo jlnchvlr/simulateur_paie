@@ -2239,6 +2239,9 @@ function initialiserComparateur() {
     el.addEventListener("change", calculerPaieComparaison);
   });
   // Radios zone séparément (pas interceptés par le sélecteur ci-dessus)
+  document.querySelectorAll("input[name='cmp-zone']").forEach((radio) => {
+    radio.addEventListener("change", calculerPaieComparaison);
+  });
 }
 
 // =============================================================================
