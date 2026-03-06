@@ -1717,7 +1717,10 @@ select.champ-non-configure {
   width: 320px;
   max-width: calc(100vw - 32px);
   font-family: var(--font-main);
-  /* Le popover lui-même ne se déplace que par recalcul de position — pas de transition */
+  transition: opacity 0.1s ease;
+}
+#tour-popover.tour-popover-fading {
+  opacity: 0;
 }
 
 .tour-pop-header {
@@ -1763,10 +1766,6 @@ select.champ-non-configure {
   line-height: 1.55;
   color: #333;
   min-height: 60px;
-  transition: opacity 0.1s ease;
-}
-.tour-pop-body.tour-body-fading {
-  opacity: 0;
 }
 
 .tour-pop-footer {
