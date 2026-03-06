@@ -1745,7 +1745,7 @@ select.champ-non-configure {
 
 /* Coche ✓ qui apparaît dans le titre quand l'étape est validée */
 .tour-pop-header.tour-valide .tour-pop-title::after {
-  content: " ✓";
+  content: "\00a0 ✓";
   color: #2c6e49;
   font-size: 13px;
   display: inline-block;

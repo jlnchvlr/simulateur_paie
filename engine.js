@@ -2393,11 +2393,11 @@ function initialiserComparateur() {
     const sp = _elSpotlight();
     if (!sp) return;
     if (!el) {
-      sp.classList.add("tour-spotlight-hidden");
+      sp.style.display = "none";
       return;
     }
     const r = el.getBoundingClientRect();
-    sp.classList.remove("tour-spotlight-hidden");
+    sp.style.display = "";
     sp.style.top = r.top - padding + "px";
     sp.style.left = r.left - padding + "px";
     sp.style.width = r.width + padding * 2 + "px";
@@ -2459,7 +2459,14 @@ function initialiserComparateur() {
     // Header : instantané
     if (elStep) elStep.textContent = `${index + 1}/${total}`;
     if (elTitle) elTitle.textContent = step.title;
-    header?.classList.remove("tour-valide");
+
+    // Remettre la coche si le champ est déjà configuré (retour arrière ou step déjà fait)
+    const dejaFait = step.watchFn ? step.watchFn() : false;
+    if (dejaFait) {
+      header?.classList.add("tour-valide");
+    } else {
+      header?.classList.remove("tour-valide");
+    }
 
     // Précédent masqué à l'étape 0
     if (btnPrev) btnPrev.style.visibility = index === 0 ? "hidden" : "";
@@ -2543,8 +2550,11 @@ function initialiserComparateur() {
     // Élément DOM cible
     const el = step.element ? document.querySelector(step.element) : null;
 
-    // Déplacer le spotlight
-    _tourSpotlightSur(el);
+    // Déplacer le spotlight — sauf pour l'étape RIST qui gère son propre spotlight
+    // via _ristDemarrer() (appelé dans onRender) pour éviter un double saut visuel
+    if (!step.isRist) {
+      _tourSpotlightSur(el);
+    }
 
     // Positionner le popover
     _tourPositionnerPopover(el);
@@ -2575,7 +2585,7 @@ function initialiserComparateur() {
     const pop = _elPopover();
     const sp = _elSpotlight();
     if (pop) pop.style.display = "";
-    if (sp) sp.classList.remove("tour-spotlight-hidden");
+    if (sp) sp.style.display = "";
 
     _tourAfficherEtape(startIndex);
   }
@@ -2590,7 +2600,7 @@ function initialiserComparateur() {
     const pop = _elPopover();
     const sp = _elSpotlight();
     if (pop) pop.style.display = "none";
-    if (sp) sp.classList.add("tour-spotlight-hidden");
+    if (sp) sp.style.display = "none";
 
     document.getElementById("btn-reset-profil")?.classList.remove("tour-highlight-reset");
     document.querySelectorAll(".tour-ligne-pulsante").forEach((el) => el.classList.remove("tour-ligne-pulsante"));
@@ -2604,6 +2614,8 @@ function initialiserComparateur() {
       }, 300);
     }
   }
+  // Exposer pour les onclick HTML inline
+  window._tourFermer = _tourFermer;
 
   // ─── Boutons du popover ───────────────────────────────────────────────────────
 
@@ -2690,7 +2702,7 @@ function initialiserComparateur() {
       const pop = _elPopover();
       const sp = _elSpotlight();
       if (pop) pop.style.display = "";
-      if (sp) sp.classList.remove("tour-spotlight-hidden");
+      if (sp) sp.style.display = "";
       const el = step.element ? document.querySelector(step.element) : null;
       _tourSpotlightSur(el);
       _tourPositionnerPopover(el);
@@ -2745,16 +2757,15 @@ function initialiserComparateur() {
     const pop = _elPopover();
     const sp = _elSpotlight();
     if (pop) pop.style.display = "";
-    if (sp) sp.classList.remove("tour-spotlight-hidden");
+    if (sp) sp.style.display = "";
 
     const prochaine = _ristProchaineLigne();
     if (!prochaine) {
-      // Toutes configurées
+      // Toutes configurées : masquer le spotlight, garder le popover en place
       _ristMajChecklist(-1);
       _tourSignalerValidation();
-      const el = document.getElementById("row-201958");
-      _tourSpotlightSur(el);
-      _tourPositionnerPopover(el);
+      _tourSpotlightSur(null); // éteindre le spotlight
+      _tourPositionnerPopover(null); // centrer le popover
       return;
     }
     const idx = RIST_KEYS.indexOf(prochaine);
@@ -2774,7 +2785,7 @@ function initialiserComparateur() {
     const sp = _elSpotlight();
     if (!pop) return;
 
-    if (sp) sp.classList.add("tour-spotlight-hidden");
+    if (sp) sp.style.display = "none";
     pop.style.display = "";
     window.isTourActive = true; // keep active pour le bouton Terminer
 
