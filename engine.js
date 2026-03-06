@@ -1811,12 +1811,19 @@ async function initialiserApplication() {
     });
 
     // Fermeture de la modale → marquer le champ RIST configuré si c'était un panneau RIST,
-    // puis reprendre le tour. Le marquage se fait ICI (pas au clic sur le niveau) pour que
-    // le tour ne réagisse jamais pendant que la modale est encore ouverte.
+    // puis reprendre le tour.
     // FIX #14 — Utilise RIST_PANEL_CLE module-level dérivée de CONFIGS_RIST (plus de doublon)
     modal.addEventListener("close", () => {
       const cle = RIST_PANEL_CLE[modal.dataset.panelOuvert];
-      if (cle) marquerConfigure(cle);
+      if (cle) {
+        // BUGFIX — Ne marquer configuré que si l'utilisateur a EXPLICITEMENT cliqué une option.
+        // dataset.confirmed = "1" est posé par select${nom}() uniquement au clic sur une option.
+        // Sans cette garde, fermer via Échap ou clic extérieur marquait le champ comme configuré
+        // et faisait avancer le tour à tort vers la ligne RIST suivante.
+        const cfg     = CONFIGS_RIST.find(c => c.panelId === modal.dataset.panelOuvert);
+        const inputEl = cfg ? document.getElementById(cfg.inputId) : null;
+        if (!inputEl || inputEl.dataset.confirmed === "1") marquerConfigure(cle);
+      }
 
       if (!window._tourPauseParModal) return;
       window._tourPauseParModal = false;
