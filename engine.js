@@ -24,9 +24,6 @@
 /** @type {Object} Base de données chargée depuis data.json */
 let baseDonnees = {};
 
-/** @type {boolean} Vrai si la visite guidée est en cours d'exécution */
-window.isTourActive = false;
-
 /** @type {boolean} Vrai si le mode comparaison de scénarios est actif */
 let modeComparaison = false;
 
@@ -371,6 +368,19 @@ function afficherResultatsRecherche(conteneur, resultats, requete, onSelect) {
 // 5. MENUS INTERACTIFS RIST / ISQ
 // =============================================================================
 /**
+ * Map input ID → clé de configuration pour marquerConfigure().
+ * Définie une seule fois ici, partagée par creerMenuInteractif et toute la section RIST.
+ * @type {Object.<string, string>}
+ */
+const RIST_INPUT_CLE_MAP = {
+  "input-fonction":        "rist_fonctions",
+  "input-experience":      "rist_experience",
+  "input-isq-licence":     "rist_isq_licence",
+  "input-isq-complement":  "rist_isq_complement",
+  "input-isq-majoration":  "rist_isq_majoration",
+};
+
+/**
  * Factory : crée et enregistre sur `window` les 3 fonctions nécessaires à un menu interactif.
  * Ces fonctions DOIVENT être sur `window` car appelées via `onclick="..."` dans le HTML.
  *
@@ -415,14 +425,7 @@ function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
     }
     // Marquer configuré immédiatement pour mise à jour en temps réel de la fiche.
     // Le tour ne réagit pas car _tourPauseParModal=true pendant la modale.
-    const cleMap = {
-      "input-fonction":        "rist_fonctions",
-      "input-experience":      "rist_experience",
-      "input-isq-licence":     "rist_isq_licence",
-      "input-isq-complement":  "rist_isq_complement",
-      "input-isq-majoration":  "rist_isq_majoration",
-    };
-    if (cleMap[inputId]) marquerConfigure(cleMap[inputId]);
+    if (RIST_INPUT_CLE_MAP[inputId]) marquerConfigure(RIST_INPUT_CLE_MAP[inputId]);
     calculerPaie();
   };
 }
@@ -647,13 +650,6 @@ window.effacerValeurs = function (event, inputIds) {
   });
   calculerPaie();
 };
-
-/**
- * Valide un champ d'absence et s'assure que le total (grève + carence + maladie) ≤ 30 jours.
- * Exposée sur `window` : appelée via `oninput` dans le HTML.
- *
- * @param {HTMLInputElement} el - Champ d'absence modifié
- */
 
 // =============================================================================
 // 7. EXTRACTION DU PROFIL DEPUIS LE FORMULAIRE
@@ -1053,6 +1049,21 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   /** Valeur à afficher : A si non nul, sinon B (ghost) */
   const affVal = (vA, vB) => (vA > 0) ? vA : (enComparaison && vB > 0 ? vB : vA);
 
+  /**
+   * Crée la paire de valeurs (A, B) pour une ligne comparative.
+   * Factorise le pattern répété : `const A = p.x; const B = pB?.x ?? 0`
+   * @param {number} vA  - Valeur scénario A
+   * @param {number} [vB=0] - Valeur scénario B (optionnelle)
+   * @returns {{ vA: number, vB: number, delta: number|null, isGhost: boolean, affiche: number }}
+   */
+  const paire = (vA, vB = 0) => ({
+    vA,
+    vB,
+    delta:   deltaVal(vA, vB),
+    isGhost: estGhost(vA, vB),
+    affiche: affVal(vA, vB),
+  });
+
   // ─────────────────────────────────────────────────────────────────────────────
   /**
    * Ajoute une ligne <tr> dans le tableau.
@@ -1211,15 +1222,15 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   // ── Éléments variables ────────────────────────────────────────────────────────
   if (m.nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", m.nuit, null, null, ["input-nuit-n", "input-nuit-s2"]);
 
-  const fmdA = p.primes.forfait_mobilites; const fmdB = pB?.primes.forfait_mobilites ?? 0;
-  if (fmdA > 0 || estGhost(fmdA, fmdB))
-    ajouterLigne("200041", "FORF. MOBILITES DURABLES", affVal(fmdA, fmdB), null, null, ["input-fmd"], null, null,
-      { delta: deltaVal(fmdA, fmdB), deltaCol: 2, isGhost: estGhost(fmdA, fmdB) });
+  const fmd = paire(p.primes.forfait_mobilites, pB?.primes.forfait_mobilites);
+  if (fmd.affiche > 0 || fmd.isGhost)
+    ajouterLigne("200041", "FORF. MOBILITES DURABLES", fmd.affiche, null, null, ["input-fmd"], null, null,
+      { delta: fmd.delta, deltaCol: 2, isGhost: fmd.isGhost });
 
-  const inflA = p.primes.inflation; const inflB = pB?.primes.inflation ?? 0;
-  if (inflA > 0 || estGhost(inflA, inflB))
-    ajouterLigne("201000", "INDEM. GARANTIE POUVOIR D'ACHAT", affVal(inflA, inflB), null, null, ["input-inflation"], null, null,
-      { delta: deltaVal(inflA, inflB), deltaCol: 2, isGhost: estGhost(inflA, inflB) });
+  const infl = paire(p.primes.inflation, pB?.primes.inflation);
+  if (infl.affiche > 0 || infl.isGhost)
+    ajouterLigne("201000", "INDEM. GARANTIE POUVOIR D'ACHAT", infl.affiche, null, null, ["input-inflation"], null, null,
+      { delta: infl.delta, deltaCol: 2, isGhost: infl.isGhost });
 
   // ── RIST (5 composantes) ──────────────────────────────────────────────────────
   ajouterLigneRistAvecBadge("201958", "RIST PART FONCTIONS",      "rist_fonctions",       p.primes.rist_fonctions,        m.absRistFct,  "panel-rist-fonctions",      "Ristourne Part Fonctions",    pB?.primes.rist_fonctions    ?? 0);
@@ -1230,40 +1241,40 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   ajouterLigneRistAvecBadge("202206", "IND. COMPENSATRICE CSG",   "ind_compensatrice_csg",p.primes.ind_compensatrice_csg, m.absIndCsg,   "panel-csg",                 "Indemnité Compensatrice CSG", pB?.primes.ind_compensatrice_csg ?? 0);
 
   // ── PSC ───────────────────────────────────────────────────────────────────────
-  const pscA = m.psc; const pscB = mB?.psc ?? 0;
-  if (pscA > 0 || estGhost(pscA, pscB))
-    ajouterLigne("202354", "PARTICIPATION A LA PSC", affVal(pscA, pscB), null, null, ["psc-15", "psc-7", "psc-5"], null, null,
-      { delta: deltaVal(pscA, pscB), deltaCol: 2, isGhost: estGhost(pscA, pscB) });
+  const psc = paire(m.psc, mB?.psc);
+  if (psc.affiche > 0 || psc.isGhost)
+    ajouterLigne("202354", "PARTICIPATION A LA PSC", psc.affiche, null, null, ["psc-15", "psc-7", "psc-5"], null, null,
+      { delta: psc.delta, deltaCol: 2, isGhost: psc.isGhost });
 
   if (p.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", p.evenements.prime_performance, null, null, ["input-perf"]);
 
   // ── OTT ───────────────────────────────────────────────────────────────────────
-  const pvA = p.evenements.ott_pv_globale; const pvB = pB?.evenements.ott_pv_globale ?? 0;
-  if (pvA > 0 || estGhost(pvA, pvB))
-    ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PV)", affVal(pvA, pvB), null, null, ["pv-globale"], null, null,
-      { delta: deltaVal(pvA, pvB), deltaCol: 2, isGhost: estGhost(pvA, pvB) });
+  const ottPv = paire(p.evenements.ott_pv_globale, pB?.evenements.ott_pv_globale);
+  if (ottPv.affiche > 0 || ottPv.isGhost)
+    ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PV)", ottPv.affiche, null, null, ["pv-globale"], null, null,
+      { delta: ottPv.delta, deltaCol: 2, isGhost: ottPv.isGhost });
 
-  const pfA = p.evenements.ott_pf; const pfB = pB?.evenements.ott_pf ?? 0;
-  if (pfA > 0 || estGhost(pfA, pfB))
-    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", affVal(pfA, pfB), null, null,
+  const ottPf = paire(p.evenements.ott_pf, pB?.evenements.ott_pf);
+  if (ottPf.affiche > 0 || ottPf.isGhost)
+    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", ottPf.affiche, null, null,
       ["pf-manuel","pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1","pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4","pf-opt1-enac","pf-opt1-plus-enac"], null, null,
-      { delta: deltaVal(pfA, pfB), deltaCol: 2, isGhost: estGhost(pfA, pfB) });
+      { delta: ottPf.delta, deltaCol: 2, isGhost: ottPf.isGhost });
 
-  const pv32A = p.evenements.ott_pv_opt32; const pv32B = pB?.evenements.ott_pv_opt32 ?? 0;
-  if (pv32A > 0 || estGhost(pv32A, pv32B))
-    ajouterLigne("202560", "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", affVal(pv32A, pv32B), null, null, ["pv-opt32"], null, null,
-      { delta: deltaVal(pv32A, pv32B), deltaCol: 2, isGhost: estGhost(pv32A, pv32B) });
+  const pv32 = paire(p.evenements.ott_pv_opt32, pB?.evenements.ott_pv_opt32);
+  if (pv32.affiche > 0 || pv32.isGhost)
+    ajouterLigne("202560", "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", pv32.affiche, null, null, ["pv-opt32"], null, null,
+      { delta: pv32.delta, deltaCol: 2, isGhost: pv32.isGhost });
 
   // ── Fidélisation & Attractivité ───────────────────────────────────────────────
-  const fidA = p.primes.fidelisation; const fidB = pB?.primes.fidelisation ?? 0;
-  if (fidA > 0 || estGhost(fidA, fidB))
-    ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", affVal(fidA, fidB), null, null, ["input-fidelisation"], null, null,
-      { delta: deltaVal(fidA, fidB), deltaCol: 2, isGhost: estGhost(fidA, fidB) });
+  const fid = paire(p.primes.fidelisation, pB?.primes.fidelisation);
+  if (fid.affiche > 0 || fid.isGhost)
+    ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", fid.affiche, null, null, ["input-fidelisation"], null, null,
+      { delta: fid.delta, deltaCol: 2, isGhost: fid.isGhost });
 
-  const attrA = p.primes.attractivite; const attrB = pB?.primes.attractivite ?? 0;
-  if (attrA > 0 || estGhost(attrA, attrB))
-    ajouterLigne("203002", "ATTRACTIVITE GEOGRAPHIQUE", affVal(attrA, attrB), null, null, ["input-attractivite"], null, null,
-      { delta: deltaVal(attrA, attrB), deltaCol: 2, isGhost: estGhost(attrA, attrB) });
+  const attr = paire(p.primes.attractivite, pB?.primes.attractivite);
+  if (attr.affiche > 0 || attr.isGhost)
+    ajouterLigne("203002", "ATTRACTIVITE GEOGRAPHIQUE", attr.affiche, null, null, ["input-attractivite"], null, null,
+      { delta: attr.delta, deltaCol: 2, isGhost: attr.isGhost });
 
   // Previews des totaux OTT dans le panneau de configuration
   majPreview("preview-ott-pf", p.evenements.ott_pf);
@@ -2282,26 +2293,22 @@ window._tourPauseParModal = false;
 window._tourWatchInterval = null;
 window._tourReprendreApresModal = null;
 
-// ─── Helpers DOM ─────────────────────────────────────────────────────────────
+// ─── Helpers DOM (encapsulation des sélecteurs — un seul endroit à changer si les IDs bougent) ──
 
-function _elPopover()   { return document.getElementById("tour-popover"); }
-function _elSpotlight() { return document.getElementById("tour-spotlight"); }
-function _elHeader()    { return document.querySelector(".tour-pop-header"); }
-function _elBody()      { return document.querySelector(".tour-pop-body"); }
-function _elStep()      { return document.querySelector(".tour-pop-step"); }
-function _elTitle()     { return document.querySelector(".tour-pop-title"); }
-function _elNext()      { return document.querySelector(".tour-pop-next"); }
-function _elPrev()      { return document.querySelector(".tour-pop-prev"); }
+const _elPopover   = () => document.getElementById("tour-popover");
+const _elSpotlight = () => document.getElementById("tour-spotlight");
+const _elHeader    = () => document.querySelector(".tour-pop-header");
+const _elBody      = () => document.querySelector(".tour-pop-body");
+const _elStep      = () => document.querySelector(".tour-pop-step");
+const _elTitle     = () => document.querySelector(".tour-pop-title");
+const _elNext      = () => document.querySelector(".tour-pop-next");
+const _elPrev      = () => document.querySelector(".tour-pop-prev");
 
 // ─── Positionnement ───────────────────────────────────────────────────────────
 
 const TOUR_GAP   = 12; // px entre spotlight et popover
 const TOUR_MARGE = 10; // px de marge screen edges
 
-/**
- * Déplace le spotlight sur un élément DOM.
- * padding : espace autour de l'élément (px)
- */
 /**
  * Déplace le spotlight sur un élément DOM.
  * Utilise opacity (pas display) pour préserver les transitions CSS top/left/width/height.
@@ -2684,9 +2691,8 @@ window._tourSkip = function () {
 /**
  * Appelé par le handler close de #magic-modal.
  * Pour chaque étape "modale" : détermine si on avance ou on reste.
+ * Initialisé à null ; écrasé par _tourInstallerRepriseApresModal() à chaque étape modale.
  */
-window._tourReprendreApresModal = null; // sera écrasé à chaque étape modale
-
 function _tourInstallerRepriseApresModal(index, steps) {
   const RIST_CLES = RIST_KEYS.map(r => r.cle);
 
@@ -2760,11 +2766,15 @@ function _ristMajChecklist(indexActif) {
   if (liste.innerHTML !== html) liste.innerHTML = html;
 }
 
-/** Pointage initial de la première ligne RIST. Appelé dans onRender de l'étape 6. */
-function _ristDemarrer() {
+/**
+ * Logique commune : trouve la prochaine ligne RIST à configurer,
+ * déplace le spotlight dessus et met à jour la checklist.
+ * Appelée à l'entrée de l'étape (onRender) ET à la reprise après chaque modale RIST.
+ */
+function _ristSuivreProgression() {
   const prochaine = _ristProchaineLigne();
   if (!prochaine) {
-    // Toutes déjà configurées (ex: retour via Précédent) → spotlight groupe entier
+    // Toutes configurées : spotlight sur le groupe entier
     _ristSpotlightGroupe();
     _ristMajChecklist(-1);
     _tourSignalerValidation();
@@ -2778,7 +2788,17 @@ function _ristDemarrer() {
   _ristMajChecklist(idx);
 }
 
-/** Positionne le spotlight sur le groupe entier des 5 lignes RIST. */
+/** Pointage initial de la première ligne RIST. Appelé dans onRender de l'étape 6. */
+function _ristDemarrer() {
+  _ristSuivreProgression();
+}
+
+/** Appelé après fermeture d'une modale RIST. */
+function _tourRistApresModal() {
+  const pop = _elPopover();
+  if (pop) pop.style.display = "";
+  _ristSuivreProgression();
+}
 function _ristSpotlightGroupe() {
   // Collecter uniquement les lignes RIST effectivement rendues dans le DOM
   const lignesPresentes = RIST_KEYS
@@ -2803,27 +2823,6 @@ function _ristSpotlightGroupe() {
   // Mémoriser comme élément actif pour le rafraîchissement
   _ristElActif = premiere;
   _tourPositionnerPopover(premiere);
-}
-
-/** Appelé après fermeture d'une modale RIST. */
-function _tourRistApresModal() {
-  const pop = _elPopover();
-  if (pop) pop.style.display = "";
-
-  const prochaine = _ristProchaineLigne();
-  if (!prochaine) {
-    // Toutes configurées : spotlight groupe entier
-    _ristSpotlightGroupe();
-    _ristMajChecklist(-1);
-    _tourSignalerValidation();
-    return;
-  }
-  const idx = RIST_KEYS.indexOf(prochaine);
-  _ristIndexActif = idx;
-  _ristElActif    = document.getElementById(prochaine.rowId);
-  _tourSpotlightSur(_ristElActif);
-  _tourPositionnerPopover(_ristElActif);
-  _ristMajChecklist(idx);
 }
 
 // =============================================================================
