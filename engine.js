@@ -1347,7 +1347,33 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       setTimeout(() => {
         const step = _tourSteps?.[window._tourEtapeIndex];
         if (!step) return;
-        const el = step.element ? document.querySelector(step.element) : null;
+        // Étape RIST : pointer la ligne actuellement active, pas step.element (toujours row-201958)
+        let el;
+        if (step.isRist) {
+          const prochain = _ristProchaineLigne();
+          if (!prochain) {
+            // Toutes faites : recalculer le spotlight groupe
+            const premiere = document.getElementById("row-201958");
+            const derniere = document.getElementById("row-201962");
+            if (premiere && derniere) {
+              const rTop = premiere.getBoundingClientRect();
+              const rBot = derniere.getBoundingClientRect();
+              const padding = 4;
+              const sp = _elSpotlight();
+              if (sp) {
+                sp.style.display = "";
+                sp.style.top    = (rTop.top    - padding) + "px";
+                sp.style.left   = (rTop.left   - padding) + "px";
+                sp.style.width  = (rTop.width  + padding * 2) + "px";
+                sp.style.height = (rBot.bottom - rTop.top + padding * 2) + "px";
+              }
+            }
+            return;
+          }
+          el = document.getElementById(prochain.rowId);
+        } else {
+          el = step.element ? document.querySelector(step.element) : null;
+        }
         _tourSpotlightSur(el);
         _tourPositionnerPopover(el);
       }, 50);
@@ -2342,11 +2368,22 @@ function _tourMajContenu(step, index, total, opts = {}) {
     }
 
     // Callbacks post-render (checklist RIST etc.)
+    // Important : doit être appelé AVANT le repositionnement final
+    // car _ristDemarrer() (dans onRender) peut changer la cible du spotlight
     if (opts.postRender) opts.postRender();
 
-    // Repositionner le popover avec le nouveau contenu (taille peut avoir changé)
-    const el = step.element ? document.querySelector(step.element) : null;
-    _tourPositionnerPopover(el);
+    // Repositionner le popover avec le nouveau contenu
+    // Pour l'étape RIST, utiliser la ligne active (mise à jour par _ristDemarrer)
+    let elPos;
+    if (step.isRist) {
+      const prochaine = _ristProchaineLigne();
+      elPos = prochaine
+        ? document.getElementById(prochaine.rowId)
+        : document.getElementById("row-201958"); // fallback (toutes faites)
+    } else {
+      elPos = step.element ? document.querySelector(step.element) : null;
+    }
+    _tourPositionnerPopover(elPos);
 
     // Fade in
     pop?.classList.remove("tour-popover-fading");
@@ -2417,10 +2454,10 @@ function _tourAfficherEtape(index) {
     _tourSpotlightSur(el);
   }
 
-  // Positionner le popover
-  _tourPositionnerPopover(el);
+  // NE PAS positionner le popover ici — il sera repositionné à l'intérieur du fade
+  // (pendant l'invisibilité) dans _tourMajContenu, évitant tout flash avec ancien contenu
 
-  // Mettre à jour le contenu
+  // Mettre à jour le contenu (fade-out → reposition → nouveau contenu → fade-in)
   _tourMajContenu(step, index, _tourTotal, {
     postRender: () => {
       if (step.onRender) step.onRender();
