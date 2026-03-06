@@ -2053,11 +2053,30 @@ window.calculerEtAfficherProjection = function () {
   set("proj-moy-cout",          fmt(mensuelMoyen.coutEmployeur));
 
   // Détail ponctuels
+  // FIX XSS résiduel — d.libelle peut contenir une saisie utilisateur (libellés libres) :
+  // construction via API DOM au lieu d'une interpolation innerHTML.
   const tbody = document.getElementById("proj-ponctuels-detail");
   if (tbody) {
-    tbody.innerHTML = detail.length === 0
-      ? `<tr><td colspan="2" style="text-align:center;color:#999;font-style:italic;">Aucun élément ponctuel saisi</td></tr>`
-      : detail.map(d => `<tr><td>${d.libelle}</td><td>${fmt(d.montant)}</td></tr>`).join("");
+    tbody.innerHTML = "";
+    if (detail.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 2;
+      td.style.cssText = "text-align:center;color:#999;font-style:italic;";
+      td.textContent = "Aucun élément ponctuel saisi";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    } else {
+      detail.forEach(d => {
+        const tr  = document.createElement("tr");
+        const td1 = document.createElement("td");
+        const td2 = document.createElement("td");
+        td1.textContent = d.libelle;
+        td2.textContent = fmt(d.montant);
+        tr.append(td1, td2);
+        tbody.appendChild(tr);
+      });
+    }
   }
 };
 
@@ -2795,6 +2814,8 @@ window._tourFermer = _tourFermer;
 // ─── Boutons du popover ───────────────────────────────────────────────────────
 
 window._tourNext = function () {
+  // Le nettoyage du handler CustomEvent est fait dans _tourActiverWatcher() appelé par _tourAfficherEtape.
+  // clearInterval conservé par compat (no-op, window._tourWatchInterval est toujours null).
   clearInterval(window._tourWatchInterval);
   const btnNext = _elNext();
   if (btnNext?.disabled) return;
@@ -2809,7 +2830,7 @@ window._tourNext = function () {
 };
 
 window._tourPrev = function () {
-  clearInterval(window._tourWatchInterval);
+  clearInterval(window._tourWatchInterval); // compat no-op
   const prev = window._tourEtapeIndex - 1;
   if (prev < 0) return;
   _tourAfficherEtape(prev);

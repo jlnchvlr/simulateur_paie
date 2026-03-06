@@ -1528,6 +1528,10 @@ body.navigation-clavier .resultat-item:focus {
   transition: background-color 0.15s;
   white-space: nowrap;
   font-family: var(--font-main);
+  /* Neutralise les styles natifs <button> — FIX #13 */
+  border: none;
+  line-height: inherit;
+  vertical-align: middle;
 }
 .badge-configurer:hover {
   background-color: #d9640d;
