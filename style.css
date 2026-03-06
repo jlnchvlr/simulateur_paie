@@ -376,6 +376,17 @@ body {
   background-color: var(--dgfip-medium);
   transform: scale(1.02);
 }
+.validate-btn:disabled {
+  background-color: #bbb;
+  cursor: not-allowed;
+  transform: none;
+}
+.validate-btn:disabled::after {
+  content: " — faites un choix ↑";
+  font-weight: normal;
+  font-size: 12px;
+  opacity: 0.85;
+}
 
 .add-buttons-grid {
   display: grid;
@@ -1704,6 +1715,29 @@ select.champ-non-configure {
 #tour-spotlight.tour-spotlight-invisible {
   opacity: 0;
   pointer-events: none;
+}
+
+/* ── Toast "hors zone" ── */
+#tour-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #333;
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: var(--font-main);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10001;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+#tour-toast.tour-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* ── Popover ── */

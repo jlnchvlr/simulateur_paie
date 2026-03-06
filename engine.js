@@ -398,12 +398,23 @@ function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
   window[`resetHelper${nom}`] = () => setHelper(`<strong>Sélectionné :</strong> ${details[getInput()?.value] || ""}`);
 
   window[`select${nom}`] = (valeur) => {
-    getInput().value = valeur;
+    const inputEl = getInput();
+    inputEl.value = valeur;
     document.querySelectorAll(`#${panelId} .rist-option`).forEach((el) => el.classList.remove("selected"));
     document.querySelector(`#${panelId} .rist-option[data-value="${valeur}"]`)?.classList.add("selected");
     window[`resetHelper${nom}`]();
-    // Marquer configuré immédiatement pour que la fiche de paie se mette à jour en temps réel.
-    // Le tour ne réagit pas car _tourPauseParModal=true pendant toute la durée de la modale.
+    // Marquer l'input comme confirmé (choix explicite de l'utilisateur)
+    if (inputEl) {
+      inputEl.dataset.confirmed = "1";
+      // Débloquer "Valider & Fermer" si il était bloqué (panels ISQ avec Aucune)
+      const validateBtn = document.querySelector(`#${panelId} .validate-btn`);
+      if (validateBtn) {
+        validateBtn.disabled = false;
+        validateBtn.removeAttribute("title");
+      }
+    }
+    // Marquer configuré immédiatement pour mise à jour en temps réel de la fiche.
+    // Le tour ne réagit pas car _tourPauseParModal=true pendant la modale.
     const cleMap = {
       "input-fonction":        "rist_fonctions",
       "input-experience":      "rist_experience",
@@ -485,18 +496,36 @@ function genererListeRist(cfg) {
   const section = baseDonnees.rist?.[cfg.dataKey];
   if (!container || !section) return;
 
-  const valeurActuelle = document.getElementById(cfg.inputId)?.value;
+  const inputEl        = document.getElementById(cfg.inputId);
+  const valeurActuelle = inputEl?.value;
+  const hasAucune      = Object.keys(section.montants).some(k => k === "Aucune" || k === "Aucun");
+  const dejaConfirme   = inputEl?.dataset.confirmed === "1";
+  // Ne montrer la sélection visuelle que si l'utilisateur a déjà fait un choix explicite
+  const afficherSelection = !hasAucune || dejaConfirme;
+
   container.innerHTML = "";
 
   Object.entries(section.montants).forEach(([niveau, montant]) => {
     const div = document.createElement("div");
-    div.className = "rist-option" + (niveau === valeurActuelle ? " selected" : "");
+    div.className = "rist-option" + (afficherSelection && niveau === valeurActuelle ? " selected" : "");
     div.dataset.value = niveau;
     div.textContent = `${niveau} (${montant.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €)`;
     div.addEventListener("mouseenter", () => window[`previewHelper${cfg.nom}`](niveau));
     div.addEventListener("click", () => window[`select${cfg.nom}`](niveau));
     container.appendChild(div);
   });
+
+  // Panels ISQ : bloquer "Valider & Fermer" tant qu'aucun choix explicite n'a été fait
+  const validateBtn = container.closest(".setting-panel")?.querySelector(".validate-btn");
+  if (hasAucune && validateBtn) {
+    if (dejaConfirme) {
+      validateBtn.disabled = false;
+      validateBtn.removeAttribute("title");
+    } else {
+      validateBtn.disabled = true;
+      validateBtn.title = "Faites un choix explicite — même « Aucune » si ça ne s'applique pas.";
+    }
+  }
 }
 
 // =============================================================================
@@ -2433,6 +2462,63 @@ function _tourSignalerValidation() {
   }
 }
 
+// ─── Verrouillage de la page pendant le tour ─────────────────────────────────
+
+let _tourToastTimer = null;
+
+/** Affiche un message toast pendant `duree` ms. */
+function _tourAfficherToast(msg, duree = 1800) {
+  const t = document.getElementById("tour-toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("tour-toast-visible");
+  clearTimeout(_tourToastTimer);
+  _tourToastTimer = setTimeout(() => t.classList.remove("tour-toast-visible"), duree);
+}
+
+/**
+ * Logique partagée de la garde — retourne true si l'événement doit être bloqué.
+ * Utilisée en capture pour click ET mousedown (les <select> natifs s'ouvrent sur mousedown).
+ */
+function _tourDoitBloquer(e) {
+  if (!window.isTourActive || window._tourPauseParModal) return false;
+
+  const pop   = document.getElementById("tour-popover");
+  const sp    = document.getElementById("tour-spotlight");
+  const modal = document.getElementById("magic-modal");
+
+  if (pop   && pop.contains(e.target))   return false;
+  if (modal && modal.contains(e.target)) return false;
+
+  if (sp && sp.style.display !== "none" && !sp.classList.contains("tour-spotlight-invisible")) {
+    const r = sp.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right &&
+        e.clientY >= r.top  && e.clientY <= r.bottom) {
+      return false; // dans la zone illuminée → autorisé
+    }
+  }
+
+  return true; // hors zone → bloquer
+}
+
+function _tourGuardeClic(e) {
+  if (!_tourDoitBloquer(e)) return;
+  e.stopPropagation();
+  e.preventDefault();
+  const step = _tourSteps?.[window._tourEtapeIndex];
+  const msg  = step?.blockedBy?.() === false || !step?.blockedBy
+    ? "Cliquez sur « Suivant » pour continuer ➔"
+    : "Terminez cette étape avant de continuer.";
+  _tourAfficherToast(msg);
+}
+
+function _tourGardeMousedown(e) {
+  if (!_tourDoitBloquer(e)) return;
+  e.stopPropagation();
+  e.preventDefault();
+  // Pas de toast sur mousedown pour éviter le doublon avec le click qui suit
+}
+
 // ─── Moteur principal ─────────────────────────────────────────────────────────
 
 let _tourSteps   = [];
@@ -2493,6 +2579,10 @@ function _tourDemarrer(steps, startIndex = 0, phase = "phase1") {
   window._tourPauseParModal = false;
   window._tourReprendreApresModal = null;
 
+  // Activer le verrouillage de la page (click + mousedown pour bloquer les <select> natifs)
+  document.addEventListener("click",     _tourGuardeClic,      true);
+  document.addEventListener("mousedown", _tourGardeMousedown,  true);
+
   const pop = _elPopover();
   const sp  = _elSpotlight();
 
@@ -2517,6 +2607,13 @@ function _tourFermer(pulserBadges = true) {
   window.isTourActive    = false;
   window._tourPauseParModal = false;
   window._tourReprendreApresModal = null;
+
+  // Désactiver le verrouillage de la page
+  document.removeEventListener("click",     _tourGuardeClic,     true);
+  document.removeEventListener("mousedown", _tourGardeMousedown, true);
+  clearTimeout(_tourToastTimer);
+  const t = document.getElementById("tour-toast");
+  if (t) t.classList.remove("tour-toast-visible");
 
   const pop = _elPopover();
   const sp  = _elSpotlight();
