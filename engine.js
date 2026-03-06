@@ -94,10 +94,14 @@ let _configures = (() => {
   return new Set();
 })();
 
-/** Marque un champ comme configuré et persiste. */
+/** Marque un champ comme configuré, persiste, et notifie le watcher du tour.
+ * FIX #10 — Performance : dispatch d'un CustomEvent "champ-configure" qui remplace
+ * le polling setInterval(200ms) dans _tourActiverWatcher.
+ */
 function marquerConfigure(cle) {
   _configures.add(cle);
   try { localStorage.setItem(CLE_CONFIGURES, JSON.stringify([..._configures])); } catch (_) {}
+  document.dispatchEvent(new CustomEvent("champ-configure", { detail: { cle } }));
 }
 
 /** Vrai si le champ n'a pas encore été configuré. */
@@ -167,17 +171,20 @@ function sauvegarderProfil() {
  * Doit être appelée APRÈS le peuplement des selects dynamiques (attractivité,
  * fidélisation, RIST) pour que les options existent avant d'être sélectionnées.
  *
- * @returns {boolean} true si un profil a été restauré, false sinon
+ * FIX #4 — Retourne l'objet profil brut (ou null) au lieu de true/false,
+ * ce qui évite une seconde lecture de localStorage chez l'appelant.
+ *
+ * @returns {Object|null} Objet profil restauré, ou null si rien à restaurer
  */
 function restaurerProfil() {
   let profil;
   try {
     const raw = localStorage.getItem(CLE_STOCKAGE);
-    if (!raw) return false;
+    if (!raw) return null;
     profil = JSON.parse(raw);
   } catch (e) {
     console.warn("Restauration profil impossible :", e);
-    return false;
+    return null;
   }
 
   CHAMPS_PROFIL.forEach(({ id, type, name }) => {
@@ -207,7 +214,7 @@ function restaurerProfil() {
     });
   });
 
-  return true;
+  return profil;
 }
 
 /**
@@ -291,6 +298,8 @@ function arrondir(valeur) {
 
 /**
  * Lit la valeur d'un champ DOM en `float`. Retourne 0 si l'élément est absent ou vide.
+ * FIX #8 — Remplace TOUTES les virgules (regex /,/g) : String.replace(str,str) ne
+ * remplaçait que la première occurrence, causant un NaN silencieux sur "1,5,0".
  * @param {string} id
  * @returns {number}
  */
@@ -299,7 +308,7 @@ function lireFloat(id) {
   if (!el) return 0;
   const v = el.value;
   if (v === "" || v === null) return 0;
-  return parseFloat(String(v).replace(",", ".")) || 0;
+  return parseFloat(String(v).replace(/,/g, ".")) || 0;
 }
 
 /**
@@ -320,6 +329,23 @@ function lireInt(id) {
 function majPreview(id, montant) {
   const el = document.getElementById(id);
   if (el) el.textContent = formaterMontant(montant);
+}
+
+/**
+ * Retarde l'exécution d'une fonction jusqu'à ce que `delai` ms se soient écoulées
+ * sans nouvel appel. Utilisé sur les champs texte libres (PAS, CSG) pour éviter
+ * de reconstruire le DOM du tableau à chaque keystroke.
+ * FIX #9 — Performance : évite la reconstruction complète de ~35 <tr> à chaque touche.
+ * @param {Function} fn
+ * @param {number} [delai=150]
+ * @returns {Function}
+ */
+function debounce(fn, delai = 150) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delai);
+  };
 }
 
 // =============================================================================
@@ -352,13 +378,22 @@ window.rechercherElement = function (requete) {
 function afficherResultatsRecherche(conteneur, resultats, requete, onSelect) {
   conteneur.innerHTML = "";
   if (resultats.length === 0) {
-    conteneur.innerHTML = `<div class="resultat-vide">Aucun élément trouvé pour "${requete}" 🕵️‍♂️</div>`;
+    // FIX #1 — XSS : construction via API DOM, jamais via innerHTML avec entrée utilisateur
+    const div = document.createElement("div");
+    div.className = "resultat-vide";
+    div.textContent = `Aucun élément trouvé pour "${requete}" 🕵️‍♂️`;
+    conteneur.appendChild(div);
     return;
   }
   resultats.forEach((res) => {
     const btn = document.createElement("button");
     btn.className = "resultat-item";
-    btn.innerHTML = `<span>${res.titre}</span> <span style="color:#aaa;font-size:12px;">➔</span>`;
+    const spanTitre = document.createElement("span");
+    spanTitre.textContent = res.titre;
+    const spanArrow = document.createElement("span");
+    spanArrow.style.cssText = "color:#aaa;font-size:12px;";
+    spanArrow.textContent = "➔";
+    btn.append(spanTitre, " ", spanArrow);
     btn.onclick = () => onSelect(res);
     conteneur.appendChild(btn);
   });
@@ -367,18 +402,31 @@ function afficherResultatsRecherche(conteneur, resultats, requete, onSelect) {
 // =============================================================================
 // 5. MENUS INTERACTIFS RIST / ISQ
 // =============================================================================
+// FIX #14 — RIST_INPUT_CLE_MAP et RIST_PANEL_CLE sont désormais dérivés de CONFIGS_RIST.
+// Ajouter un menu RIST ne nécessite plus de modifier trois structures séparées.
+// Note : CONFIGS_RIST est défini plus bas dans cette section ; les maps sont initialisées
+// au moment du premier accès (après le chargement de CONFIGS_RIST).
+
+// Ces deux constantes sont déclarées ici (avant creerMenuInteractif) mais remplies
+// juste après CONFIGS_RIST via Object.fromEntries() — voir commentaire section CONFIGS_RIST.
+// Pour permettre l'accès dans creerMenuInteractif (défini avant CONFIGS_RIST),
+// on utilise des late-binding via des fonctions au lieu de constantes statiques.
+
 /**
  * Map input ID → clé de configuration pour marquerConfigure().
- * Définie une seule fois ici, partagée par creerMenuInteractif et toute la section RIST.
+ * FIX #14 — Dérivée automatiquement de CONFIGS_RIST (plus de synchronisation manuelle).
+ * Initialisée après la déclaration de CONFIGS_RIST.
  * @type {Object.<string, string>}
  */
-const RIST_INPUT_CLE_MAP = {
-  "input-fonction":        "rist_fonctions",
-  "input-experience":      "rist_experience",
-  "input-isq-licence":     "rist_isq_licence",
-  "input-isq-complement":  "rist_isq_complement",
-  "input-isq-majoration":  "rist_isq_majoration",
-};
+let RIST_INPUT_CLE_MAP = {};
+
+/**
+ * Map panel ID → clé de configuration pour le handler close de la modale.
+ * FIX #14 — Dérivée automatiquement de CONFIGS_RIST.
+ * Initialisée après la déclaration de CONFIGS_RIST.
+ * @type {Object.<string, string>}
+ */
+let RIST_PANEL_CLE = {};
 
 /**
  * Factory : crée et enregistre sur `window` les 3 fonctions nécessaires à un menu interactif.
@@ -408,20 +456,19 @@ function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
   window[`resetHelper${nom}`] = () => setHelper(`<strong>Sélectionné :</strong> ${details[getInput()?.value] || ""}`);
 
   window[`select${nom}`] = (valeur) => {
+    // FIX #17 — Guard immédiat : le null check était APRÈS l'accès à .value (crash potentiel)
     const inputEl = getInput();
+    if (!inputEl) return;
     inputEl.value = valeur;
     document.querySelectorAll(`#${panelId} .rist-option`).forEach((el) => el.classList.remove("selected"));
     document.querySelector(`#${panelId} .rist-option[data-value="${valeur}"]`)?.classList.add("selected");
     window[`resetHelper${nom}`]();
-    // Marquer l'input comme confirmé (choix explicite de l'utilisateur)
-    if (inputEl) {
-      inputEl.dataset.confirmed = "1";
-      // Débloquer "Valider & Fermer" si il était bloqué (panels ISQ avec Aucune)
-      const validateBtn = document.querySelector(`#${panelId} .validate-btn`);
-      if (validateBtn) {
-        validateBtn.disabled = false;
-        validateBtn.removeAttribute("title");
-      }
+    inputEl.dataset.confirmed = "1";
+    // Débloquer "Valider & Fermer" si il était bloqué (panels ISQ avec Aucune)
+    const validateBtn = document.querySelector(`#${panelId} .validate-btn`);
+    if (validateBtn) {
+      validateBtn.disabled = false;
+      validateBtn.removeAttribute("title");
     }
     // Marquer configuré immédiatement pour mise à jour en temps réel de la fiche.
     // Le tour ne réagit pas car _tourPauseParModal=true pendant la modale.
@@ -436,12 +483,14 @@ function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
  */
 /**
  * Configuration des 5 menus RIST / ISQ.
- * Source unique de vérité : toute modification ici suffit pour ajouter ou supprimer un menu.
- * @type {Array<{nom:string, inputId:string, helperId:string, panelId:string, previewId:string, dataKey:string, placeholder:string}>}
+ * FIX #14 — Source unique de vérité : le champ `cle` permet de dériver automatiquement
+ * RIST_INPUT_CLE_MAP et RIST_PANEL_CLE, éliminant la triple redondance.
+ * @type {Array<{nom:string, cle:string, inputId:string, helperId:string, panelId:string, previewId:string, dataKey:string, placeholder:string}>}
  */
 const CONFIGS_RIST = [
   {
     nom: "Rist",
+    cle: "rist_fonctions",
     inputId: "input-fonction",
     helperId: "rist-helper-text",
     panelId: "panel-rist-fonctions",
@@ -451,6 +500,7 @@ const CONFIGS_RIST = [
   },
   {
     nom: "Exp",
+    cle: "rist_experience",
     inputId: "input-experience",
     helperId: "exp-helper-text",
     panelId: "panel-rist-experience",
@@ -460,6 +510,7 @@ const CONFIGS_RIST = [
   },
   {
     nom: "IsqLicence",
+    cle: "rist_isq_licence",
     inputId: "input-isq-licence",
     helperId: "isq-licence-helper-text",
     panelId: "panel-rist-isq-licence",
@@ -469,6 +520,7 @@ const CONFIGS_RIST = [
   },
   {
     nom: "IsqComplement",
+    cle: "rist_isq_complement",
     inputId: "input-isq-complement",
     helperId: "isq-complement-helper-text",
     panelId: "panel-rist-isq-complement",
@@ -478,6 +530,7 @@ const CONFIGS_RIST = [
   },
   {
     nom: "IsqMajoration",
+    cle: "rist_isq_majoration",
     inputId: "input-isq-majoration",
     helperId: "isq-majoration-helper-text",
     panelId: "panel-rist-isq-majoration",
@@ -486,6 +539,10 @@ const CONFIGS_RIST = [
     placeholder: "Sélectionnez un niveau pour voir l'affectation correspondante...",
   },
 ];
+
+// FIX #14 — Dérivation automatique des deux maps depuis CONFIGS_RIST (source unique)
+RIST_INPUT_CLE_MAP = Object.fromEntries(CONFIGS_RIST.map(cfg => [cfg.inputId, cfg.cle]));
+RIST_PANEL_CLE     = Object.fromEntries(CONFIGS_RIST.map(cfg => [cfg.panelId,  cfg.cle]));
 
 /**
  * Génère dynamiquement les options d'un menu RIST/ISQ depuis `baseDonnees`.
@@ -508,13 +565,32 @@ function genererListeRist(cfg) {
 
   container.innerHTML = "";
 
-  Object.entries(section.montants).forEach(([niveau, montant]) => {
+  // FIX #7 — Feedback explicite si data.json est mal formé pour ce menu
+  const entries = Object.entries(section.montants);
+  if (entries.length === 0) {
+    const msg = document.createElement("p");
+    msg.className = "panel-hint";
+    msg.style.color = "var(--color-danger)";
+    msg.textContent = "Données indisponibles (data.json). Rechargez la page.";
+    container.appendChild(msg);
+    return;
+  }
+
+  entries.forEach(([niveau, montant]) => {
+    const isSelected = afficherSelection && niveau === valeurActuelle;
     const div = document.createElement("div");
-    div.className = "rist-option" + (afficherSelection && niveau === valeurActuelle ? " selected" : "");
+    div.className = "rist-option" + (isSelected ? " selected" : "");
     div.dataset.value = niveau;
     div.textContent = `${niveau} (${montant.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €)`;
+    // FIX #12 — Accessibilité : option navigable au clavier et annoncée par les lecteurs d'écran
+    div.setAttribute("role", "option");
+    div.setAttribute("tabindex", "0");
+    div.setAttribute("aria-selected", isSelected ? "true" : "false");
     div.addEventListener("mouseenter", () => window[`previewHelper${cfg.nom}`](niveau));
     div.addEventListener("click", () => window[`select${cfg.nom}`](niveau));
+    div.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); window[`select${cfg.nom}`](niveau); }
+    });
     container.appendChild(div);
   });
 
@@ -536,8 +612,24 @@ function genererListeRist(cfg) {
 // =============================================================================
 
 /**
+ * Trie les clés d'un objet d'échelons : numériques d'abord (1, 2, …), puis alphanumériques (HEA1…).
+ * FIX #5 — Fonction partagée : évite l'incohérence entre le panneau principal et le comparateur.
+ * @param {Object} echelonsObj - Objet dont les clés sont les noms d'échelon
+ * @returns {string[]}
+ */
+function trierEchelons(echelonsObj) {
+  return Object.keys(echelonsObj).sort((a, b) => {
+    const [nA, nB] = [parseInt(a), parseInt(b)];
+    const [isA, isB] = [!isNaN(nA), !isNaN(nB)];
+    if (isA && isB) return nA - nB;
+    if (isA) return -1;
+    if (isB) return 1;
+    return a.localeCompare(b);
+  });
+}
+
+/**
  * Peuple le `<select>` des échelons selon le grade sélectionné.
- * Trie les échelons numériques avant les échelons alphanumériques (HEA1, HEA2...).
  * Conserve l'échelon actif si celui-ci existe dans le nouveau grade.
  */
 function mettreAJourEchelons() {
@@ -558,14 +650,7 @@ function mettreAJourEchelons() {
     return;
   }
 
-  const echelons = Object.keys(baseDonnees.grilles_icna[grade] || {}).sort((a, b) => {
-    const [nA, nB] = [parseInt(a), parseInt(b)];
-    const [isA, isB] = [!isNaN(nA), !isNaN(nB)];
-    if (isA && isB) return nA - nB;
-    if (isA) return -1;
-    if (isB) return 1;
-    return a.localeCompare(b);
-  });
+  const echelons = trierEchelons(baseDonnees.grilles_icna[grade] || {});
 
   // Placeholder en tête
   const ph = document.createElement("option");
@@ -622,7 +707,8 @@ function ouvrirModal(panelIds, titre) {
   // Mémoriser le panneau ouvert pour le gestionnaire de fermeture
   modal.dataset.panelOuvert = Array.isArray(panelIds) ? panelIds[0] : panelIds;
 
-  modal.showModal();
+  // FIX #3 — Guard : showModal() lève DOMException si la dialog est déjà ouverte
+  if (!modal.open) modal.showModal();
 
   // Auto-focus sur le champ principal si panel impôts ou CSG
   setTimeout(() => {
@@ -644,7 +730,9 @@ window.effacerValeurs = function (event, inputIds) {
   inputIds.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (el.tagName === "SELECT") el.value = el.querySelector('option[value="none"]') ? "none" : "0";
+    // FIX #6 — La valeur de reset est la première option du select (toujours "0" dans cette appli).
+    // L'ancienne détection via option[value="none"] était du dead code (aucune option "none" dans le HTML).
+    if (el.tagName === "SELECT") el.value = el.options[0]?.value ?? "0";
     else if (el.type === "checkbox") el.checked = false;
     else el.value = "0";
   });
@@ -1081,10 +1169,23 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     if (route && !isGhost) {
       classes.push("clickable-row");
       tr.title = "Cliquez pour modifier";
+      // FIX #11 — Accessibilité : rôle interactif + navigation clavier pour les lecteurs d'écran
+      tr.setAttribute("role", "button");
+      tr.setAttribute("tabindex", "0");
+      tr.setAttribute("aria-label", `Modifier : ${libelle}`);
       tr.onclick = () => ouvrirModal(route.cible, route.titre);
+      tr.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ouvrirModal(route.cible, route.titre); }
+      });
     } else if (libelle.includes("TAUX PERSONNALISE") && !isGhost) {
       classes.push("clickable-row");
+      tr.setAttribute("role", "button");
+      tr.setAttribute("tabindex", "0");
+      tr.setAttribute("aria-label", "Modifier : Prélèvement à la Source");
       tr.onclick = () => ouvrirModal("panel-impots", "Prélèvement à la Source");
+      tr.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ouvrirModal("panel-impots", "Prélèvement à la Source"); }
+      });
     }
     if (isGhost) classes.push("ligne-fantome-b");
     if (classes.length) tr.className = classes.join(" ");
@@ -1144,7 +1245,11 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   // ── Helper badge "À configurer" ───────────────────────────────────────────
   const badgeSiVierge = (cle, panelCible, titreCible) => {
     if (!nonConfigure(cle)) return null;
-    return `<span class="badge-configurer" onclick="ouvrirModal('${panelCible}','${titreCible}')">⚙ À configurer</span>`;
+    // FIX #13 — Accessibilité : <button> est focusable et annoncé par les lecteurs d'écran ;
+    // un <span onclick> ne l'est pas.
+    return `<button type="button" class="badge-configurer"
+      onclick="ouvrirModal('${panelCible}','${titreCible}')"
+      aria-label="Configurer : ${titreCible}">⚙ À configurer</button>`;
   };
 
   function ajouterLigneAvecBadge(code, libelle, cle, valeur, colonne, panelCible, titreCible, opts = {}) {
@@ -1559,12 +1664,13 @@ async function initialiserApplication() {
     initialiserComparateur();
 
     // Restauration du profil sauvegardé (après peuplement des listes)
-    const profilRestauré = restaurerProfil();
-    if (profilRestauré) {
+    // FIX #4 — restaurerProfil() retourne l'objet profil : pas besoin de relire localStorage
+    const profilSauve = restaurerProfil();
+    if (profilSauve) {
       // Le grade restauré peut avoir changé → reconstruire les échelons
       mettreAJourEchelons();
       // Réappliquer l'échelon sauvegardé (mettreAJourEchelons() remet sur le premier)
-      const echelonSauve = JSON.parse(localStorage.getItem(CLE_STOCKAGE))?.["input-echelon"];
+      const echelonSauve = profilSauve["input-echelon"];
       if (echelonSauve) document.getElementById("input-echelon").value = echelonSauve;
     }
 
@@ -1667,6 +1773,8 @@ async function initialiserApplication() {
       });
 
     // Taux PAS et Ind. CSG — type=text, listener unique backspace-safe
+    // FIX #9 — debounce(150ms) : ces champs texte déclenchaient calculerPaie() à chaque touche,
+    // ce qui reconstruisait les ~35 <tr> inutilement pendant la frappe.
     const creerListenerChampLibre = (id, cle, maxVal) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1677,13 +1785,13 @@ async function initialiserApplication() {
         if (e.ctrlKey || e.metaKey) return;
         if (!/[\d.,]/.test(e.key)) e.preventDefault();
       });
-      el.addEventListener("input", function () {
-        const v = this.value.replace(",", ".");
+      el.addEventListener("input", debounce(function () {
+        const v = this.value.replace(/,/g, ".");
         const n = parseFloat(v);
         if (maxVal !== null && !isNaN(n) && n > maxVal) this.value = String(maxVal);
         if (!isNaN(n) && v !== "") marquerConfigure(cle);
         calculerPaie();
-      });
+      }, 150));
     };
     creerListenerChampLibre("input-pas",     "taux_pas",             100);
     creerListenerChampLibre("input-ind-csg", "ind_compensatrice_csg", null);
@@ -1705,14 +1813,8 @@ async function initialiserApplication() {
     // Fermeture de la modale → marquer le champ RIST configuré si c'était un panneau RIST,
     // puis reprendre le tour. Le marquage se fait ICI (pas au clic sur le niveau) pour que
     // le tour ne réagisse jamais pendant que la modale est encore ouverte.
+    // FIX #14 — Utilise RIST_PANEL_CLE module-level dérivée de CONFIGS_RIST (plus de doublon)
     modal.addEventListener("close", () => {
-      const RIST_PANEL_CLE = {
-        "panel-rist-fonctions":      "rist_fonctions",
-        "panel-rist-experience":     "rist_experience",
-        "panel-rist-isq-licence":    "rist_isq_licence",
-        "panel-rist-isq-complement": "rist_isq_complement",
-        "panel-rist-isq-majoration": "rist_isq_majoration",
-      };
       const cle = RIST_PANEL_CLE[modal.dataset.panelOuvert];
       if (cle) marquerConfigure(cle);
 
@@ -1802,7 +1904,9 @@ async function initialiserApplication() {
   }
 }
 
-window.onload = initialiserApplication;
+// FIX #15 — DOMContentLoaded : ne bloque pas sur le chargement des images/fonts, et ne risque
+// pas d'écraser un autre handler onload assigné ailleurs (window.onload = ... est exclusif).
+document.addEventListener("DOMContentLoaded", initialiserApplication);
 
 // =============================================================================
 // 12. PROJECTION ANNUELLE
@@ -1981,14 +2085,8 @@ window.ouvrirProjectionAnnuelle = function () {
     container.innerHTML = "";
     saved.libres.forEach(({ libelle, montant }) => {
       if (!montant) return;
-      const row = document.createElement("div");
-      row.className = "proj-libre-row";
-      row.innerHTML = `
-        <input type="text"   class="proj-libre-lib" placeholder="Libellé (ex: Rappel RIST)" value="${libelle}" />
-        <input type="number" class="proj-libre-val" placeholder="0.00" step="10" value="${montant}" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
-        <button type="button" onclick="this.parentElement.remove(); calculerEtAfficherProjection()">✖</button>
-      `;
-      container.appendChild(row);
+      // FIX #2 — XSS : libellé utilisateur injecté via .value (sûr), jamais via attribut innerHTML
+      container.appendChild(_creerLigneLibre(libelle, montant));
     });
   }
 
@@ -1997,19 +2095,50 @@ window.ouvrirProjectionAnnuelle = function () {
 };
 
 /**
+ * Construit une ligne libre (div.proj-libre-row) via l'API DOM.
+ * FIX #2 — XSS : libellé/montant passés via .value et .textContent, jamais via attribut innerHTML.
+ * @param {string} [libelle=""] - Libellé pré-rempli
+ * @param {number|string} [montant=""] - Montant pré-rempli
+ * @returns {HTMLDivElement}
+ */
+function _creerLigneLibre(libelle = "", montant = "") {
+  const row = document.createElement("div");
+  row.className = "proj-libre-row";
+
+  const inputLib = document.createElement("input");
+  inputLib.type = "text";
+  inputLib.className = "proj-libre-lib";
+  inputLib.placeholder = "Libellé (ex: Rappel RIST)";
+  if (libelle) inputLib.value = libelle;
+
+  const inputVal = document.createElement("input");
+  inputVal.type = "number";
+  inputVal.className = "proj-libre-val";
+  inputVal.placeholder = "0.00";
+  inputVal.step = "10";
+  if (montant) inputVal.value = montant;
+  inputVal.addEventListener("focus", () => inputVal.select());
+  inputVal.addEventListener("input", () => window.calculerEtAfficherProjection?.());
+
+  const btnSuppr = document.createElement("button");
+  btnSuppr.type = "button";
+  btnSuppr.textContent = "✖";
+  btnSuppr.addEventListener("click", () => {
+    row.remove();
+    window.calculerEtAfficherProjection?.();
+  });
+
+  row.append(inputLib, inputVal, btnSuppr);
+  return row;
+}
+
+/**
  * Ajoute une ligne libre dans la section ponctuels.
  */
 window.ajouterLigneLibre = function () {
   const container = document.getElementById("proj-lignes-libres");
   if (!container) return;
-  const row = document.createElement("div");
-  row.className = "proj-libre-row";
-  row.innerHTML = `
-    <input type="text"   class="proj-libre-lib" placeholder="Libellé (ex: Rappel RIST)" />
-    <input type="number" class="proj-libre-val" placeholder="0.00" step="10" onfocus="this.select()" oninput="calculerEtAfficherProjection()" />
-    <button type="button" onclick="this.parentElement.remove(); calculerEtAfficherProjection()">✖</button>
-  `;
-  container.appendChild(row);
+  container.appendChild(_creerLigneLibre());
 };
 
 // =============================================================================
@@ -2101,17 +2230,17 @@ function majDeltaNet(mA, mB) {
 
 /**
  * Met à jour les échelons disponibles dans le select grade du panneau B.
- * Miroir de mettreAJourEchelons() pour le panneau comparateur.
+ * FIX #5 — Utilise trierEchelons() partagé : ordre identique au panneau principal.
  */
 function mettreAJourEchelonsB() {
   const grade  = document.getElementById("cmp-grade")?.value;
   const select = document.getElementById("cmp-echelon");
   if (!select || !baseDonnees.grilles_icna) return;
-  const echelons = baseDonnees.grilles_icna[grade] || {};
-  const current  = select.value;
-  select.innerHTML = "";
-  Object.keys(echelons).forEach((ech) => select.add(new Option(ech, ech)));
-  if (current && echelons[current]) select.value = current;
+  const echelonsObj = baseDonnees.grilles_icna[grade] || {};
+  const current     = select.value;
+  select.innerHTML  = "";
+  trierEchelons(echelonsObj).forEach((ech) => select.add(new Option(ech, ech)));
+  if (current && echelonsObj[current]) select.value = current;
 }
 
 /**
@@ -2290,7 +2419,8 @@ const LABELS_CHAMPS = {
 window.isTourActive       = false;
 window._tourEtapeIndex    = 0;
 window._tourPauseParModal = false;
-window._tourWatchInterval = null;
+window._tourWatchInterval = null;  // conservé pour nettoyage compat, plus utilisé par setInterval
+window._tourWatchHandler  = null;  // FIX #10 — handler CustomEvent "champ-configure"
 window._tourReprendreApresModal = null;
 
 // ─── Helpers DOM (encapsulation des sélecteurs — un seul endroit à changer si les IDs bougent) ──
@@ -2439,24 +2569,33 @@ function _tourMajContenu(step, index, total, opts = {}) {
 
 /**
  * Active le watcher pour l'étape courante.
+ * FIX #10 — Remplace le polling setInterval(200ms) par un listener sur l'événement
+ * "champ-configure" émis par marquerConfigure(). Réactif instantanément, zéro overhead en idle.
  * Enregistre l'état du champ AU MOMENT DE L'APPEL (synchrone).
  * Déclenche uniquement si l'état passe false → true par rapport à cet instant.
  */
 function _tourActiverWatcher(step) {
-  clearInterval(window._tourWatchInterval);
+  // Nettoyer le listener précédent s'il existe encore
+  if (window._tourWatchHandler) {
+    document.removeEventListener("champ-configure", window._tourWatchHandler);
+    window._tourWatchHandler = null;
+  }
+  clearInterval(window._tourWatchInterval); // compat : on ne set plus d'interval mais on nettoie par sécurité
   if (!step.watchFn) return;
 
   const etatInitial = step.watchFn(); // État au moment de l'entrée dans l'étape
 
-  window._tourWatchInterval = setInterval(() => {
+  const handler = () => {
     if (!window.isTourActive || window._tourPauseParModal) return;
-    const etatActuel = step.watchFn();
-    if (!etatInitial && etatActuel) {
+    if (!etatInitial && step.watchFn()) {
       // Transition false → true : valider visuellement, débloquer Suivant
-      clearInterval(window._tourWatchInterval);
+      document.removeEventListener("champ-configure", handler);
+      window._tourWatchHandler = null;
       _tourSignalerValidation();
     }
-  }, 200);
+  };
+  window._tourWatchHandler = handler;
+  document.addEventListener("champ-configure", handler);
 }
 
 /** Affiche la coche ✓ dans le header et débloque le bouton Suivant. */
@@ -2613,7 +2752,12 @@ function _tourDemarrer(steps, startIndex = 0, phase = "phase1") {
 
 /** Ferme le tour proprement. */
 function _tourFermer(pulserBadges = true) {
-  clearInterval(window._tourWatchInterval);
+  // FIX #10 — Nettoyer le listener CustomEvent (remplace clearInterval)
+  if (window._tourWatchHandler) {
+    document.removeEventListener("champ-configure", window._tourWatchHandler);
+    window._tourWatchHandler = null;
+  }
+  clearInterval(window._tourWatchInterval); // compat : garde le nettoyage pour sécurité
   window.isTourActive    = false;
   window._tourPauseParModal = false;
   window._tourReprendreApresModal = null;
