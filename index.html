@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulateur Paie ICNA</title>
     <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css" />
+
   </head>
   <body>
-    <button class="btn-visite-flottant" onclick="lancerVisiteGuidee()">💡 Comment ça marche ?</button>
+    <div class="visite-btns-wrap">
+      <button id="btn-visite-avance-flottant" class="btn-visite-avance-flottant" onclick="lancerVisiteAvancee(0)">🚀 Fonctions avancées</button>
+      <button id="btn-visite-flottant" class="btn-visite-flottant" onclick="lancerVisiteGuidee(0)">
+        💡 Démarrage
+      </button>
+    </div>
   <button id="btn-comparer-flottant" class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
   <button id="btn-projection-flottant" class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
 
@@ -463,7 +468,7 @@
     <div class="page-a4">
       <div class="bareme-header">
         <span id="ui-version-bareme" class="bareme-version"></span>
-        <button onclick="effacerProfil()" class="reset-profil" title="Réinitialiser le profil sauvegardé">↺</button>
+        <button id="btn-reset-profil" onclick="effacerProfil()" class="reset-profil" title="Réinitialiser le profil sauvegardé">↺</button>
       </div>
 
       <table class="info-table">
@@ -689,7 +694,24 @@
     <!-- /#panneau-comparaison -->
 
 
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+
     <script src="engine.js"></script>
+    <!-- ═══ TOUR GUIDÉ — DOM fixe, jamais détruit ═══ -->
+    <div id="tour-spotlight" aria-hidden="true" style="display:none"></div>
+    <div id="tour-toast" aria-live="polite"></div>
+    <div id="tour-popover" role="dialog" aria-modal="true" aria-label="Tutoriel" style="display:none">
+      <div class="tour-pop-header">
+        <span class="tour-pop-step"></span>
+        <span class="tour-pop-title"></span>
+      </div>
+      <div class="tour-pop-body"></div>
+      <div class="tour-pop-footer">
+        <button class="tour-pop-prev" onclick="window._tourPrev()">⬅ Précédent</button>
+        <button class="tour-pop-skip" onclick="window._tourSkip()">Passer ⏭</button>
+        <button class="tour-pop-next" onclick="window._tourNext()">Suivant ➔</button>
+      </div>
+    </div>
+    <!-- ═══ FIN TOUR ═══ -->
+
   </body>
 </html>

@@ -376,6 +376,17 @@ body {
   background-color: var(--dgfip-medium);
   transform: scale(1.02);
 }
+.validate-btn:disabled {
+  background-color: #bbb;
+  cursor: not-allowed;
+  transform: none;
+}
+.validate-btn:disabled::after {
+  content: " — faites un choix ↑";
+  font-weight: normal;
+  font-size: 12px;
+  opacity: 0.85;
+}
 
 .add-buttons-grid {
   display: grid;
@@ -534,23 +545,40 @@ body {
   color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 50px; /* Forme de pilule arrondie */
+  border-radius: 50px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   font-family: var(--font-main);
   font-size: 14px;
   font-weight: bold;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   z-index: 1000;
 }
-.btn-visite-flottant:hover {
-  transform: translateY(-3px); /* Petit effet de soulèvement au survol */
+.btn-visite-avance-flottant {
+  position: fixed;
+  bottom: 30px;
+  right: 200px;
+  background-color: #2c6e49;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 14px;
+  font-weight: bold;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 1000;
+}
+.btn-visite-flottant:hover,
+.btn-visite-avance-flottant:hover {
+  transform: translateY(-3px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 @media print {
-  .btn-visite-flottant {
+  .btn-visite-flottant,
+  .btn-visite-avance-flottant {
     display: none !important;
   }
 }
@@ -1610,7 +1638,6 @@ select.champ-non-configure {
 }
 .footer-pending-icon {
   font-size: 14px;
-  animation: badge-pulse 1.8s ease-in-out infinite;
 }
 
 /* ── Boutons flottants désactivés (config incomplète) ── */
@@ -1629,4 +1656,301 @@ select.champ-non-configure {
   border-radius: 6px;
   padding: 4px;
   animation: badge-pulse 1.8s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   VISITE GUIDÉE CUSTOM — Tour from scratch, zéro driver.js
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Boutons visite (conteneur flex) ── */
+.visite-btns-wrap {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  z-index: 900;
+}
+.btn-visite-flottant,
+.btn-visite-avance-flottant {
+  position: static;
+  white-space: nowrap;
+  color: white;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: bold;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.btn-visite-flottant        { background-color: var(--dgfip-dark); }
+.btn-visite-avance-flottant { background-color: #2c6e49; }
+.btn-visite-flottant:hover,
+.btn-visite-avance-flottant:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.36);
+}
+@media print { .visite-btns-wrap { display: none !important; } }
+
+/* ── Spotlight ── */
+#tour-spotlight {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 5px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+  z-index: 9998;
+  transition: top 0.32s cubic-bezier(0.4,0,0.2,1),
+              left 0.32s cubic-bezier(0.4,0,0.2,1),
+              width 0.32s cubic-bezier(0.4,0,0.2,1),
+              height 0.32s cubic-bezier(0.4,0,0.2,1),
+              opacity 0.15s ease;
+}
+/* Invisible mais présent dans le DOM → les transitions top/left/width/height jouent */
+#tour-spotlight.tour-spotlight-invisible {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Toast "hors zone" ── */
+#tour-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #333;
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: var(--font-main);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10001;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+#tour-toast.tour-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Popover ── */
+#tour-popover {
+  position: fixed;
+  z-index: 9999;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.1);
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  font-family: var(--font-main);
+  transition: opacity 0.1s ease;
+}
+#tour-popover.tour-popover-fading {
+  opacity: 0;
+}
+
+.tour-pop-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.tour-pop-step {
+  font-size: 10px;
+  color: #aaa;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tour-pop-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--dgfip-dark);
+  flex: 1;
+  line-height: 1.3;
+}
+
+/* Coche ✓ qui apparaît dans le titre quand l'étape est validée */
+.tour-pop-header.tour-valide .tour-pop-title::after {
+  content: "\00a0 ✓";
+  color: #2c6e49;
+  font-size: 13px;
+  display: inline-block;
+  animation: tour-coche-pop 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes tour-coche-pop {
+  from { opacity: 0; transform: scale(0.3); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Corps — fade sur changement de contenu uniquement */
+.tour-pop-body {
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #333;
+  min-height: 60px;
+}
+
+.tour-pop-footer {
+  padding: 10px 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+.tour-pop-prev {
+  font-size: 12px;
+  color: #888;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.tour-pop-prev:hover { color: #555; border-color: #bbb; }
+
+.tour-pop-skip {
+  font-size: 11px;
+  color: #bbb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 4px;
+  font-family: var(--font-main);
+  text-decoration: underline dotted;
+  flex: 1;
+  text-align: center;
+  transition: color 0.15s;
+}
+.tour-pop-skip:hover { color: #888; }
+
+.tour-pop-next {
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+  background: var(--dgfip-dark);
+  border: none;
+  border-radius: 7px;
+  padding: 7px 16px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+.tour-pop-next:not([disabled]):hover {
+  background: #1a3a5c;
+  transform: translateY(-1px);
+}
+.tour-pop-next[disabled] {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+/* Quand Suivant se débloque : petit pulse vert pour attirer l'oeil */
+.tour-pop-next.tour-next-ready {
+  background: #2c6e49 !important;
+  animation: tour-next-pulse 0.4s ease-out forwards;
+}
+@keyframes tour-next-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(44,110,73,0.7); }
+  60%  { box-shadow: 0 0 0 7px rgba(44,110,73,0); }
+  100% { box-shadow: none; }
+}
+
+/* Confirmation quitter */
+.tour-confirm-quit {
+  padding: 8px 10px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #856404;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.tour-confirm-quit button {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  border: 1px solid currentColor; cursor: pointer; background: white;
+  font-family: var(--font-main);
+}
+.tour-confirm-quit .btn-oui { color: #dc3545; border-color: #dc3545; }
+.tour-confirm-quit .btn-non { color: #2c6e49; border-color: #2c6e49; }
+
+/* ── Checklist RIST dans le corps ── */
+.tour-rist-checklist { margin-top: 10px; font-size: 12px; }
+.tour-rist-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 0;
+  transition: color 0.25s;
+}
+.tour-rist-check {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #ccc;
+  flex-shrink: 0; font-size: 9px; font-weight: bold;
+  transition: background 0.25s, border-color 0.25s;
+}
+.tour-rist-item.done .tour-rist-check { background: #28a745; border-color: #28a745; color: white; }
+.tour-rist-item.done > span:last-child { color: #28a745; text-decoration: line-through; }
+/* Ligne RIST actuellement spotlightée */
+.tour-rist-item.actif > span:last-child { font-weight: bold; color: var(--dgfip-dark); }
+
+/* Hint italique */
+.tour-hint {
+  display: block; margin-top: 8px;
+  font-size: 11px; color: #999; font-style: italic;
+}
+
+/* ── Lignes pulsantes phase 2 ── */
+@keyframes tour-ligne-pulse {
+  0%,100% { background-color: transparent; }
+  50%     { background-color: rgba(40,167,69,0.11); }
+}
+.tour-ligne-pulsante td { animation: tour-ligne-pulse 1.5s ease-in-out infinite !important; }
+.tour-ligne-pulsante:hover td {
+  background-color: rgba(40,167,69,0.22) !important;
+  animation-play-state: paused !important;
+}
+
+/* ── Reset button highlight ── */
+@keyframes tour-pulse-reset {
+  0%,100% { box-shadow: 0 0 0 0 rgba(220,53,69,0.7); }
+  50%     { box-shadow: 0 0 0 8px rgba(220,53,69,0); }
+}
+#btn-reset-profil.tour-highlight-reset {
+  opacity: 1 !important; color: #dc3545 !important; font-size: 16px !important;
+  animation: tour-pulse-reset 1.2s ease-in-out 3;
+}
+
+/* ── Bouton démo ── */
+.tour-demo-btn {
+  display: inline-block; margin-top: 10px; padding: 6px 14px;
+  background: var(--dgfip-dark); color: white; border: none;
+  border-radius: 6px; cursor: pointer; font-family: var(--font-main);
+  font-size: 12px; font-weight: bold; transition: opacity 0.2s;
+}
+.tour-demo-btn:hover    { opacity: 0.85; }
+.tour-demo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Pulsation post-tour ── */
+@keyframes badge-post-attention {
+  0%,100% { box-shadow: 0 0 0 0 rgba(253,126,20,0.9); transform: scale(1); }
+  40%     { box-shadow: 0 0 0 8px rgba(253,126,20,0); transform: scale(1.1); }
+}
+.badge-configurer.tour-post-attention {
+  animation: badge-post-attention 0.7s ease-out 4 !important;
 }
