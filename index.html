@@ -52,11 +52,11 @@
             <strong>Zone 3 (0%) :</strong> Toutes les autres communes.
           </p>
           <div id="zone-radios-wrap" class="ir-tabs">
-            <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" onchange="calculerPaie()" />
+            <input type="radio" id="ir-zone1" name="ir-zone" value="Zone 1" />
             <label for="ir-zone1"><strong>3 %</strong><br /><small>Zone 1</small></label>
-            <input type="radio" id="ir-zone2" name="ir-zone" value="Zone 2" onchange="calculerPaie()" />
+            <input type="radio" id="ir-zone2" name="ir-zone" value="Zone 2" />
             <label for="ir-zone2"><strong>1 %</strong><br /><small>Zone 2</small></label>
-            <input type="radio" id="ir-zone3" name="ir-zone" value="Zone 3" onchange="calculerPaie()" />
+            <input type="radio" id="ir-zone3" name="ir-zone" value="Zone 3" />
             <label for="ir-zone3"><strong>0 %</strong><br /><small>Zone 3</small></label>
           </div>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
@@ -148,29 +148,29 @@
           <p class="panel-hint-small">Cliquez sur les options actives dans votre centre :</p>
 
           <div class="ott-grid">
-            <input type="checkbox" id="pf-opt1-l16" class="pf-checkbox" value="345" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-l16" class="pf-checkbox" value="345" />
             <label for="pf-opt1-l16" class="ott-card"><span class="ott-card-title">Option 1 (Listes 1 à 6)</span><span class="ott-card-amount">+ 345,00 €</span></label>
-            <input type="checkbox" id="pf-opt1-cdg" class="pf-checkbox" value="379.50" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-cdg" class="pf-checkbox" value="379.50" />
             <label for="pf-opt1-cdg" class="ott-card"><span class="ott-card-title">Option 1 (CDG)</span><span class="ott-card-amount">+ 379,50 €</span></label>
-            <input type="checkbox" id="pf-opt1-l711" class="pf-checkbox" value="293.25" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-l711" class="pf-checkbox" value="293.25" />
             <label for="pf-opt1-l711" class="ott-card"><span class="ott-card-title">Option 1 (Listes 7 à 8)</span><span class="ott-card-amount">+ 293,25 €</span></label>
-            <input type="checkbox" id="pf-opt1-l911" class="pf-checkbox" value="241.50" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-l911" class="pf-checkbox" value="241.50" />
             <label for="pf-opt1-l911" class="ott-card"><span class="ott-card-title">Option 1 (Listes 9 à 11)</span><span class="ott-card-amount">+ 241,50 €</span></label>
-            <input type="checkbox" id="pf-opt1-plus-n1" class="pf-checkbox" value="80" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-plus-n1" class="pf-checkbox" value="80" />
             <label for="pf-opt1-plus-n1" class="ott-card"><span class="ott-card-title">Option 1 Plus (N' &le; 2)</span><span class="ott-card-amount">+ 80,00 €</span></label>
-            <input type="checkbox" id="pf-opt1-plus-n2" class="pf-checkbox" value="160" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-plus-n2" class="pf-checkbox" value="160" />
             <label for="pf-opt1-plus-n2" class="ott-card"><span class="ott-card-title">Option 1 Plus (N' &gt; 2)</span><span class="ott-card-amount">+ 160,00 €</span></label>
-            <input type="checkbox" id="pf-opt2-1" class="pf-checkbox" value="115" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt2-1" class="pf-checkbox" value="115" />
             <label for="pf-opt2-1" class="ott-card"><span class="ott-card-title">Option 2-1</span><span class="ott-card-amount">+ 115,00 €</span></label>
-            <input type="checkbox" id="pf-opt2-2" class="pf-checkbox" value="115" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt2-2" class="pf-checkbox" value="115" />
             <label for="pf-opt2-2" class="ott-card"><span class="ott-card-title">Option 2-2</span><span class="ott-card-amount">+ 115,00 €</span></label>
-            <input type="checkbox" id="pf-opt2-bis" class="pf-checkbox" value="57.50" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt2-bis" class="pf-checkbox" value="57.50" />
             <label for="pf-opt2-bis" class="ott-card"><span class="ott-card-title">Option 2 Bis</span><span class="ott-card-amount">+ 57,50 €</span></label>
-            <input type="checkbox" id="pf-opt4" class="pf-checkbox" value="115" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt4" class="pf-checkbox" value="115" />
             <label for="pf-opt4" class="ott-card"><span class="ott-card-title">Option 4</span><span class="ott-card-amount">+ 115,00 €</span></label>
-            <input type="checkbox" id="pf-opt1-enac" class="pf-checkbox" value="216" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-enac" class="pf-checkbox" value="216" />
             <label for="pf-opt1-enac" class="ott-card"><span class="ott-card-title">Option 1 ENAC</span><span class="ott-card-amount">+ 216,00 €</span></label>
-            <input type="checkbox" id="pf-opt1-plus-enac" class="pf-checkbox" value="80" onchange="calculerPaie()" />
+            <input type="checkbox" id="pf-opt1-plus-enac" class="pf-checkbox" value="80" />
             <label for="pf-opt1-plus-enac" class="ott-card"><span class="ott-card-title">Option 1 Plus ENAC</span><span class="ott-card-amount">+ 80,00 €</span></label>
           </div>
 
@@ -234,15 +234,15 @@
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <p class="panel-notice">Vous pouvez cumuler plusieurs aides (cochez celles qui s'appliquent à votre situation) :</p>
           <div class="ir-tabs">
-            <input type="checkbox" id="psc-15" class="psc-checkbox" value="15" onchange="calculerPaie()" />
+            <input type="checkbox" id="psc-15" class="psc-checkbox" value="15" />
             <label for="psc-15"
               ><strong>15 €</strong><br /><small>Jusqu'au<br />30/04/26</small></label
             >
-            <input type="checkbox" id="psc-7" class="psc-checkbox" value="7" onchange="calculerPaie()" />
+            <input type="checkbox" id="psc-7" class="psc-checkbox" value="7" />
             <label for="psc-7"
               ><strong>7 €</strong><br /><small>Prév. MGAS<br />(Dès 05/26)</small></label
             >
-            <input type="checkbox" id="psc-5" class="psc-checkbox" value="5" onchange="calculerPaie()" />
+            <input type="checkbox" id="psc-5" class="psc-checkbox" value="5" />
             <label for="psc-5"
               ><strong>5 €</strong><br /><small>Santé ALAN<br />(Dès 05/26)</small></label
             >
@@ -258,15 +258,15 @@
           <input type="text" id="recherche-ajout" placeholder="Rechercher une prime, absence, indemnité..." autocomplete="off" />
           <div id="resultats-recherche" style="display: none"></div>
           <div id="boutons-ajout-defaut" class="add-buttons-grid">
-            <button onclick="ouvrirModal('panel-nuits', '🌙 Travail de Nuit &amp; Soirées')">🌙 Nuits &amp; Soirées</button>
-            <button onclick="ouvrirModal('panel-absences', '🤒 Absences &amp; Carence')">🤒 Jours d'absence</button>
-            <button onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">📊 Protocole (OTT)</button>
-            <button onclick="ouvrirModal('panel-primes', '💰 Partage Performance (PPP)')">💰 Partage Performance</button>
-            <button onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')">📍 Attractivité Géo</button>
-            <button onclick="ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')">⏳ Prime Fidélisation</button>
-            <button onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
-            <button onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
-            <button onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">🛡️ Participation PSC</button>
+            <button type="button" onclick="ouvrirModal('panel-nuits', '🌙 Travail de Nuit &amp; Soirées')">🌙 Nuits &amp; Soirées</button>
+            <button type="button" onclick="ouvrirModal('panel-absences', '🤒 Absences &amp; Carence')">🤒 Jours d'absence</button>
+            <button type="button" onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">📊 Protocole (OTT)</button>
+            <button type="button" onclick="ouvrirModal('panel-primes', '💰 Partage Performance (PPP)')">💰 Partage Performance</button>
+            <button type="button" onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')">📍 Attractivité Géo</button>
+            <button type="button" onclick="ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')">⏳ Prime Fidélisation</button>
+            <button type="button" onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
+            <button type="button" onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
+            <button type="button" onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">🛡️ Participation PSC</button>
           </div>
         </div>
 
@@ -468,7 +468,7 @@
     <div class="page-a4">
       <div class="bareme-header">
         <span id="ui-version-bareme" class="bareme-version"></span>
-        <button id="btn-reset-profil" onclick="effacerProfil()" class="reset-profil" title="Réinitialiser le profil sauvegardé">↺</button>
+        <button type="button" id="btn-reset-profil" onclick="effacerProfil()" class="reset-profil" title="Réinitialiser le profil sauvegardé">↺</button>
       </div>
 
       <table class="info-table">
@@ -695,7 +695,9 @@
 
 
 
-    <script src="engine.js"></script>
+    <!-- ════════════════════════════════════════════
+         MOTEUR — chargé après tout le DOM
+         ════════════════════════════════════════════ -->
     <!-- ═══ TOUR GUIDÉ — DOM fixe, jamais détruit ═══ -->
     <div id="tour-spotlight" aria-hidden="true" style="display:none"></div>
     <div id="tour-toast" aria-live="polite"></div>
@@ -712,6 +714,7 @@
       </div>
     </div>
     <!-- ═══ FIN TOUR ═══ -->
+    <script src="engine.js"></script>
 
   </body>
 </html>
