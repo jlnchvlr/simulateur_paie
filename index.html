@@ -696,29 +696,6 @@
 
 
     <script src="engine.js"></script>
-    <!-- ══════════════════════════════════════
-         DIALOG FIN DE TOUR GUIDÉ
-         ══════════════════════════════════════ -->
-    <dialog id="tour-fin-dialog" class="tour-fin-dialog">
-      <div class="tour-fin-inner">
-        <h2 id="tour-fin-title">📋 Tour terminé</h2>
-        <div id="tour-fin-recap" class="tour-fin-recap"></div>
-        <div class="tour-fin-actions">
-          <button class="tour-fin-btn tour-fin-btn-solo"
-            onclick="window._tourFinFermer()">
-            Explorer seul
-          </button>
-          <button id="tour-fin-btn-avance" class="tour-fin-btn tour-fin-btn-avance"
-            onclick="window._tourFinLancerAvance()">
-            🚀 Guide avancé →
-          </button>
-        </div>
-        <p id="tour-fin-hint" class="tour-fin-hint" style="display:none">
-          Complétez les champs orange ⚙ pour déverrouiller le guide avancé.
-        </p>
-      </div>
-    </dialog>
-
     <!-- ═══ TOUR GUIDÉ — DOM fixe, jamais détruit ═══ -->
     <div id="tour-spotlight" aria-hidden="true" style="display:none"></div>
     <div id="tour-popover" role="dialog" aria-modal="true" aria-label="Tutoriel" style="display:none">

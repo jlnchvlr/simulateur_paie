@@ -1914,29 +1914,6 @@ select.champ-non-configure {
 .tour-demo-btn:hover    { opacity: 0.85; }
 .tour-demo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Dialog de fin ── */
-.tour-fin-dialog {
-  border: none; border-radius: 16px; padding: 0;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; width: 90vw;
-}
-.tour-fin-dialog::backdrop { background: rgba(0,0,0,0.45); }
-.tour-fin-inner  { padding: 28px 28px 24px; font-family: var(--font-main); }
-.tour-fin-inner h2 { margin: 0 0 16px; font-size: 18px; color: var(--dgfip-dark); }
-.tour-fin-recap  { font-size: 12px; line-height: 2; margin-bottom: 18px; max-height: 220px; overflow-y: auto; }
-.tour-fin-recap .ok  { color: #28a745; }
-.tour-fin-recap .nok { color: #fd7e14; }
-.tour-fin-actions { display: flex; gap: 10px; }
-.tour-fin-btn {
-  flex: 1; padding: 10px 14px; border-radius: 8px; border: none;
-  cursor: pointer; font-family: var(--font-main); font-size: 13px; font-weight: bold;
-  transition: opacity 0.2s, transform 0.1s;
-}
-.tour-fin-btn:hover          { opacity: 0.85; transform: translateY(-1px); }
-.tour-fin-btn-solo           { background: #f0f0f0; color: #444; }
-.tour-fin-btn-avance         { background: #2c6e49; color: white; }
-.tour-fin-btn-avance:disabled { background: #ccc; cursor: not-allowed; transform: none; }
-.tour-fin-hint { font-size: 11px; color: #fd7e14; margin: 10px 0 0; text-align: center; }
-
 /* ── Pulsation post-tour ── */
 @keyframes badge-post-attention {
   0%,100% { box-shadow: 0 0 0 0 rgba(253,126,20,0.9); transform: scale(1); }

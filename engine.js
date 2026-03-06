@@ -572,7 +572,6 @@ function ouvrirModal(panelIds, titre) {
   // Pause de la visite guidée en cours
   if (window.isTourActive) {
     window._tourPauseParModal = true;
-    window._tourSavedStepOnModal = window._tourEtapeIndex;
   }
 
   const modal = document.getElementById("magic-modal");
@@ -2625,19 +2624,9 @@ function initialiserComparateur() {
     if (btnNext?.disabled) return;
     const next = window._tourEtapeIndex + 1;
     if (next >= _tourTotal) {
-      // Fin du tour
-      if (_tourPhase === "phase1") {
-        _tourFermer(false);
-        // Pas de dialog de fin — juste fermer proprement, badges pulsent
-        setTimeout(() => {
-          document.querySelectorAll(".badge-configurer").forEach((b) => {
-            b.classList.add("tour-post-attention");
-            setTimeout(() => b.classList.remove("tour-post-attention"), 4000);
-          });
-        }, 300);
-      } else {
-        _tourFin_phase2();
-      }
+      // Fin du tour — fermeture propre dans les deux phases
+      // La phase 2 a sa propre étape de conclusion dans steps[], pas besoin de cas spécial
+      _tourFermer(_tourPhase === "phase1");
       return;
     }
     _tourAfficherEtape(next);
@@ -2774,52 +2763,6 @@ function initialiserComparateur() {
     _tourSpotlightSur(el);
     _tourPositionnerPopover(el);
     _ristMajChecklist(idx);
-  }
-
-  // ─── Fin phase 2 ──────────────────────────────────────────────────────────────
-
-  function _tourFin_phase2() {
-    _tourFermer(false);
-    // Popover de conclusion simple (réutilise le même popover)
-    const pop = _elPopover();
-    const sp = _elSpotlight();
-    if (!pop) return;
-
-    if (sp) sp.style.display = "none";
-    pop.style.display = "";
-    window.isTourActive = true; // keep active pour le bouton Terminer
-
-    const header = _elHeader();
-    const body = _elBody();
-    const btnNext = _elNext();
-    const btnPrev = _elPrev();
-    const elStep = _elStep();
-    const elTitle = _elTitle();
-
-    if (elStep) elStep.textContent = "";
-    if (elTitle) elTitle.textContent = "✅ Vous êtes prêt !";
-    header?.classList.remove("tour-valide");
-    if (btnPrev) btnPrev.style.visibility = "hidden";
-    if (btnNext) {
-      btnNext.disabled = false;
-      btnNext.textContent = "C'est parti !";
-    }
-    if (body)
-      body.innerHTML = `Vous maîtrisez maintenant tout le simulateur.<br><br>
-    • <strong>Ctrl+K</strong> — recherche rapide<br>
-    • <strong>⚖ Comparer</strong> — scénarios côte à côte<br>
-    • <strong>📅 Annuel</strong> — projection sur l'année<br><br>
-    <strong>Bonne simulation !</strong>`;
-
-    _tourPositionnerPopover(null); // centré
-
-    // Remplacer l'action du bouton Suivant pour cette conclusion
-    const nextFn = window._tourNext;
-    window._tourNext = () => {
-      window._tourNext = nextFn; // restaurer
-      window.isTourActive = false;
-      pop.style.display = "none";
-    };
   }
 
   // =============================================================================
@@ -3004,9 +2947,6 @@ function initialiserComparateur() {
         onEnter: () => {
           document.querySelectorAll("#lignes-paie tr.clickable-row").forEach((el) => el.classList.add("tour-ligne-pulsante"));
         },
-        onRender: () => {
-          // onEnter déjà appelé
-        },
       },
       {
         element: "#btn-comparer-flottant",
@@ -3026,6 +2966,21 @@ function initialiserComparateur() {
         title: "Réinitialiser",
         description: `Ce bouton <strong>↺</strong> efface tout : profil, badges et données de projection.`,
         onEnter: () => document.getElementById("btn-reset-profil")?.classList.add("tour-highlight-reset"),
+      },
+      // Conclusion — étape finale sans spotlight
+      {
+        element: null,
+        title: "✅ Vous êtes prêt !",
+        description:
+          `Vous maîtrisez maintenant tout le simulateur.<br><br>` +
+          `• <strong>Ctrl+K</strong> — recherche rapide<br>` +
+          `• <strong>⚖ Comparer</strong> — scénarios côte à côte<br>` +
+          `• <strong>📅 Annuel</strong> — projection sur l'année<br><br>` +
+          `<strong>Bonne simulation !</strong>`,
+        onEnter: () => {
+          // Retirer le highlight reset si on arrive ici depuis l'étape précédente
+          document.getElementById("btn-reset-profil")?.classList.remove("tour-highlight-reset");
+        },
       },
     ];
 
