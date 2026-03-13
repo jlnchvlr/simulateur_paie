@@ -267,6 +267,7 @@
             <button type="button" onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
             <button type="button" onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
             <button type="button" onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">🛡️ Participation PSC</button>
+            <button type="button" onclick="ouvrirModal('panel-primes-manuelles', '✏️ Primes manuelles')">✏️ Primes manuelles</button>
           </div>
         </div>
 
@@ -312,6 +313,17 @@
         <div id="panel-impots" class="setting-panel">
           <label>Taux de Prélèvement à la Source (%)</label>
           <input type="text" inputmode="decimal" id="input-pas" value="" placeholder="ex : 7.5" autocomplete="off" />
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Primes Manuelles
+             ══════════════════════════════════════ -->
+        <div id="panel-primes-manuelles" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-hint">Ajoutez vos primes non prévues dans le simulateur (rappels, remboursements, primes exceptionnelles…). Indiquez si chaque prime est imposable : cela affecte le net imposable et le calcul du PAS.</p>
+          <div id="primes-manuelles-liste"></div>
+          <button type="button" class="proj-add-btn" onclick="window.ajouterPrimeManuelle()">+ Ajouter une prime</button>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 

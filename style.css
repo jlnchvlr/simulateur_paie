@@ -1415,6 +1415,93 @@ body.navigation-clavier .resultat-item:focus {
   color: var(--dgfip-dark);
 }
 
+/* ── Primes manuelles (panel-primes-manuelles) ─────────────────────────── */
+.prime-manuelle-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--dgfip-light);
+}
+.prime-manuelle-row:last-child {
+  border-bottom: none;
+}
+.pm-libelle {
+  flex: 1;
+  min-width: 0;          /* évite le débordement flex */
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.pm-montant {
+  width: 86px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  text-align: right;
+  box-sizing: border-box;
+}
+/* Toggle Imposable / Non imposable — deux labels-boutons */
+.pm-toggle {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.pm-toggle input[type="radio"] {
+  display: none;
+}
+.pm-toggle label {
+  padding: 4px 7px;
+  font-size: 10px;
+  font-family: var(--font-main);
+  cursor: pointer;
+  background: #f8f9fa;
+  color: #666;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+}
+.pm-toggle label:not(:last-child) {
+  border-right: 1px solid var(--color-border);
+}
+.pm-toggle input[type="radio"]:checked + label {
+  background: var(--dgfip-dark);
+  color: white;
+  font-weight: bold;
+}
+.pm-suppr {
+  background: transparent;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.pm-suppr:hover {
+  opacity: 0.7;
+}
+/* Message "vide" quand la liste ne contient aucune ligne */
+#primes-manuelles-liste:empty::before {
+  content: "Aucune prime saisie — cliquez « + Ajouter » ci-dessous.";
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-style: italic;
+  padding: 8px 0 4px;
+}
+
 /* Tableau résultats */
 .proj-table {
   width: 100%;

@@ -81,6 +81,7 @@ const CHAMPS_REQUIS = new Set([
 ]);
 
 const CLE_CONFIGURES = "icna_configures_v1";
+const CLE_PRIMES_MANUELLES = "icna_primes_manuelles_v1";
 
 /**
  * Ensemble des champs déjà configurés par l'utilisateur.
@@ -225,6 +226,7 @@ window.effacerProfil = function () {
   localStorage.removeItem(CLE_STOCKAGE);
   localStorage.removeItem(CLE_CONFIGURES);
   localStorage.removeItem("icna_projection");
+  localStorage.removeItem(CLE_PRIMES_MANUELLES);
   location.reload();
 };
 
@@ -258,6 +260,7 @@ const INDEX_RECHERCHE = [
   { titre: "Licence ISQ", motsCles: ["isq", "licence", "icna"], cible: "panel-rist-isq-licence" },
   { titre: "Complément ISQ", motsCles: ["isq", "complément", "complement", "cplt"], cible: "panel-rist-isq-complement" },
   { titre: "Majoration ISQ", motsCles: ["majoration", "isq"], cible: "panel-rist-isq-majoration" },
+  { titre: "✏️ Primes manuelles (saisie libre)", motsCles: ["manuel", "manuelle", "libre", "prime", "rappel", "exceptionnel", "autre", "divers"], cible: "panel-primes-manuelles" },
 ];
 
 // =============================================================================
@@ -781,6 +784,16 @@ function getProfilDepuisInterface() {
   const cpltKey = document.getElementById("input-isq-complement")?.value;
   const majKey = document.getElementById("input-isq-majoration")?.value;
 
+  // Lecture des primes manuelles depuis le panneau (deux sommes : imposable / non imposable)
+  let manuelles_imposables = 0, manuelles_non_imposables = 0;
+  document.querySelectorAll("#primes-manuelles-liste .prime-manuelle-row").forEach(row => {
+    const montant   = parseFloat(row.querySelector(".pm-montant")?.value) || 0;
+    const imposable = row.querySelector(".pm-imp-oui")?.checked !== false
+                   && row.querySelector(".pm-imp-oui")?.checked === true;
+    if (imposable) manuelles_imposables     += montant;
+    else           manuelles_non_imposables += montant;
+  });
+
   return {
     grade: document.getElementById("input-grade")?.value || "ING.DIV. CONT.NAV.AE",
     echelon: document.getElementById("input-echelon")?.value || "",
@@ -814,6 +827,8 @@ function getProfilDepuisInterface() {
       inflation: lireFloat("input-inflation"),
       ind_compensatrice_csg: lireFloat("input-ind-csg"),
       psc: pscTotal,
+      manuelles_imposables,
+      manuelles_non_imposables,
     },
   };
 }
@@ -935,7 +950,8 @@ function calculerMontants(p) {
     p.evenements.ott_pv_opt32 +
     p.primes.attractivite +
     p.primes.fidelisation +
-    p.primes.inflation;
+    p.primes.inflation +
+    p.primes.manuelles_imposables; // primes manuelles imposables seulement (CSG/CRDS/RAFP s'appliquent)
 
   // ── SFT ──────────────────────────────────────────────────────────────────────
   const sftBrut = calculerSFT(p.enfants, traitementBrut, cst.valeur_point_mensuel);
@@ -995,7 +1011,10 @@ function calculerMontants(p) {
       (p.evenements.ott_pf > 0 ? p.evenements.ott_pf : 0) +
       (p.evenements.ott_pv_opt32 > 0 ? p.evenements.ott_pv_opt32 : 0) +
       (p.primes.fidelisation > 0 ? p.primes.fidelisation : 0) +
-      (p.primes.attractivite > 0 ? p.primes.attractivite : 0),
+      (p.primes.attractivite > 0 ? p.primes.attractivite : 0) +
+      // Primes manuelles : les deux types apparaissent dans le brut à payer
+      (p.primes.manuelles_imposables     > 0 ? p.primes.manuelles_imposables     : 0) +
+      (p.primes.manuelles_non_imposables > 0 ? p.primes.manuelles_non_imposables : 0),
   );
 
   const totalADeduire = arrondir(
@@ -1012,8 +1031,9 @@ function calculerMontants(p) {
   );
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
-  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc + retenueIsq);
-  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds - p.primes.forfait_mobilites);
+  // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
+  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.manuelles_non_imposables + retenueIsq);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables);
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal - transfertPrimes);
@@ -1385,6 +1405,27 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   majPreview("preview-ott-pf", p.evenements.ott_pf);
   majPreview("preview-ott-pv", p.evenements.ott_pv_globale + p.evenements.ott_pv_opt32);
 
+  // ── Primes manuelles (insérées juste avant la CSG) ──────────────────────────
+  _getPrimesManuelles().forEach(({ libelle, montant, imposable }, i) => {
+    if (montant <= 0) return;
+    const rowId   = `row-pm-${i}`;
+    const tooltip = imposable ? null : "Non imposable (exclu du net imposable et du PAS)";
+    ajouterLigne("", libelle.toUpperCase(), montant, null, null, null, tooltip, rowId);
+    // Rendre la ligne cliquable pour ouvrir le panneau de gestion
+    const tr = document.getElementById(rowId);
+    if (tr) {
+      tr.classList.add("clickable-row");
+      tr.title = "Cliquez pour modifier les primes manuelles";
+      tr.setAttribute("role", "button");
+      tr.setAttribute("tabindex", "0");
+      tr.setAttribute("aria-label", "Modifier les primes manuelles");
+      tr.onclick = () => ouvrirModal("panel-primes-manuelles", "✏️ Primes manuelles");
+      tr.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ouvrirModal("panel-primes-manuelles", "✏️ Primes manuelles"); }
+      });
+    }
+  });
+
   // ── Cotisations ───────────────────────────────────────────────────────────────
   ajouterLigne("401201", "C.S.G. NON DEDUCTIBLE",     null, m.csgNonDeductible, null, null, null, null, { delta: deltaVal(m.csgNonDeductible, mB?.csgNonDeductible), deltaCol: 3 });
   ajouterLigne("401301", "C.S.G. DEDUCTIBLE",         null, m.csgDeductible,    null, null, null, null, { delta: deltaVal(m.csgDeductible,    mB?.csgDeductible),    deltaCol: 3 });
@@ -1666,6 +1707,8 @@ async function initialiserApplication() {
     // Restauration du profil sauvegardé (après peuplement des listes)
     // FIX #4 — restaurerProfil() retourne l'objet profil : pas besoin de relire localStorage
     const profilSauve = restaurerProfil();
+    // Restauration des primes manuelles (clé localStorage séparée — liste dynamique)
+    _restaurerPrimesManuelles();
     if (profilSauve) {
       // Le grade restauré peut avoir changé → reconstruire les échelons
       mettreAJourEchelons();
@@ -1914,6 +1957,147 @@ async function initialiserApplication() {
 // FIX #15 — DOMContentLoaded : ne bloque pas sur le chargement des images/fonts, et ne risque
 // pas d'écraser un autre handler onload assigné ailleurs (window.onload = ... est exclusif).
 document.addEventListener("DOMContentLoaded", initialiserApplication);
+
+// =============================================================================
+// 11b. PRIMES MANUELLES — Saisie libre
+// =============================================================================
+
+/**
+ * Compteur auto-incrémentant pour générer des IDs de radios uniques par ligne.
+ * Ne jamais le réinitialiser : garantit l'unicité même après suppressions.
+ */
+let _pmRowCounter = 0;
+
+/**
+ * Construit une ligne de prime manuelle via l'API DOM (jamais innerHTML sur données user).
+ * @param {string}  [libelle=""]  - Libellé pré-rempli
+ * @param {number|string} [montant=""] - Montant pré-rempli
+ * @param {boolean} [imposable=true]  - Toggle imposable/non imposable
+ * @returns {HTMLDivElement}
+ */
+function _creerLignePrimeManuelle(libelle = "", montant = "", imposable = true) {
+  const id  = _pmRowCounter++;
+  const row = document.createElement("div");
+  row.className = "prime-manuelle-row";
+
+  // Libellé
+  const inputLib = document.createElement("input");
+  inputLib.type        = "text";
+  inputLib.className   = "pm-libelle";
+  inputLib.placeholder = "Libellé (ex: Rappel RIST 2024)";
+  if (libelle) inputLib.value = libelle;
+  inputLib.addEventListener("input", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
+
+  // Montant
+  const inputVal = document.createElement("input");
+  inputVal.type        = "number";
+  inputVal.className   = "pm-montant";
+  inputVal.placeholder = "0.00";
+  inputVal.step        = "1";
+  inputVal.min         = "0";
+  if (montant !== "") inputVal.value = montant;
+  inputVal.addEventListener("focus",  () => inputVal.select());
+  inputVal.addEventListener("input",  () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
+
+  // Toggle Imposable / Non imposable
+  const toggle = document.createElement("div");
+  toggle.className = "pm-toggle";
+
+  const rOuiId  = `pm-imp-oui-${id}`;
+  const rNonId  = `pm-imp-non-${id}`;
+  const rName   = `pm-imposable-${id}`;
+
+  const rOui  = document.createElement("input");
+  rOui.type   = "radio"; rOui.name = rName;
+  rOui.id     = rOuiId;  rOui.className = "pm-imp-oui";
+  rOui.value  = "1";     rOui.checked = imposable;
+
+  const lOui  = document.createElement("label");
+  lOui.htmlFor    = rOuiId;
+  lOui.textContent = "Imposable";
+
+  const rNon  = document.createElement("input");
+  rNon.type   = "radio"; rNon.name = rName;
+  rNon.id     = rNonId;  rNon.className = "pm-imp-non";
+  rNon.value  = "0";     rNon.checked = !imposable;
+
+  const lNon  = document.createElement("label");
+  lNon.htmlFor    = rNonId;
+  lNon.textContent = "Non imposable";
+
+  rOui.addEventListener("change", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
+  rNon.addEventListener("change", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
+
+  toggle.append(rOui, lOui, rNon, lNon);
+
+  // Bouton suppression
+  const btnSuppr  = document.createElement("button");
+  btnSuppr.type   = "button";
+  btnSuppr.className   = "pm-suppr";
+  btnSuppr.title  = "Supprimer cette prime";
+  btnSuppr.textContent = "✖";
+  btnSuppr.addEventListener("click", () => { row.remove(); _sauvegarderPrimesManuelles(); calculerPaie(); });
+
+  row.append(inputLib, inputVal, toggle, btnSuppr);
+  return row;
+}
+
+/**
+ * Lit les lignes du DOM et retourne le tableau des primes manuelles.
+ * @returns {{libelle:string, montant:number, imposable:boolean}[]}
+ */
+function _getPrimesManuelles() {
+  const result = [];
+  document.querySelectorAll("#primes-manuelles-liste .prime-manuelle-row").forEach(row => {
+    const libelle   = row.querySelector(".pm-libelle")?.value?.trim() || "Prime manuelle";
+    const montant   = parseFloat(row.querySelector(".pm-montant")?.value) || 0;
+    const imposable = row.querySelector(".pm-imp-oui")?.checked === true;
+    result.push({ libelle, montant, imposable });
+  });
+  return result;
+}
+
+/**
+ * Persiste les primes manuelles dans localStorage.
+ * Appelée automatiquement à chaque modification d'une ligne.
+ */
+function _sauvegarderPrimesManuelles() {
+  try {
+    localStorage.setItem(CLE_PRIMES_MANUELLES, JSON.stringify(_getPrimesManuelles()));
+  } catch (_) {}
+}
+
+/**
+ * Restaure les primes manuelles depuis localStorage.
+ * Appelée dans initialiserApplication().
+ */
+function _restaurerPrimesManuelles() {
+  try {
+    const raw = localStorage.getItem(CLE_PRIMES_MANUELLES);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    const container = document.getElementById("primes-manuelles-liste");
+    if (!container) return;
+    container.innerHTML = "";
+    data.forEach(({ libelle, montant, imposable }) => {
+      container.appendChild(_creerLignePrimeManuelle(libelle, montant, imposable));
+    });
+  } catch (e) {
+    console.warn("Restauration primes manuelles impossible :", e);
+  }
+}
+
+/**
+ * Ajoute une nouvelle ligne vide dans le panneau.
+ * Exposée sur window : appelée via onclick dans le HTML.
+ */
+window.ajouterPrimeManuelle = function () {
+  const container = document.getElementById("primes-manuelles-liste");
+  if (!container) return;
+  const row = _creerLignePrimeManuelle();
+  container.appendChild(row);
+  row.querySelector(".pm-libelle")?.focus();
+};
 
 // =============================================================================
 // 12. PROJECTION ANNUELLE
