@@ -1411,9 +1411,21 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     const rowId   = `row-pm-${i}`;
     const tooltip = imposable ? null : "Non imposable (exclu du net imposable et du PAS)";
     ajouterLigne("", libelle.toUpperCase(), montant, null, null, null, tooltip, rowId);
-    // Rendre la ligne cliquable pour ouvrir le panneau de gestion
     const tr = document.getElementById(rowId);
     if (tr) {
+      // ── Croix ✖ — injectée directement dans la cellule libellé (FIX Bug 3)
+      // effacerValeurs() ne fonctionne pas ici (pas d'input ID fixe) →
+      // on utilise supprimerPrimeManuelle(i) dédié aux lignes dynamiques.
+      const cellLib = tr.querySelector(".col-libelle");
+      if (cellLib) {
+        const croix = document.createElement("span");
+        croix.className = "delete-btn";
+        croix.title     = "Retirer cette prime";
+        croix.textContent = "✖";
+        croix.addEventListener("click", e => { e.stopPropagation(); window.supprimerPrimeManuelle(i); });
+        cellLib.appendChild(croix);
+      }
+      // ── Ligne cliquable pour ouvrir le panneau de gestion
       tr.classList.add("clickable-row");
       tr.title = "Cliquez pour modifier les primes manuelles";
       tr.setAttribute("role", "button");
@@ -2097,6 +2109,20 @@ window.ajouterPrimeManuelle = function () {
   const row = _creerLignePrimeManuelle();
   container.appendChild(row);
   row.querySelector(".pm-libelle")?.focus();
+};
+
+/**
+ * Supprime la i-ème prime manuelle depuis la fiche de paie (bouton ✖ de la ligne).
+ * Exposée sur window : appelée via onclick inline dans dessinerFiche.
+ * @param {number} index - Position de la ligne dans #primes-manuelles-liste
+ */
+window.supprimerPrimeManuelle = function (index) {
+  const rows = document.querySelectorAll("#primes-manuelles-liste .prime-manuelle-row");
+  if (rows[index]) {
+    rows[index].remove();
+    _sauvegarderPrimesManuelles();
+    calculerPaie();
+  }
 };
 
 // =============================================================================

@@ -1427,9 +1427,12 @@ body.navigation-clavier .resultat-item:focus {
 .prime-manuelle-row:last-child {
   border-bottom: none;
 }
-.pm-libelle {
+/* Spécificité intentionnellement élevée pour battre .modal-body input { width:100%; padding:8px }
+   qui s'applique à tous les <input> de la modale et écrase nos valeurs flex/width. */
+.prime-manuelle-row .pm-libelle {
   flex: 1;
-  min-width: 0;          /* évite le débordement flex */
+  min-width: 0;
+  width: auto;           /* neutralise width:100% de .modal-body input */
   padding: 4px 8px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -1437,16 +1440,21 @@ body.navigation-clavier .resultat-item:focus {
   font-family: var(--font-main);
   box-sizing: border-box;
 }
-.pm-montant {
-  width: 86px;
+.prime-manuelle-row .pm-montant {
+  width: 80px;
   flex-shrink: 0;
-  padding: 4px 8px;
+  padding: 4px 6px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-numbers);
   font-size: 12px;
   text-align: right;
   box-sizing: border-box;
+}
+/* Le toggle doit avoir une largeur fixe pour ne pas être écrasé par flex */
+.prime-manuelle-row .pm-toggle {
+  width: 160px;
+  flex-shrink: 0;
 }
 /* Toggle Imposable / Non imposable — deux labels-boutons */
 .pm-toggle {
