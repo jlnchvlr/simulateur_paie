@@ -2297,6 +2297,17 @@ function _creerOverlaysMobile() {
     selEch.id = "panel-traitement-echelon-select";
     selEch.style.fontSize = "16px";
 
+    // Enfants à charge
+    const lblEnfants = document.createElement("label");
+    lblEnfants.textContent = "Enfants à charge";
+    lblEnfants.style.marginTop = "16px";
+    const selEnfants = document.createElement("select");
+    selEnfants.id = "panel-traitement-enfants-select";
+    selEnfants.style.fontSize = "16px";
+    [["", "— Sélectionner —"],["0","0"],["1","1"],["2","2"],["3","3"],["4","4"],["5","5"]].forEach(([v, t]) => {
+      const o = new Option(t, v); if (!v) o.disabled = true; selEnfants.appendChild(o);
+    });
+
     // NBI
     const lblNbi = document.createElement("label");
     lblNbi.textContent = "NBI (Nouvelle Bonification Indiciaire)";
@@ -2333,6 +2344,14 @@ function _creerOverlaysMobile() {
         marquerConfigure("echelon");
       }
 
+      // Appliquer enfants à charge — toujours marqué (défaut 0 si rien sélectionné)
+      const srcEnfants = document.getElementById("input-enfants");
+      if (srcEnfants) {
+        srcEnfants.value = selEnfants.value !== "" ? selEnfants.value : "0";
+        srcEnfants.dispatchEvent(new Event("change", { bubbles: true }));
+        marquerConfigure("enfants");
+      }
+
       // Appliquer NBI — FIX 2A : toujours marquée, défaut = Non si aucun radio coché
       const cb = document.getElementById("input-nbi-checkbox");
       const choixNbi = document.querySelector('input[name="trait-nbi"]:checked')?.value ?? "non";
@@ -2366,7 +2385,7 @@ function _creerOverlaysMobile() {
       }
     });
 
-    panel.append(lblGrade, selGrade, lblEch, selEch, lblNbi, nbiWrap, btnVal);
+    panel.append(lblGrade, selGrade, lblEch, selEch, lblEnfants, selEnfants, lblNbi, nbiWrap, btnVal);
     modalBody.appendChild(panel);
   }
 
@@ -2432,6 +2451,10 @@ function _ouvrirPanneauMobile(panelId, titre, sourceId) {
       });
       selEch.value = srcEch.value;
     }
+    // Sync enfants
+    const srcEnfantsSrc = document.getElementById("input-enfants");
+    const selEnfantsSync = document.getElementById("panel-traitement-enfants-select");
+    if (srcEnfantsSrc && selEnfantsSync) selEnfantsSync.value = srcEnfantsSrc.value;
     // Sync NBI
     const cb = document.getElementById("input-nbi-checkbox");
     const rOui = document.getElementById("trait-nbi-oui");

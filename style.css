@@ -2149,6 +2149,19 @@ select.champ-non-configure {
   .magic-modal:has(#panel-projection.active) {
     max-width: none;
   }
+  /* Fix 2 — search-mode : même centrage que les autres panneaux.
+     La règle desktop (top:15%, transform sans Y) n'est pas dans un @media → s'applique ici.
+     On la neutralise pour un centrage cohérent. */
+  .magic-modal.search-mode {
+    top: 50%;
+    transform: translate(-50%, -50%);
+    animation: mobileModalIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  /* modal-header : coins arrondis en haut, flush avec la dialog */
+  .modal-header {
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
+  }
 
 
   /* ── 5. Fix iOS — zoom auto sur focus input (font-size < 16px) ─ */
@@ -2928,5 +2941,85 @@ select.champ-non-configure {
     line-height: 1.5;
     color: var(--color-text-muted);
     margin-top: 12px;
+  }
+}
+
+@media (max-width: 820px) {
+
+  /* ── Fix 3 : OTT Protocole — 1 colonne, layout horizontal par carte ─────
+     Sur desktop : 2 colonnes, titre + montant empilés verticalement.
+     Sur mobile  : 1 colonne, titre à gauche + montant badge à droite.
+     Beaucoup plus lisible, les noms longs ne débordent plus. */
+  .ott-grid {
+    grid-template-columns: 1fr;
+  }
+  .ott-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    padding: 12px 14px;
+    gap: 8px;
+    min-height: 48px; /* tap target */
+  }
+  .ott-card-title {
+    flex: 1;
+    font-size: 13px;
+    margin-bottom: 0;
+    line-height: 1.3;
+  }
+  .ott-card-amount {
+    flex-shrink: 0;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-top: 0;
+  }
+
+  /* ── Fix 4 : Primes manuelles — layout 2 lignes sur mobile ──────────────
+     Desktop : tout sur 1 ligne (libellé + montant + toggle + ✖)
+     Mobile  : libellé sur ligne 1 (pleine largeur)
+               montant + toggle + ✖ sur ligne 2
+     Résout le problème de libellé ultra-étroit (66px). */
+  .prime-manuelle-row {
+    flex-wrap: wrap;
+    gap: 8px 6px;
+    padding: 10px 0;
+  }
+  .prime-manuelle-row .pm-libelle {
+    width: 100%;
+    flex: none;
+    font-size: 15px;
+    min-height: 44px;
+    padding: 8px 12px;
+    line-height: 44px;
+  }
+  .prime-manuelle-row .pm-montant {
+    flex: 1;
+    width: auto;
+    min-width: 80px;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 16px;
+    line-height: 44px;
+  }
+  .prime-manuelle-row .pm-toggle {
+    flex: 2;
+    width: auto;
+    min-height: 44px;
+  }
+  .pm-toggle label {
+    font-size: 13px;
+    padding: 0 10px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pm-suppr {
+    font-size: 18px;
+    padding: 0 8px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 }
