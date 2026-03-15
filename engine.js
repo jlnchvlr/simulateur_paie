@@ -2067,7 +2067,7 @@ function _creerBottomBarMobile() {
     { icon: "📅", label: "Annuel",   action: () => window.ouvrirProjectionAnnuelle?.() },
     { icon: "⚖",  label: "Comparer", action: () => _ouvrirComparateurMobile() },
     { icon: "➕",  label: "Ajouter",  action: () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?") },
-    { icon: "💡",  label: "Aide",     action: () => { /* Tour désactivé mobile — affiche une info */ _mobileInfoTour(); } },
+    { icon: "↺",  label: "Reset",    action: () => _mobileConfirmReset() },
   ];
 
   btns.forEach(({ icon, label, action }) => {
@@ -2117,6 +2117,34 @@ function _mobileInfoTour() {
   })();
   tmp.classList.add("active");
   modal.dataset.panelOuvert = "_mobile-aide-panel";
+  if (!modal.open) modal.showModal();
+}
+
+/** Confirmation reset depuis la bottom-bar mobile */
+function _mobileConfirmReset() {
+  const modal = document.getElementById("magic-modal");
+  if (!modal) return;
+  document.getElementById("modal-title").textContent = "↺ Réinitialiser";
+  document.querySelectorAll(".setting-panel").forEach(p => p.classList.remove("active"));
+  const tmp = document.getElementById("_mobile-reset-panel") || (() => {
+    const d = document.createElement("div");
+    d.id = "_mobile-reset-panel";
+    d.className = "setting-panel";
+    d.innerHTML = `
+      <p class="panel-hint" style="margin-bottom:16px;">
+        ⚠️ Cette action va <strong>effacer toutes vos données</strong> sauvegardées
+        (grade, échelon, RIST, PAS, primes manuelles, projection…) et recharger la page.
+      </p>
+      <button type="button" class="validate-btn" style="background:#c0392b;"
+        onclick="window.effacerProfil()">✕ Tout réinitialiser</button>
+      <button type="button" class="validate-btn" style="margin-top:8px;background:#555;"
+        onclick="document.getElementById('magic-modal').close()">Annuler</button>
+    `;
+    document.querySelector(".modal-body").appendChild(d);
+    return d;
+  })();
+  tmp.classList.add("active");
+  modal.dataset.panelOuvert = "_mobile-reset-panel";
   if (!modal.open) modal.showModal();
 }
 
@@ -2738,7 +2766,12 @@ function _creerLignePrimeManuelle(libelle = "", montant = "", imposable = true) 
   btnSuppr.textContent = "✖";
   btnSuppr.addEventListener("click", () => { row.remove(); _sauvegarderPrimesManuelles(); calculerPaie(); });
 
-  row.append(inputLib, inputVal, toggle, btnSuppr);
+  // Wrapper dédié pour la ligne 2 (montant + toggle + suppr)
+  // → flex container propre, sans les complications de flex-wrap
+  const row2 = document.createElement("div");
+  row2.className = "pm-row2";
+  row2.append(inputVal, toggle, btnSuppr);
+  row.append(inputLib, row2);
   return row;
 }
 
