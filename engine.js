@@ -2321,26 +2321,28 @@ function _creerOverlaysMobile() {
       const srcGrade = document.getElementById("input-grade");
       if (srcGrade && selGrade.value) {
         srcGrade.value = selGrade.value;
-        srcGrade.dispatchEvent(new Event("input", { bubbles: true }));
         marquerConfigure("grade");
+        // mettreAJourEchelons() synchrone — les options input-echelon sont à jour immédiatement
+        mettreAJourEchelons();
       }
-      // Appliquer échelon (après grade car mettreAJourEchelons est déclenché par grade)
-      setTimeout(() => {
-        const srcEch = document.getElementById("input-echelon");
-        if (srcEch && selEch.value) {
-          srcEch.value = selEch.value;
-          srcEch.dispatchEvent(new Event("input", { bubbles: true }));
-          marquerConfigure("echelon");
-        }
-      }, 50);
-      // Appliquer NBI
-      const choixNbi = document.querySelector('input[name="trait-nbi"]:checked')?.value;
+
+      // Appliquer échelon synchronement (après mettreAJourEchelons)
+      const srcEch = document.getElementById("input-echelon");
+      if (srcEch && selEch.value) {
+        srcEch.value = selEch.value;
+        marquerConfigure("echelon");
+      }
+
+      // Appliquer NBI — FIX 2A : toujours marquée, défaut = Non si aucun radio coché
       const cb = document.getElementById("input-nbi-checkbox");
-      if (cb && choixNbi) {
+      const choixNbi = document.querySelector('input[name="trait-nbi"]:checked')?.value ?? "non";
+      if (cb) {
         cb.checked = choixNbi === "oui";
         cb.dispatchEvent(new Event("input", { bubbles: true }));
-        marquerConfigure("nbi");
       }
+      marquerConfigure("nbi"); // FIX 2A — marqué systématiquement, pas conditionnel
+
+      // Un seul calculerPaie() synchrone avec toutes les valeurs appliquées
       calculerPaie();
       document.getElementById("magic-modal").close();
     });
@@ -2675,7 +2677,7 @@ function dessinerFicheMobile(p, m) {
   // ── Helpers DOM ──────────────────────────────────────────────────────────
 
   // FIX 8 — Sections ouvertes par défaut (les plus importantes)
-  const SECTIONS_OUVERTES = new Set(["Base", "Primes & RIST", "Résultat"]);
+  const SECTIONS_OUVERTES = new Set(["Base", "Primes & RIST", "Impôt", "Résultat"]);
 
   /**
    * Crée un titre de section pliable.
