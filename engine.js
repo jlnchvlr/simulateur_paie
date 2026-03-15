@@ -141,6 +141,29 @@ const CHAMPS_PROFIL = [
   { id: "psc-15", type: "checkbox" },
   { id: "psc-7", type: "checkbox" },
   { id: "psc-5", type: "checkbox" },
+  // OTT Part Fixe — cases à cocher + saisie manuelle
+  { id: "pf-opt1-l16",       type: "checkbox" },
+  { id: "pf-opt1-cdg",       type: "checkbox" },
+  { id: "pf-opt1-l711",      type: "checkbox" },
+  { id: "pf-opt1-l911",      type: "checkbox" },
+  { id: "pf-opt1-plus-n1",   type: "checkbox" },
+  { id: "pf-opt1-plus-n2",   type: "checkbox" },
+  { id: "pf-opt2-1",         type: "checkbox" },
+  { id: "pf-opt2-2",         type: "checkbox" },
+  { id: "pf-opt2-bis",       type: "checkbox" },
+  { id: "pf-opt4",           type: "checkbox" },
+  { id: "pf-opt1-enac",      type: "checkbox" },
+  { id: "pf-opt1-plus-enac", type: "checkbox" },
+  { id: "pf-manuel",         type: "value" },
+  // OTT Part Variable
+  { id: "pv-globale",        type: "value" },
+  { id: "pv-opt32",          type: "value" },
+  // Éléments variables mensuels
+  { id: "input-nuit-n",      type: "value" },
+  { id: "input-nuit-s2",     type: "value" },
+  { id: "input-fmd",         type: "value" },
+  { id: "input-inflation",   type: "value" },
+  { id: "input-perf",        type: "value" },
 ];
 
 /**
@@ -3182,64 +3205,28 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       { panel: "panel-absences", titre: "Absences & Carence", absence: true });
   }
 
-  // ── Primes & RIST ─────────────────────────────────────────────────────────
+  // ── Primes & RIST — ordre identique au desktop ───────────────────────────
   section("Primes & RIST");
 
-  // Nuits
+  // 1. Nuits
   if (m.nuit > 0)
     ligne("Ind. travail de nuit",   m.nuit, null,
       { panel: "panel-nuits", titre: "Travail de Nuit & Soirées",
         onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-nuit-n","input-nuit-s2"]) });
 
-  // FMD
+  // 2. FMD
   if (p.primes.forfait_mobilites > 0)
     ligne("Forfait mobilités",      p.primes.forfait_mobilites, null,
       { panel: "panel-fmd", titre: "Forfait Mobilités",
         onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-fmd"]) });
 
-  // Inflation
+  // 3. Inflation
   if (p.primes.inflation > 0)
     ligne("Indemnité pouvoir d'achat", p.primes.inflation, null,
       { panel: "panel-inflation", titre: "Indemnité Inflation",
         onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-inflation"]) });
 
-  // PSC
-  if (p.primes.psc > 0)
-    ligne("Participation PSC",      p.primes.psc, null,
-      { panel: "panel-psc", titre: "Participation PSC",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["psc-15","psc-7","psc-5"]) });
-
-  // PPP
-  if (p.evenements.prime_performance > 0)
-    ligne("Prime partage performance", p.evenements.prime_performance, null,
-      { panel: "panel-primes", titre: "Prime Partage Performance",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-perf"]) });
-
-  // OTT
-  if (p.evenements.ott_pf > 0)
-    ligne("OTT Part Fixe",         p.evenements.ott_pf, null,
-      { panel: "panel-ott", titre: "Protocole (OTT)",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pf-manuel","pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1","pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4","pf-opt1-enac","pf-opt1-plus-enac"]) });
-  if (p.evenements.ott_pv_globale > 0)
-    ligne("OTT Part Variable",     p.evenements.ott_pv_globale, null,
-      { panel: "panel-ott", titre: "Protocole (OTT)",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pv-globale"]) });
-  if (p.evenements.ott_pv_opt32 > 0)
-    ligne("OTT PV Opt 3-1/3-2",   p.evenements.ott_pv_opt32, null,
-      { panel: "panel-ott", titre: "Protocole (OTT)",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pv-opt32"]) });
-
-  // Attractivité / Fidélisation
-  if (p.primes.attractivite > 0)
-    ligne("Attractivité géo.",     p.primes.attractivite, null,
-      { panel: "panel-attractivite", titre: "Attractivité Géographique",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-attractivite"]) });
-  if (p.primes.fidelisation > 0)
-    ligne("Prime fidélisation",    p.primes.fidelisation, null,
-      { panel: "panel-fidelisation", titre: "Prime Fidélisation",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-fidelisation"]) });
-
-  // RIST (avec badge si non configuré)
+  // 4-8. RIST × 5 (avec badge si non configuré)
   ligne("RIST Part Fonctions",     p.primes.rist_fonctions - m.absRistFct, null,
     { cle: "rist_fonctions", panel: "panel-rist-fonctions", titre: "RIST Part Fonctions",
       delta: mB ? ((pB.primes.rist_fonctions - mB.absRistFct) - (p.primes.rist_fonctions - m.absRistFct)) : null });
@@ -3256,9 +3243,47 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     { cle: "rist_isq_majoration", panel: "panel-rist-isq-majoration", titre: "Majoration ISQ",
       delta: mB ? ((pB.primes.rist_maj_isq - mB.absRistMaj) - (p.primes.rist_maj_isq - m.absRistMaj)) : null });
 
-  // Ind. compensatrice CSG
+  // 9. Ind. compensatrice CSG
   ligne("Ind. compensatrice CSG",  p.primes.ind_compensatrice_csg - m.absIndCsg, null,
     { cle: "ind_compensatrice_csg", panel: "panel-csg", titre: "Indemnité Compensatrice CSG" });
+
+  // 10. PSC
+  if (p.primes.psc > 0)
+    ligne("Participation PSC",      p.primes.psc, null,
+      { panel: "panel-psc", titre: "Participation PSC",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["psc-15","psc-7","psc-5"]) });
+
+  // 11. PPP
+  if (p.evenements.prime_performance > 0)
+    ligne("Prime partage performance", p.evenements.prime_performance, null,
+      { panel: "panel-primes", titre: "Prime Partage Performance",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-perf"]) });
+
+  // 12-14. OTT : PV globale, PF, PV opt 3-1/3-2 (ordre desktop)
+  if (p.evenements.ott_pv_globale > 0)
+    ligne("OTT Part Variable",     p.evenements.ott_pv_globale, null,
+      { panel: "panel-ott", titre: "Protocole (OTT)",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pv-globale"]) });
+  if (p.evenements.ott_pf > 0)
+    ligne("OTT Part Fixe",         p.evenements.ott_pf, null,
+      { panel: "panel-ott", titre: "Protocole (OTT)",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pf-manuel","pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1","pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4","pf-opt1-enac","pf-opt1-plus-enac"]) });
+  if (p.evenements.ott_pv_opt32 > 0)
+    ligne("OTT PV Opt 3-1/3-2",   p.evenements.ott_pv_opt32, null,
+      { panel: "panel-ott", titre: "Protocole (OTT)",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pv-opt32"]) });
+
+  // 15. Fidélisation (avant Attractivité — ordre desktop)
+  if (p.primes.fidelisation > 0)
+    ligne("Prime fidélisation",    p.primes.fidelisation, null,
+      { panel: "panel-fidelisation", titre: "Prime Fidélisation",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-fidelisation"]) });
+
+  // 16. Attractivité
+  if (p.primes.attractivite > 0)
+    ligne("Attractivité géo.",     p.primes.attractivite, null,
+      { panel: "panel-attractivite", titre: "Attractivité Géographique",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-attractivite"]) });
 
   // Primes manuelles
   _getPrimesManuelles().forEach(({ libelle, montant, imposable }, i) => {
@@ -3419,13 +3444,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     root.appendChild(rowNet);
   }
 
-  // ── Bouton ajouter élément variable ──────────────────────────────────────
-  const addBtn = document.createElement("button");
-  addBtn.type = "button";
-  addBtn.className = "mf-add-btn";
-  addBtn.textContent = "+ Ajouter ou modifier un élément variable";
-  addBtn.addEventListener("click", () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?"));
-  root.appendChild(addBtn);
+  // Bouton "Ajouter" supprimé — fonction disponible via le bouton ➕ de la bottom-bar
 
   // ── Mise à jour de la barre sticky NET ──────────────────────────────────
   // ui-net-a-payer et ui-net-imposable sont dans le tfoot de la fiche A4 (masquée).
