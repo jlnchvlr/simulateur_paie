@@ -1459,33 +1459,37 @@ body.navigation-clavier .resultat-item:focus {
 /* Toggle Imposable / Non imposable — deux labels-boutons */
 .pm-toggle {
   display: flex;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border: 1px solid #d0d8e4;
+  border-radius: 20px;      /* pilule */
   overflow: hidden;
   flex-shrink: 0;
+  background: #f0f3f7;
+  padding: 3px;             /* marge interne entre bord et labels */
+  gap: 2px;
 }
 .pm-toggle input[type="radio"] {
   display: none;
 }
 .pm-toggle label {
-  padding: 4px 7px;
+  flex: 1;
+  padding: 4px 10px;
   font-size: 10px;
   font-family: var(--font-main);
   cursor: pointer;
-  background: #f8f9fa;
-  color: #666;
-  line-height: 1.4;
+  background: transparent;
+  color: #777;
+  line-height: 1.5;
   white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
+  text-align: center;
+  border-radius: 16px;      /* label aussi en pilule */
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   user-select: none;
 }
-.pm-toggle label:not(:last-child) {
-  border-right: 1px solid var(--color-border);
-}
 .pm-toggle input[type="radio"]:checked + label {
-  background: var(--dgfip-dark);
-  color: white;
+  background: white;
+  color: var(--dgfip-dark);
   font-weight: bold;
+  box-shadow: 0 1px 4px rgba(59,84,114,0.15);
 }
 .pm-suppr {
   background: transparent;
@@ -2849,12 +2853,21 @@ select.champ-non-configure {
   #recherche-ajout {
     font-size: 16px;
     min-height: 48px;
-    padding: 0 14px;
+    /* padding-left:40px préserve l'espace pour l'icône loupe (background-position:10px) */
+    padding: 0 14px 0 40px;
     line-height: 48px;
     border-radius: 10px;
     margin-bottom: 12px;
   }
 
+  /* Fix 5 — inputs projection : taille compacte (ils sont dans des lignes proj-row) */
+  .proj-row input[type="number"] {
+    min-height: 36px;
+    height: 36px;
+    padding: 0 8px;
+    line-height: 36px;
+    font-size: 15px;
+  }
   /* ── Back-btn : zone de tap 44px ────────────────────────────── */
   .back-btn {
     min-height: 44px;

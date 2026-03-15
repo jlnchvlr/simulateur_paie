@@ -2504,17 +2504,8 @@ function _majBottomBarComparer() {
   btnComparer.querySelector(".mbb-label").textContent = actif ? "Comparer ✓" : "Comparer";
 }
 
-// Patch activerComparaison / desactiverComparaison pour mettre à jour la bottom-bar
-const _origActiver     = window.activerComparaison;
-const _origDesactiver  = window.desactiverComparaison;
-window.activerComparaison = function () {
-  _origActiver?.();
-  _majBottomBarComparer();
-};
-window.desactiverComparaison = function () {
-  _origDesactiver?.();
-  _majBottomBarComparer();
-};
+// Patch activerComparaison : déplacé après la définition de la vraie fonction
+// (voir fin de section 13 Comparateur)
 
 // FIX #15 — DOMContentLoaded : ne bloque pas sur le chargement des images/fonts, et ne risque
 // pas d'écraser un autre handler onload assigné ailleurs (window.onload = ... est exclusif).
@@ -3087,9 +3078,21 @@ function dessinerFicheMobile(p, m) {
   if (!pending) {
     section("Résultat");
 
-    ligne("Net avant impôt",       null, null,
-      { total: true });
-    // On construit manuellement cette ligne pour afficher dans "info"
+    // Brut total — ajouté en premier dans la section résultat
+    (() => {
+      const row = document.createElement("div");
+      row.className = "mf-row mf-total";
+      const lbl = document.createElement("span");
+      lbl.className = "mf-label";
+      lbl.textContent = "Brut total";
+      const amt = document.createElement("span");
+      amt.className = "mf-amount mf-info";
+      amt.textContent = fmt(m.totalAPayer);
+      row.append(lbl, amt);
+      root.appendChild(row);
+    })();
+
+    // Net avant impôt
     (() => {
       const row = document.createElement("div");
       row.className = "mf-row mf-total";
@@ -3100,44 +3103,25 @@ function dessinerFicheMobile(p, m) {
       amt.className = "mf-amount mf-info";
       amt.textContent = fmt(m.netAPayerAvantImpot);
       row.append(lbl, amt);
-      // Remplacer la ligne vide créée ci-dessus
-      const last = root.lastChild;
-      if (last?.classList.contains("mf-total")) root.removeChild(last);
       root.appendChild(row);
     })();
 
-    ligne("Net social",            null, null,
-      { total: true });
+    // Net social
     (() => {
       const row = document.createElement("div");
       row.className = "mf-row mf-total";
-      const lbl = document.createElement("span");
-      lbl.className = "mf-label";
-      lbl.textContent = "Net social";
-      const amt = document.createElement("span");
-      amt.className = "mf-amount mf-info";
-      amt.textContent = fmt(m.netSocial);
-      row.append(lbl, amt);
-      const last = root.lastChild;
-      if (last?.classList.contains("mf-total")) root.removeChild(last);
-      root.appendChild(row);
+      const lbl = document.createElement("span"); lbl.className = "mf-label"; lbl.textContent = "Net social";
+      const amt = document.createElement("span"); amt.className = "mf-amount mf-info"; amt.textContent = fmt(m.netSocial);
+      row.append(lbl, amt); root.appendChild(row);
     })();
 
-    ligne("Montant imposable",     null, null,
-      { total: true });
+    // Montant imposable
     (() => {
       const row = document.createElement("div");
       row.className = "mf-row mf-total";
-      const lbl = document.createElement("span");
-      lbl.className = "mf-label";
-      lbl.textContent = "Montant imposable";
-      const amt = document.createElement("span");
-      amt.className = "mf-amount mf-info";
-      amt.textContent = fmt(m.netImposableFinal);
-      row.append(lbl, amt);
-      const last = root.lastChild;
-      if (last?.classList.contains("mf-total")) root.removeChild(last);
-      root.appendChild(row);
+      const lbl = document.createElement("span"); lbl.className = "mf-label"; lbl.textContent = "Montant imposable";
+      const amt = document.createElement("span"); amt.className = "mf-amount mf-info"; amt.textContent = fmt(m.netImposableFinal);
+      row.append(lbl, amt); root.appendChild(row);
     })();
 
     // NET À PAYER — ligne vedette
@@ -3394,6 +3378,8 @@ function _creerLigneLibre(libelle = "", montant = "") {
   inputLib.className = "proj-libre-lib";
   inputLib.placeholder = "Libellé (ex: Rappel RIST)";
   if (libelle) inputLib.value = libelle;
+  // FIX libellé non sauvegardé : déclenche le recalcul (et donc la sauvegarde) au changement
+  inputLib.addEventListener("input", () => window.calculerEtAfficherProjection?.());
 
   const inputVal = document.createElement("input");
   inputVal.type = "number";
@@ -3616,6 +3602,21 @@ window.desactiverComparaison = function () {
   if (panneau) panneau.classList.remove("visible");
   calculerPaie(); // redessine proprement sans pB/mB
 };
+
+// Patch post-définition — met à jour la bottom-bar mobile après activation/désactivation
+// FIX comparateur mobile : _origActiver était capturé avant la définition (undefined)
+{
+  const _origActiver    = window.activerComparaison;
+  const _origDesactiver = window.desactiverComparaison;
+  window.activerComparaison = function () {
+    _origActiver?.();
+    if (typeof _majBottomBarComparer === "function") _majBottomBarComparer();
+  };
+  window.desactiverComparaison = function () {
+    _origDesactiver?.();
+    if (typeof _majBottomBarComparer === "function") _majBottomBarComparer();
+  };
+}
 
 /**
  * Initialise le panneau comparateur après le chargement de data.json :
