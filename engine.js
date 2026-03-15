@@ -1598,7 +1598,7 @@ function calculerPaie() {
   // dessinerFicheMobile est appelée dans tous les cas (is-mobile vérifié en CSS)
   // pour que ui-net-a-payer soit à jour pour la barre sticky
   if (document.body.classList.contains("is-mobile")) {
-    dessinerFicheMobile(profilA, mA);
+    dessinerFicheMobile(profilA, mA, profilB, mB);
   }
 
   // Indice — affiché seulement quand grade+échelon configurés
@@ -2065,7 +2065,7 @@ function _creerBottomBarMobile() {
 
   const btns = [
     { icon: "📅", label: "Annuel",   action: () => window.ouvrirProjectionAnnuelle?.() },
-    { icon: "⚖",  label: "Comparer", action: () => window.activerComparaison?.() },
+    { icon: "⚖",  label: "Comparer", action: () => _ouvrirComparateurMobile() },
     { icon: "➕",  label: "Ajouter",  action: () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?") },
     { icon: "💡",  label: "Aide",     action: () => { /* Tour désactivé mobile — affiche une info */ _mobileInfoTour(); } },
   ];
@@ -2497,11 +2497,152 @@ window.addEventListener("resize", () => {
 function _majBottomBarComparer() {
   const bar = document.getElementById("mobile-bottom-bar");
   if (!bar) return;
-  const btnComparer = bar.querySelectorAll(".mobile-bottom-bar-btn")[1]; // index 1 = Comparer
+  const btnComparer = bar.querySelectorAll(".mobile-bottom-bar-btn")[1];
   if (!btnComparer) return;
   const actif = modeComparaison;
   btnComparer.classList.toggle("active", actif);
-  btnComparer.querySelector(".mbb-label").textContent = actif ? "Comparer ✓" : "Comparer";
+  const icon  = btnComparer.querySelector(".mbb-icon");
+  const label = btnComparer.querySelector(".mbb-label");
+  if (actif) {
+    if (icon)  icon.textContent  = "⚖";
+    if (label) label.textContent = "Scén. B ✓";
+    // Clic quand actif : réouvre la modale pour reconfigurer
+    btnComparer.onclick = () => _ouvrirComparateurMobile();
+  } else {
+    if (icon)  icon.textContent  = "⚖";
+    if (label) label.textContent = "Comparer";
+    btnComparer.onclick = () => _ouvrirComparateurMobile();
+  }
+}
+
+/**
+ * Ouvre le panneau comparateur dans la modale sur mobile.
+ * - Si mode comparaison pas encore actif → active + ouvre la modale de config
+ * - Si déjà actif → ouvre directement la modale (pour reconfigurer)
+ * - Bouton "Quitter" dans la modale → désactive le mode
+ */
+function _ouvrirComparateurMobile() {
+  if (!document.body.classList.contains("is-mobile")) {
+    window.activerComparaison?.();
+    return;
+  }
+
+  // Activer le mode si pas encore actif
+  if (!modeComparaison) {
+    window.activerComparaison?.(); // initialise les champs B + calculerPaie
+  }
+
+  // Construire ou récupérer le panneau mobile comparateur dans la modale
+  const modalBody = document.querySelector(".modal-body");
+  if (!modalBody) return;
+
+  let panel = document.getElementById("panel-cmp-mobile");
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.id = "panel-cmp-mobile";
+    panel.className = "setting-panel";
+
+    // Cloner le contenu du panneau comparateur (sans le header avec bouton Quitter)
+    const cmpBody = document.getElementById("panneau-comparaison")?.querySelector(".cmp-body");
+    if (cmpBody) {
+      // Copier le HTML du corps du comparateur
+      const clone = cmpBody.cloneNode(true);
+      clone.id = "panel-cmp-mobile-body";
+      // Mettre à jour les IDs clonés pour éviter les doublons — on utilise directement
+      // les VRAIS éléments du panneau via synchronisation manuelle
+      panel.appendChild(clone);
+    }
+
+    // Bouton Quitter la comparaison
+    const btnQuitter = document.createElement("button");
+    btnQuitter.type = "button";
+    btnQuitter.className = "validate-btn";
+    btnQuitter.style.cssText = "background:#c0392b;margin-top:8px;";
+    btnQuitter.textContent = "✕ Quitter la comparaison";
+    btnQuitter.addEventListener("click", () => {
+      window.desactiverComparaison?.();
+      document.getElementById("magic-modal").close();
+    });
+
+    // Bouton Valider (voir les deltas)
+    const btnValider = document.createElement("button");
+    btnValider.type = "button";
+    btnValider.className = "validate-btn";
+    btnValider.textContent = "✓ Voir les différences";
+    btnValider.addEventListener("click", () => {
+      // Synchroniser les valeurs des champs clonés → champs originaux
+      _syncCmpMobileVersOriginal();
+      calculerPaie();
+      document.getElementById("magic-modal").close();
+    });
+
+    // Ajouter les boutons dans l'ordre (append, pas insertBefore — btnQuitter
+    // n'est pas encore enfant de panel au moment de l'appel)
+    panel.appendChild(btnValider);
+    panel.appendChild(btnQuitter);
+    modalBody.appendChild(panel);
+  }
+
+  // Synchroniser les champs originaux → clonés à l'ouverture
+  _syncCmpOriginalVersClone();
+  ouvrirModal("panel-cmp-mobile", "⚖ Scénario B — Comparaison");
+}
+
+/**
+ * Copie les valeurs des vrais champs #panneau-comparaison vers leurs clones dans panel-cmp-mobile.
+ */
+function _syncCmpOriginalVersClone() {
+  const orig  = document.getElementById("panneau-comparaison");
+  const clone = document.getElementById("panel-cmp-mobile-body");
+  if (!orig || !clone) return;
+
+  // Selects
+  clone.querySelectorAll("select").forEach(sel => {
+    const origEl = orig.querySelector(`#${sel.id}`);
+    if (origEl) sel.value = origEl.value;
+  });
+  // Checkboxes
+  clone.querySelectorAll("input[type='checkbox']").forEach(cb => {
+    const origEl = orig.querySelector(`#${cb.id}`);
+    if (origEl) cb.checked = origEl.checked;
+  });
+  // Radios
+  clone.querySelectorAll("input[type='radio']").forEach(r => {
+    const origEl = orig.querySelector(`input[name='${r.name}'][value='${r.value}']`);
+    if (origEl) r.checked = origEl.checked;
+  });
+  // Inputs text/number
+  clone.querySelectorAll("input[type='text'], input[type='number']").forEach(inp => {
+    const origEl = orig.querySelector(`#${inp.id}`);
+    if (origEl) inp.value = origEl.value;
+  });
+}
+
+/**
+ * Copie les valeurs des champs clonés → vrais champs du panneau comparateur,
+ * puis déclenche les listeners natifs pour que calculerPaie() reçoive les bonnes valeurs.
+ */
+function _syncCmpMobileVersOriginal() {
+  const orig  = document.getElementById("panneau-comparaison");
+  const clone = document.getElementById("panel-cmp-mobile-body");
+  if (!orig || !clone) return;
+
+  clone.querySelectorAll("select").forEach(sel => {
+    const origEl = orig.querySelector(`#${sel.id}`);
+    if (origEl) { origEl.value = sel.value; origEl.dispatchEvent(new Event("change", { bubbles: true })); }
+  });
+  clone.querySelectorAll("input[type='checkbox']").forEach(cb => {
+    const origEl = orig.querySelector(`#${cb.id}`);
+    if (origEl) { origEl.checked = cb.checked; origEl.dispatchEvent(new Event("change", { bubbles: true })); }
+  });
+  clone.querySelectorAll("input[type='radio']:checked").forEach(r => {
+    const origEl = orig.querySelector(`input[name='${r.name}'][value='${r.value}']`);
+    if (origEl) { origEl.checked = true; origEl.dispatchEvent(new Event("change", { bubbles: true })); }
+  });
+  clone.querySelectorAll("input[type='text'], input[type='number']").forEach(inp => {
+    const origEl = orig.querySelector(`#${inp.id}`);
+    if (origEl) { origEl.value = inp.value; origEl.dispatchEvent(new Event("input", { bubbles: true })); }
+  });
 }
 
 // Patch activerComparaison : déplacé après la définition de la vraie fonction
@@ -2567,7 +2708,9 @@ function _creerLignePrimeManuelle(libelle = "", montant = "", imposable = true) 
 
   const lOui  = document.createElement("label");
   lOui.htmlFor    = rOuiId;
-  lOui.textContent = "Imposable";
+  // Labels abrégés sur mobile pour éviter le débordement
+  const isMob = document.body.classList.contains("is-mobile");
+  lOui.textContent = isMob ? "Imp." : "Imposable";
 
   const rNon  = document.createElement("input");
   rNon.type   = "radio"; rNon.name = rName;
@@ -2576,7 +2719,7 @@ function _creerLignePrimeManuelle(libelle = "", montant = "", imposable = true) 
 
   const lNon  = document.createElement("label");
   lNon.htmlFor    = rNonId;
-  lNon.textContent = "Non imposable";
+  lNon.textContent = isMob ? "Non imp." : "Non imposable";
 
   rOui.addEventListener("change", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
   rNon.addEventListener("change", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
@@ -2679,7 +2822,7 @@ window.supprimerPrimeManuelle = function (index) {
  * @param {ProfilAgent}      p - Profil agent
  * @param {MontantsCalcules} m - Résultats calculerMontants(p)
  */
-function dessinerFicheMobile(p, m) {
+function dessinerFicheMobile(p, m, pB = null, mB = null) {
   const root = document.getElementById("fiche-mobile");
   if (!root) return;
   root.innerHTML = "";
@@ -3124,17 +3267,32 @@ function dessinerFicheMobile(p, m) {
       row.append(lbl, amt); root.appendChild(row);
     })();
 
-    // NET À PAYER — ligne vedette
+    // NET À PAYER — ligne vedette (avec delta si mode comparaison)
     const rowNet = document.createElement("div");
     rowNet.className = "mf-row mf-total mf-total-net";
     const lblNet = document.createElement("span");
     lblNet.className = "mf-label";
     lblNet.textContent = "NET À PAYER";
+    const amtNetWrap = document.createElement("span");
+    amtNetWrap.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:2px;";
     const amtNet = document.createElement("span");
     amtNet.className = "mf-amount";
     amtNet.textContent = (m.netFinal === 0 ? "0,00" :
       m.netFinal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + " €";
-    rowNet.append(lblNet, amtNet);
+    amtNetWrap.appendChild(amtNet);
+    // Delta mode comparaison
+    if (mB && modeComparaison) {
+      const delta = m.netFinal - mB.netFinal;
+      if (delta !== 0) {
+        const deltaBadge = document.createElement("span");
+        const signe = delta > 0 ? "+" : "";
+        deltaBadge.className = "mf-delta-badge " + (delta > 0 ? "mf-delta-pos" : "mf-delta-neg");
+        deltaBadge.textContent = signe + delta.toLocaleString("fr-FR",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+        amtNetWrap.appendChild(deltaBadge);
+      }
+    }
+    rowNet.append(lblNet, amtNetWrap);
     root.appendChild(rowNet);
   }
 
