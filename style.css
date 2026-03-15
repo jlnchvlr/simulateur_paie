@@ -3125,3 +3125,100 @@ select.champ-non-configure {
     margin-top: 8px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPARATEUR MOBILE — Plan B
+   Barre delta live + bouton Quitter discret
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Barre delta en haut du panneau comparateur mobile */
+.cmp-mobile-delta-bar {
+  background: #f0f4f8;
+  border: 1px solid #d0daea;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+  text-align: center;
+}
+.cmp-mobile-delta-bar.cmp-delta-neutral {
+  color: #888;
+}
+.cmp-delta-pill {
+  display: inline-block;
+  font-family: var(--font-numbers);
+  font-size: 15px;
+  font-weight: bold;
+  padding: 3px 12px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+.cmp-delta-pos {
+  background: #d4edda;
+  color: #1a6b2f;
+}
+.cmp-delta-neg {
+  background: #f8d7da;
+  color: #c0392b;
+}
+
+/* Bouton Quitter — petit, discret, centré en bas */
+.cmp-mobile-btn-quitter {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  color: #c0392b;
+  font-family: var(--font-main);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: underline;
+  opacity: 0.75;
+}
+.cmp-mobile-btn-quitter:active {
+  opacity: 1;
+}
+
+@media (max-width: 820px) {
+  /* S'assurer que le panneau comparateur ne s'affiche pas en dehors de la modale */
+  #panneau-comparaison,
+  #panneau-comparaison.visible {
+    display: none !important;
+  }
+  /* Le cmp-body quand il est dans la modale mobile */
+  #panel-cmp-mobile .cmp-body {
+    padding: 0;
+    overflow-y: visible;
+    flex: none;
+  }
+  #panel-cmp-mobile .cmp-body select,
+  #panel-cmp-mobile .cmp-body input[type="number"] {
+    font-size: 16px;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+  #panel-cmp-mobile .cmp-body .panel-subhead {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--dgfip-light);
+    text-transform: uppercase;
+  }
+  #panel-cmp-mobile .cmp-body label {
+    font-size: 14px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  #panel-cmp-mobile .cmp-body .ir-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}

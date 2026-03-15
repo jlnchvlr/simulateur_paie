@@ -2516,10 +2516,15 @@ function _majBottomBarComparer() {
 }
 
 /**
- * Ouvre le panneau comparateur dans la modale sur mobile.
- * - Si mode comparaison pas encore actif → active + ouvre la modale de config
- * - Si déjà actif → ouvre directement la modale (pour reconfigurer)
- * - Bouton "Quitter" dans la modale → désactive le mode
+ * Plan B — Comparateur mobile.
+ *
+ * Au lieu de cloner le panneau (ce qui crée des IDs dupliqués),
+ * on DÉPLACE le vrai #panneau-comparaison dans la modale.
+ * getProfilComparaisonDepuisPanneau() lit toujours les vrais IDs → ça marche.
+ * À la fermeture, on remet le panneau dans document.body.
+ *
+ * Le recalcul est live : chaque changement → calculerPaie() → delta Δ NET mis à jour
+ * dans #cmp-mobile-delta sans fermer la modale.
  */
 function _ouvrirComparateurMobile() {
   if (!document.body.classList.contains("is-mobile")) {
@@ -2527,122 +2532,121 @@ function _ouvrirComparateurMobile() {
     return;
   }
 
-  // Activer le mode si pas encore actif
+  const modalBody = document.querySelector(".modal-body");
+  const panneau   = document.getElementById("panneau-comparaison");
+  if (!modalBody || !panneau) return;
+
+  // Activer le mode comparaison (initialise les champs B)
   if (!modeComparaison) {
-    window.activerComparaison?.(); // initialise les champs B + calculerPaie
+    window.activerComparaison?.();
   }
 
-  // Construire ou récupérer le panneau mobile comparateur dans la modale
-  const modalBody = document.querySelector(".modal-body");
-  if (!modalBody) return;
-
+  // ── Créer le panel-cmp-mobile wrapper (une seule fois) ──────────────────
   let panel = document.getElementById("panel-cmp-mobile");
   if (!panel) {
     panel = document.createElement("div");
-    panel.id = "panel-cmp-mobile";
+    panel.id        = "panel-cmp-mobile";
     panel.className = "setting-panel";
 
-    // Cloner le contenu du panneau comparateur (sans le header avec bouton Quitter)
-    const cmpBody = document.getElementById("panneau-comparaison")?.querySelector(".cmp-body");
-    if (cmpBody) {
-      // Copier le HTML du corps du comparateur
-      const clone = cmpBody.cloneNode(true);
-      clone.id = "panel-cmp-mobile-body";
-      // Mettre à jour les IDs clonés pour éviter les doublons — on utilise directement
-      // les VRAIS éléments du panneau via synchronisation manuelle
-      panel.appendChild(clone);
-    }
+    // ── Barre delta Δ NET — mise à jour live ────────────────────────────
+    const deltaBar = document.createElement("div");
+    deltaBar.id        = "cmp-mobile-delta";
+    deltaBar.className = "cmp-mobile-delta-bar";
+    deltaBar.textContent = "Modifiez les paramètres — le Δ NET s'affiche ici.";
+    panel.appendChild(deltaBar);
 
-    // Bouton Quitter la comparaison
+    // ── Le vrai corps du comparateur sera déplacé ici ──────────────────
+    // (placeholder, panneau.cmp-body sera appendé dynamiquement)
+
+    // ── Bouton principal : Fermer et voir les deltas ─────────────────────
+    const btnFermer = document.createElement("button");
+    btnFermer.type      = "button";
+    btnFermer.className = "validate-btn";
+    btnFermer.id        = "cmp-mobile-btn-fermer";
+    btnFermer.textContent = "✓ Fermer — voir les deltas";
+    btnFermer.addEventListener("click", () => {
+      document.getElementById("magic-modal").close();
+    });
+    panel.appendChild(btnFermer);
+
+    // ── Bouton secondaire discret : Quitter le mode ──────────────────────
     const btnQuitter = document.createElement("button");
-    btnQuitter.type = "button";
-    btnQuitter.className = "validate-btn";
-    btnQuitter.style.cssText = "background:#c0392b;margin-top:8px;";
-    btnQuitter.textContent = "✕ Quitter la comparaison";
+    btnQuitter.type      = "button";
+    btnQuitter.className = "cmp-mobile-btn-quitter";
+    btnQuitter.id        = "cmp-mobile-btn-quitter";
+    btnQuitter.textContent = "Quitter la comparaison";
     btnQuitter.addEventListener("click", () => {
       window.desactiverComparaison?.();
       document.getElementById("magic-modal").close();
     });
-
-    // Bouton Valider (voir les deltas)
-    const btnValider = document.createElement("button");
-    btnValider.type = "button";
-    btnValider.className = "validate-btn";
-    btnValider.textContent = "✓ Voir les différences";
-    btnValider.addEventListener("click", () => {
-      // Synchroniser les valeurs des champs clonés → champs originaux
-      _syncCmpMobileVersOriginal();
-      calculerPaie();
-      document.getElementById("magic-modal").close();
-    });
-
-    // Ajouter les boutons dans l'ordre (append, pas insertBefore — btnQuitter
-    // n'est pas encore enfant de panel au moment de l'appel)
-    panel.appendChild(btnValider);
     panel.appendChild(btnQuitter);
+
     modalBody.appendChild(panel);
   }
 
-  // Synchroniser les champs originaux → clonés à l'ouverture
-  _syncCmpOriginalVersClone();
-  ouvrirModal("panel-cmp-mobile", "⚖ Scénario B — Comparaison");
+  // ── Déplacer le VRAI panneau (cmp-body) dans panel-cmp-mobile ──────────
+  // On insère entre deltaBar et btnFermer
+  const cmpBody   = panneau.querySelector(".cmp-body");
+  const btnFermer = document.getElementById("cmp-mobile-btn-fermer");
+  if (cmpBody && btnFermer) {
+    panel.insertBefore(cmpBody, btnFermer);
+    // Mémoriser où remettre le panneau à la fermeture
+    panel.dataset.cmpBodyMoved = "1";
+  }
+
+  // ── Recalcul live à chaque changement ───────────────────────────────────
+  if (!panel._liveListenerAttached) {
+    panel.addEventListener("change", _majDeltaMobile);
+    panel.addEventListener("input",  _majDeltaMobile);
+    panel._liveListenerAttached = true;
+  }
+
+  // ── Restaurer cmp-body dans panneau-comparaison à la fermeture ──────────
+  const modal = document.getElementById("magic-modal");
+  const _onClose = () => {
+    const moved = panel.querySelector(".cmp-body");
+    if (moved) panneau.appendChild(moved);
+    modal.removeEventListener("close", _onClose);
+  };
+  modal.addEventListener("close", _onClose);
+
+  _majDeltaMobile(); // afficher le delta courant à l'ouverture
+  ouvrirModal("panel-cmp-mobile", "⚖ Scénario B");
 }
 
 /**
- * Copie les valeurs des vrais champs #panneau-comparaison vers leurs clones dans panel-cmp-mobile.
+ * Met à jour le badge Δ NET dans la modale comparateur mobile.
+ * Appelée à chaque changement de champ ET à l'ouverture.
  */
-function _syncCmpOriginalVersClone() {
-  const orig  = document.getElementById("panneau-comparaison");
-  const clone = document.getElementById("panel-cmp-mobile-body");
-  if (!orig || !clone) return;
+function _majDeltaMobile() {
+  if (!modeComparaison) return;
+  const bar = document.getElementById("cmp-mobile-delta");
+  if (!bar) return;
 
-  // Selects
-  clone.querySelectorAll("select").forEach(sel => {
-    const origEl = orig.querySelector(`#${sel.id}`);
-    if (origEl) sel.value = origEl.value;
-  });
-  // Checkboxes
-  clone.querySelectorAll("input[type='checkbox']").forEach(cb => {
-    const origEl = orig.querySelector(`#${cb.id}`);
-    if (origEl) cb.checked = origEl.checked;
-  });
-  // Radios
-  clone.querySelectorAll("input[type='radio']").forEach(r => {
-    const origEl = orig.querySelector(`input[name='${r.name}'][value='${r.value}']`);
-    if (origEl) r.checked = origEl.checked;
-  });
-  // Inputs text/number
-  clone.querySelectorAll("input[type='text'], input[type='number']").forEach(inp => {
-    const origEl = orig.querySelector(`#${inp.id}`);
-    if (origEl) inp.value = origEl.value;
-  });
-}
+  // Recalculer le profil B depuis les vrais champs (pas de clone !)
+  try {
+    const pA = getProfilDepuisInterface();
+    const pB = getProfilComparaisonDepuisPanneau();
+    const mA = calculerMontants(pA);
+    const mB = calculerMontants(pB);
+    const delta = mB.netFinal - mA.netFinal; // B - A : positif = B meilleur
+    const fmt = v => v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/**
- * Copie les valeurs des champs clonés → vrais champs du panneau comparateur,
- * puis déclenche les listeners natifs pour que calculerPaie() reçoive les bonnes valeurs.
- */
-function _syncCmpMobileVersOriginal() {
-  const orig  = document.getElementById("panneau-comparaison");
-  const clone = document.getElementById("panel-cmp-mobile-body");
-  if (!orig || !clone) return;
+    if (Math.abs(delta) < 0.01) {
+      bar.textContent  = "Δ NET : aucune différence";
+      bar.className    = "cmp-mobile-delta-bar cmp-delta-neutral";
+    } else {
+      const signe = delta > 0 ? "+" : "";
+      bar.innerHTML = `Scén. A <strong>${fmt(mA.netFinal)} €</strong> &nbsp;·&nbsp; Scén. B <strong>${fmt(mB.netFinal)} €</strong><br>
+        <span class="cmp-delta-pill ${delta > 0 ? "cmp-delta-pos" : "cmp-delta-neg"}">${signe}${fmt(delta)} €</span>`;
+      bar.className = "cmp-mobile-delta-bar";
+    }
 
-  clone.querySelectorAll("select").forEach(sel => {
-    const origEl = orig.querySelector(`#${sel.id}`);
-    if (origEl) { origEl.value = sel.value; origEl.dispatchEvent(new Event("change", { bubbles: true })); }
-  });
-  clone.querySelectorAll("input[type='checkbox']").forEach(cb => {
-    const origEl = orig.querySelector(`#${cb.id}`);
-    if (origEl) { origEl.checked = cb.checked; origEl.dispatchEvent(new Event("change", { bubbles: true })); }
-  });
-  clone.querySelectorAll("input[type='radio']:checked").forEach(r => {
-    const origEl = orig.querySelector(`input[name='${r.name}'][value='${r.value}']`);
-    if (origEl) { origEl.checked = true; origEl.dispatchEvent(new Event("change", { bubbles: true })); }
-  });
-  clone.querySelectorAll("input[type='text'], input[type='number']").forEach(inp => {
-    const origEl = orig.querySelector(`#${inp.id}`);
-    if (origEl) { origEl.value = inp.value; origEl.dispatchEvent(new Event("input", { bubbles: true })); }
-  });
+    // Aussi déclencher le recalcul complet pour mettre à jour la liste en arrière-plan
+    calculerPaie();
+  } catch (e) {
+    bar.textContent = "Δ NET : —";
+  }
 }
 
 // Patch activerComparaison : déplacé après la définition de la vraie fonction
@@ -2895,9 +2899,11 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
    * @param {boolean}  [opts.totalNet] - style ligne NET final
    * @param {boolean}  [opts.absence] - style ligne absence
    * @param {Function} [opts.onDelete] - callback bouton ✖
+   * @param {number|null} [opts.delta] - delta comparaison (B-A pour crédits, A-B pour déductions)
+   *                                     positif = vert, négatif = rouge
    */
   function ligne(libelle, credit, deduction, opts = {}) {
-    const { panel, titre, cle, sub, total, totalNet, absence, onDelete } = opts;
+    const { panel, titre, cle, sub, total, totalNet, absence, onDelete, delta } = opts;
 
     // Si clé onboarding non configurée → ligne badge orange
     if (cle && nonConfigure(cle)) {
@@ -2980,12 +2986,27 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       lbl.appendChild(s);
     }
 
+    // Wrapper pour montant + badge delta
+    const amtWrap = document.createElement("span");
+    amtWrap.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;";
+
     const amt = document.createElement("span");
     amt.className = "mf-amount " + (credit ? "mf-credit" : deduction ? "mf-deduction" : "mf-info");
 
     if (credit)    amt.textContent = "+" + fmt(credit);
     else if (deduction) amt.textContent = "−" + fmt(deduction);
     else           amt.textContent = fmt(montant);
+    amtWrap.appendChild(amt);
+
+    // Badge delta comparaison — affiché uniquement en mode comparaison
+    if (delta != null && mB && modeComparaison && Math.abs(delta) >= 0.01) {
+      const db = document.createElement("span");
+      const signe = delta > 0 ? "+" : "";
+      db.className = "mf-delta-badge " + (delta > 0 ? "mf-delta-pos" : "mf-delta-neg");
+      db.textContent = signe + delta.toLocaleString("fr-FR",
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+      amtWrap.appendChild(db);
+    }
 
     // Bouton ✖ pour supprimer (primes manuelles)
     if (onDelete) {
@@ -2994,9 +3015,9 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       del.style.cssText = "background:none;border:none;color:#c0392b;font-size:14px;padding:0 0 0 8px;cursor:pointer;flex-shrink:0;";
       del.textContent = "✖";
       del.addEventListener("click", e => { e.stopPropagation(); onDelete(); });
-      row.append(lbl, del, amt);
+      row.append(lbl, del, amtWrap);
     } else {
-      row.append(lbl, amt);
+      row.append(lbl, amtWrap);
     }
 
     root.appendChild(row);
@@ -3057,6 +3078,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     const action = () => _ouvrirPanneauMobile("panel-traitement-mobile", "Traitement", "");
     row.addEventListener("click", action);
     row.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); action(); }});
+    const _deltaTrait = mB ? ((mB.traitementBrut + (mB.montantNbi||0)) - (m.traitementBrut + (m.montantNbi||0))) : null;
     const lbl = document.createElement("span");
     lbl.className = "mf-label";
     lbl.textContent = "Traitement brut";
@@ -3074,16 +3096,27 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       badge.addEventListener("click", e => { e.stopPropagation(); action(); });
       row.append(lbl, badge);
     } else {
+      const amtW = document.createElement("span");
+      amtW.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;";
       const amt = document.createElement("span");
       amt.className = "mf-amount mf-credit";
       amt.textContent = "+" + fmt(m.traitementBrut + (m.montantNbi || 0));
-      row.append(lbl, amt);
+      amtW.appendChild(amt);
+      if (_deltaTrait != null && mB && modeComparaison && Math.abs(_deltaTrait) >= 0.01) {
+        const db = document.createElement("span");
+        db.className = "mf-delta-badge " + (_deltaTrait > 0 ? "mf-delta-pos" : "mf-delta-neg");
+        db.textContent = (_deltaTrait > 0 ? "+" : "") + _deltaTrait.toLocaleString("fr-FR",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+        amtW.appendChild(db);
+      }
+      row.append(lbl, amtW);
     }
     root.appendChild(row);
   }
 
   ligne("Indemnité de résidence",   m.indemniteResidence, null,
-    { cle: "zone_residence", panel: "panel-residence", titre: "Zone de Résidence" });
+    { cle: "zone_residence", panel: "panel-residence", titre: "Zone de Résidence",
+      delta: mB ? (mB.indemniteResidence - m.indemniteResidence) : null });
 
   if (m.montantSFT > 0)
     ligne("Supplément familial (SFT)", m.montantSFT, null,
@@ -3157,15 +3190,20 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
 
   // RIST (avec badge si non configuré)
   ligne("RIST Part Fonctions",     p.primes.rist_fonctions - m.absRistFct, null,
-    { cle: "rist_fonctions", panel: "panel-rist-fonctions", titre: "Ristourne Part Fonctions" });
+    { cle: "rist_fonctions", panel: "panel-rist-fonctions", titre: "Ristourne Part Fonctions",
+      delta: mB ? ((pB.primes.rist_fonctions - mB.absRistFct) - (p.primes.rist_fonctions - m.absRistFct)) : null });
   ligne("RIST Part Expérience",    p.primes.rist_exper_prof - m.absRistExp, null,
-    { cle: "rist_experience", panel: "panel-rist-experience", titre: "Ristourne Part Expérience" });
+    { cle: "rist_experience", panel: "panel-rist-experience", titre: "Ristourne Part Expérience",
+      delta: mB ? ((pB.primes.rist_exper_prof - mB.absRistExp) - (p.primes.rist_exper_prof - m.absRistExp)) : null });
   ligne("RIST Part LIC-ISQ",       p.primes.rist_lic_isq - m.absRistIsq, null,
-    { cle: "rist_isq_licence", panel: "panel-rist-isq-licence", titre: "Ristourne Part LIC-ISQ" });
+    { cle: "rist_isq_licence", panel: "panel-rist-isq-licence", titre: "Ristourne Part LIC-ISQ",
+      delta: mB ? ((pB.primes.rist_lic_isq - mB.absRistIsq) - (p.primes.rist_lic_isq - m.absRistIsq)) : null });
   ligne("RIST CPLT LIC-ISQ",       p.primes.rist_cplt_lic_isq - m.absRistCplt, null,
-    { cle: "rist_isq_complement", panel: "panel-rist-isq-complement", titre: "Ristourne CPLT LIC-ISQ" });
+    { cle: "rist_isq_complement", panel: "panel-rist-isq-complement", titre: "Ristourne CPLT LIC-ISQ",
+      delta: mB ? ((pB.primes.rist_cplt_lic_isq - mB.absRistCplt) - (p.primes.rist_cplt_lic_isq - m.absRistCplt)) : null });
   ligne("Majoration ISQ",          p.primes.rist_maj_isq - m.absRistMaj, null,
-    { cle: "rist_isq_majoration", panel: "panel-rist-isq-majoration", titre: "Majoration ISQ" });
+    { cle: "rist_isq_majoration", panel: "panel-rist-isq-majoration", titre: "Majoration ISQ",
+      delta: mB ? ((pB.primes.rist_maj_isq - mB.absRistMaj) - (p.primes.rist_maj_isq - m.absRistMaj)) : null });
 
   // Ind. compensatrice CSG
   ligne("Ind. compensatrice CSG",  p.primes.ind_compensatrice_csg - m.absIndCsg, null,
@@ -3185,12 +3223,17 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
   // ── Cotisations salariales ────────────────────────────────────────────────
   section("Cotisations salariales");
 
-  ligne("CSG non déductible",      null, m.csgNonDeductible);
-  ligne("CSG déductible",          null, m.csgDeductible);
-  ligne("CRDS",                    null, m.crds);
-  ligne("Cotisation RAFP",         null, m.cotisationRafp);
+  ligne("CSG non déductible",      null, m.csgNonDeductible,
+    { delta: mB ? (m.csgNonDeductible - mB.csgNonDeductible) : null });
+  ligne("CSG déductible",          null, m.csgDeductible,
+    { delta: mB ? (m.csgDeductible - mB.csgDeductible) : null });
+  ligne("CRDS",                    null, m.crds,
+    { delta: mB ? (m.crds - mB.crds) : null });
+  ligne("Cotisation RAFP",         null, m.cotisationRafp,
+    { delta: mB ? (m.cotisationRafp - mB.cotisationRafp) : null });
   if (m.retenueIsq > 0)
-    ligne("24,6% ISQ",             null, m.retenueIsq);
+    ligne("24,6% ISQ",             null, m.retenueIsq,
+      { delta: mB ? (m.retenueIsq - mB.retenueIsq) : null });
 
   // ── Cotisations patronales ────────────────────────────────────────────────
   section("Cotisations patronales");
@@ -3214,7 +3257,8 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     const tauxPct = (p.taux_pas * 100).toLocaleString("fr-FR",
       { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " %";
     ligne("Prélèvement à la source", null, m.impotSource,
-      { panel: "panel-impots", titre: "Prélèvement à la Source", sub: `Taux ${tauxPct}` });
+      { panel: "panel-impots", titre: "Prélèvement à la Source", sub: `Taux ${tauxPct}`,
+        delta: mB ? (m.impotSource - mB.impotSource) : null });
   }
 
   // ── Nets ──────────────────────────────────────────────────────────────────
@@ -3282,7 +3326,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     amtNetWrap.appendChild(amtNet);
     // Delta mode comparaison
     if (mB && modeComparaison) {
-      const delta = m.netFinal - mB.netFinal;
+      const delta = mB.netFinal - m.netFinal; // B - A : positif = B meilleur
       if (delta !== 0) {
         const deltaBadge = document.createElement("span");
         const signe = delta > 0 ? "+" : "";
