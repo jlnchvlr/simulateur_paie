@@ -2995,6 +2995,8 @@ select.champ-non-configure {
      Résout le problème de libellé ultra-étroit (66px). */
   .prime-manuelle-row {
     flex-wrap: wrap;
+    align-items: center;      /* centre les items dans chaque ligne flex */
+    align-content: flex-start; /* FIX: chaque ligne prend sa hauteur minimale */
     gap: 8px 6px;
     padding: 10px 0;
   }
@@ -3019,11 +3021,12 @@ select.champ-non-configure {
     align-self: center;
   }
   .prime-manuelle-row .pm-toggle {
-    flex: 2;
+    flex: 0 0 auto;
     width: auto;
-    min-height: 44px;
+    min-height: unset; /* géré dans le bloc plus bas */
+    align-self: center;
   }
-  /* pm-toggle label : géré séparément ci-dessous, pas de min-height ici */
+  /* pm-toggle label : géré dans le dernier @media */
   .pm-suppr {
     font-size: 18px;
     padding: 0 6px;
@@ -3221,4 +3224,63 @@ select.champ-non-configure {
     flex-wrap: wrap;
     gap: 6px;
   }
+}
+
+/* ─── Panel WIP (fonctionnalité en développement) ─────────────── */
+.panel-wip-notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 8px 0 16px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: #5d4037;
+  line-height: 1.5;
+}
+.panel-wip-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Détail des totaux — bouton toggle + conteneur ──────────────── */
+.mf-detail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: #f0f4f8;
+  border: none;
+  border-top: 1px solid var(--dgfip-light);
+  padding: 10px 16px;
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--dgfip-medium);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.mf-detail-toggle:active { opacity: 0.7; }
+.mf-detail-arrow {
+  font-size: 9px;
+  flex-shrink: 0;
+}
+.mf-detail-wrap .mf-row.mf-total {
+  background: #f8fafc;
+  margin-top: 1px;
+}
+.mf-detail-wrap .mf-row.mf-total .mf-label {
+  color: #444;
+  font-weight: normal;
+  font-size: 12px;
+}
+.mf-detail-wrap .mf-row.mf-total .mf-amount {
+  color: #333;
+  font-size: 13px;
 }

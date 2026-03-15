@@ -1099,10 +1099,10 @@ function calculerMontants(p) {
  */
 const ROUTAGE_MODAL = {
   102000: { cible: "panel-residence", titre: "Zone de Résidence" },
-  201958: { cible: "panel-rist-fonctions", titre: "Ristourne Part Fonctions" },
-  201959: { cible: "panel-rist-experience", titre: "Ristourne Part Expérience" },
-  201960: { cible: "panel-rist-isq-licence", titre: "Ristourne Part LIC-ISQ" },
-  201961: { cible: "panel-rist-isq-complement", titre: "Ristourne CPLT Part LIC-ISQ" },
+  201958: { cible: "panel-rist-fonctions", titre: "RIST Part Fonctions" },
+  201959: { cible: "panel-rist-experience", titre: "RIST Part Expérience" },
+  201960: { cible: "panel-rist-isq-licence", titre: "RIST Part LIC-ISQ" },
+  201961: { cible: "panel-rist-isq-complement", titre: "RIST CPLT LIC-ISQ" },
   201962: { cible: "panel-rist-isq-majoration", titre: "Majoration Complément ISQ" },
   200176: { cible: "panel-nuits", titre: "Travail de Nuit & Soirées" },
   200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
@@ -1358,10 +1358,10 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       { delta: infl.delta, deltaCol: 2, isGhost: infl.isGhost });
 
   // ── RIST (5 composantes) ──────────────────────────────────────────────────────
-  ajouterLigneRistAvecBadge("201958", "RIST PART FONCTIONS",      "rist_fonctions",       p.primes.rist_fonctions,        m.absRistFct,  "panel-rist-fonctions",      "Ristourne Part Fonctions",    pB?.primes.rist_fonctions    ?? 0);
-  ajouterLigneRistAvecBadge("201959", "RIST PART EXPER. PROF.",   "rist_experience",      p.primes.rist_exper_prof,       m.absRistExp,  "panel-rist-experience",     "Ristourne Part Expérience",   pB?.primes.rist_exper_prof   ?? 0);
-  ajouterLigneRistAvecBadge("201960", "RIST PART LIC-ISQ (ICNA)", "rist_isq_licence",     p.primes.rist_lic_isq,          m.absRistIsq,  "panel-rist-isq-licence",    "Ristourne Part LIC-ISQ",      pB?.primes.rist_lic_isq      ?? 0);
-  ajouterLigneRistAvecBadge("201961", "RIST CPLT PART LIC-ISQ",   "rist_isq_complement",  p.primes.rist_cplt_lic_isq,     m.absRistCplt, "panel-rist-isq-complement", "Ristourne CPLT Part LIC-ISQ", pB?.primes.rist_cplt_lic_isq ?? 0);
+  ajouterLigneRistAvecBadge("201958", "RIST PART FONCTIONS",      "rist_fonctions",       p.primes.rist_fonctions,        m.absRistFct,  "panel-rist-fonctions",      "RIST Part Fonctions",    pB?.primes.rist_fonctions    ?? 0);
+  ajouterLigneRistAvecBadge("201959", "RIST PART EXPER. PROF.",   "rist_experience",      p.primes.rist_exper_prof,       m.absRistExp,  "panel-rist-experience",     "RIST Part Expérience",   pB?.primes.rist_exper_prof   ?? 0);
+  ajouterLigneRistAvecBadge("201960", "RIST PART LIC-ISQ (ICNA)", "rist_isq_licence",     p.primes.rist_lic_isq,          m.absRistIsq,  "panel-rist-isq-licence",    "RIST Part LIC-ISQ",      pB?.primes.rist_lic_isq      ?? 0);
+  ajouterLigneRistAvecBadge("201961", "RIST CPLT PART LIC-ISQ",   "rist_isq_complement",  p.primes.rist_cplt_lic_isq,     m.absRistCplt, "panel-rist-isq-complement", "RIST CPLT LIC-ISQ", pB?.primes.rist_cplt_lic_isq ?? 0);
   ajouterLigneRistAvecBadge("201962", "MAJORATION CPLT ISQ",      "rist_isq_majoration",  p.primes.rist_maj_isq,          m.absRistMaj,  "panel-rist-isq-majoration", "Majoration Complément ISQ",   pB?.primes.rist_maj_isq      ?? 0);
   ajouterLigneRistAvecBadge("202206", "IND. COMPENSATRICE CSG",   "ind_compensatrice_csg",p.primes.ind_compensatrice_csg, m.absIndCsg,   "panel-csg",                 "Indemnité Compensatrice CSG", pB?.primes.ind_compensatrice_csg ?? 0);
 
@@ -3078,7 +3078,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     const action = () => _ouvrirPanneauMobile("panel-traitement-mobile", "Traitement", "");
     row.addEventListener("click", action);
     row.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); action(); }});
-    const _deltaTrait = mB ? ((mB.traitementBrut + (mB.montantNbi||0)) - (m.traitementBrut + (m.montantNbi||0))) : null;
+    const _deltaTrait = mB ? (mB.traitementBrut - m.traitementBrut) : null; // NBI séparée
     const lbl = document.createElement("span");
     lbl.className = "mf-label";
     lbl.textContent = "Traitement brut";
@@ -3100,7 +3100,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       amtW.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;";
       const amt = document.createElement("span");
       amt.className = "mf-amount mf-credit";
-      amt.textContent = "+" + fmt(m.traitementBrut + (m.montantNbi || 0));
+      amt.textContent = "+" + fmt(m.traitementBrut);  // NBI sur ligne séparée
       amtW.appendChild(amt);
       if (_deltaTrait != null && mB && modeComparaison && Math.abs(_deltaTrait) >= 0.01) {
         const db = document.createElement("span");
@@ -3112,6 +3112,14 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       row.append(lbl, amtW);
     }
     root.appendChild(row);
+  }
+
+  // NBI — affichée uniquement si activée (montantNbi > 0)
+  if (m.montantNbi > 0) {
+    ligne("NBI",  m.montantNbi, null,
+      { panel: "panel-traitement-mobile", titre: "Traitement",
+        sub: "Nouvelle Bonification Indiciaire",
+        delta: mB ? (mB.montantNbi - m.montantNbi) : null });
   }
 
   ligne("Indemnité de résidence",   m.indemniteResidence, null,
@@ -3147,59 +3155,69 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
   // Nuits
   if (m.nuit > 0)
     ligne("Ind. travail de nuit",   m.nuit, null,
-      { panel: "panel-nuits", titre: "Travail de Nuit & Soirées" });
+      { panel: "panel-nuits", titre: "Travail de Nuit & Soirées",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-nuit-n","input-nuit-s2"]) });
 
   // FMD
   if (p.primes.forfait_mobilites > 0)
     ligne("Forfait mobilités",      p.primes.forfait_mobilites, null,
-      { panel: "panel-fmd", titre: "Forfait Mobilités" });
+      { panel: "panel-fmd", titre: "Forfait Mobilités",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-fmd"]) });
 
   // Inflation
   if (p.primes.inflation > 0)
     ligne("Indemnité pouvoir d'achat", p.primes.inflation, null,
-      { panel: "panel-inflation", titre: "Indemnité Inflation" });
+      { panel: "panel-inflation", titre: "Indemnité Inflation",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-inflation"]) });
 
   // PSC
   if (p.primes.psc > 0)
     ligne("Participation PSC",      p.primes.psc, null,
-      { panel: "panel-psc", titre: "Participation PSC" });
+      { panel: "panel-psc", titre: "Participation PSC",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["psc-15","psc-7","psc-5"]) });
 
   // PPP
   if (p.evenements.prime_performance > 0)
     ligne("Prime partage performance", p.evenements.prime_performance, null,
-      { panel: "panel-primes", titre: "Prime Partage Performance" });
+      { panel: "panel-primes", titre: "Prime Partage Performance",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-perf"]) });
 
   // OTT
   if (p.evenements.ott_pf > 0)
     ligne("OTT Part Fixe",         p.evenements.ott_pf, null,
-      { panel: "panel-ott", titre: "Protocole (OTT)" });
+      { panel: "panel-ott", titre: "Protocole (OTT)",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pf-manuel","pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1","pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4","pf-opt1-enac","pf-opt1-plus-enac"]) });
   if (p.evenements.ott_pv_globale > 0)
     ligne("OTT Part Variable",     p.evenements.ott_pv_globale, null,
-      { panel: "panel-ott", titre: "Protocole (OTT)" });
+      { panel: "panel-ott", titre: "Protocole (OTT)",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pv-globale"]) });
   if (p.evenements.ott_pv_opt32 > 0)
     ligne("OTT PV Opt 3-1/3-2",   p.evenements.ott_pv_opt32, null,
-      { panel: "panel-ott", titre: "Protocole (OTT)" });
+      { panel: "panel-ott", titre: "Protocole (OTT)",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["pv-opt32"]) });
 
   // Attractivité / Fidélisation
   if (p.primes.attractivite > 0)
     ligne("Attractivité géo.",     p.primes.attractivite, null,
-      { panel: "panel-attractivite", titre: "Attractivité Géographique" });
+      { panel: "panel-attractivite", titre: "Attractivité Géographique",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-attractivite"]) });
   if (p.primes.fidelisation > 0)
     ligne("Prime fidélisation",    p.primes.fidelisation, null,
-      { panel: "panel-fidelisation", titre: "Prime Fidélisation" });
+      { panel: "panel-fidelisation", titre: "Prime Fidélisation",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-fidelisation"]) });
 
   // RIST (avec badge si non configuré)
   ligne("RIST Part Fonctions",     p.primes.rist_fonctions - m.absRistFct, null,
-    { cle: "rist_fonctions", panel: "panel-rist-fonctions", titre: "Ristourne Part Fonctions",
+    { cle: "rist_fonctions", panel: "panel-rist-fonctions", titre: "RIST Part Fonctions",
       delta: mB ? ((pB.primes.rist_fonctions - mB.absRistFct) - (p.primes.rist_fonctions - m.absRistFct)) : null });
   ligne("RIST Part Expérience",    p.primes.rist_exper_prof - m.absRistExp, null,
-    { cle: "rist_experience", panel: "panel-rist-experience", titre: "Ristourne Part Expérience",
+    { cle: "rist_experience", panel: "panel-rist-experience", titre: "RIST Part Expérience",
       delta: mB ? ((pB.primes.rist_exper_prof - mB.absRistExp) - (p.primes.rist_exper_prof - m.absRistExp)) : null });
   ligne("RIST Part LIC-ISQ",       p.primes.rist_lic_isq - m.absRistIsq, null,
-    { cle: "rist_isq_licence", panel: "panel-rist-isq-licence", titre: "Ristourne Part LIC-ISQ",
+    { cle: "rist_isq_licence", panel: "panel-rist-isq-licence", titre: "RIST Part LIC-ISQ",
       delta: mB ? ((pB.primes.rist_lic_isq - mB.absRistIsq) - (p.primes.rist_lic_isq - m.absRistIsq)) : null });
   ligne("RIST CPLT LIC-ISQ",       p.primes.rist_cplt_lic_isq - m.absRistCplt, null,
-    { cle: "rist_isq_complement", panel: "panel-rist-isq-complement", titre: "Ristourne CPLT LIC-ISQ",
+    { cle: "rist_isq_complement", panel: "panel-rist-isq-complement", titre: "RIST CPLT LIC-ISQ",
       delta: mB ? ((pB.primes.rist_cplt_lic_isq - mB.absRistCplt) - (p.primes.rist_cplt_lic_isq - m.absRistCplt)) : null });
   ligne("Majoration ISQ",          p.primes.rist_maj_isq - m.absRistMaj, null,
     { cle: "rist_isq_majoration", panel: "panel-rist-isq-majoration", titre: "Majoration ISQ",
@@ -3265,51 +3283,79 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
   if (!pending) {
     section("Résultat");
 
-    // Brut total — ajouté en premier dans la section résultat
-    (() => {
+    // Formateur dédié aux lignes de total : inclut TOUJOURS le € même pour 0
+    const fmtT = (v) => v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+    // Helper : ligne de total réutilisable
+    const ligneTotal = (libelle, valeur, deltaVal = null) => {
       const row = document.createElement("div");
       row.className = "mf-row mf-total";
-      const lbl = document.createElement("span");
-      lbl.className = "mf-label";
-      lbl.textContent = "Brut total";
-      const amt = document.createElement("span");
-      amt.className = "mf-amount mf-info";
-      amt.textContent = fmt(m.totalAPayer);
-      row.append(lbl, amt);
-      root.appendChild(row);
-    })();
+      const lbl = document.createElement("span"); lbl.className = "mf-label"; lbl.textContent = libelle;
+      const wrap = document.createElement("span");
+      wrap.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;min-width:0;";
+      const amt = document.createElement("span"); amt.className = "mf-amount mf-info"; amt.textContent = fmtT(valeur);
+      wrap.appendChild(amt);
+      if (deltaVal != null && mB && modeComparaison && Math.abs(deltaVal) >= 0.01) {
+        const db = document.createElement("span");
+        db.className = "mf-delta-badge " + (deltaVal > 0 ? "mf-delta-pos" : "mf-delta-neg");
+        db.textContent = (deltaVal > 0 ? "+" : "") + deltaVal.toLocaleString("fr-FR",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+        wrap.appendChild(db);
+      }
+      row.append(lbl, wrap); root.appendChild(row);
+    };
 
-    // Net avant impôt
-    (() => {
-      const row = document.createElement("div");
-      row.className = "mf-row mf-total";
-      const lbl = document.createElement("span");
-      lbl.className = "mf-label";
-      lbl.textContent = "Net avant impôt";
-      const amt = document.createElement("span");
-      amt.className = "mf-amount mf-info";
-      amt.textContent = fmt(m.netAPayerAvantImpot);
-      row.append(lbl, amt);
-      root.appendChild(row);
-    })();
+    // ── Lignes TOUJOURS visibles (hors pliable) ─────────────────────────────
+    // Net avant impôt — toujours visible
+    ligneTotal("Net avant impôt", m.netAPayerAvantImpot,
+      mB ? (mB.netAPayerAvantImpot - m.netAPayerAvantImpot) : null);
 
-    // Net social
-    (() => {
-      const row = document.createElement("div");
-      row.className = "mf-row mf-total";
-      const lbl = document.createElement("span"); lbl.className = "mf-label"; lbl.textContent = "Net social";
-      const amt = document.createElement("span"); amt.className = "mf-amount mf-info"; amt.textContent = fmt(m.netSocial);
-      row.append(lbl, amt); root.appendChild(row);
-    })();
+    // ── Sous-section pliable : détail des totaux ──────────────────────────
+    // Bouton toggle "Détail ▶"
+    const btnDetailTotaux = document.createElement("button");
+    btnDetailTotaux.type = "button";
+    btnDetailTotaux.className = "mf-detail-toggle";
+    btnDetailTotaux.innerHTML = '<span class="mf-detail-arrow">▶</span> Détail des totaux';
+    let detailOuvert = false;
+    root.appendChild(btnDetailTotaux);
 
-    // Montant imposable
-    (() => {
+    // Conteneur des lignes de détail (caché par défaut)
+    const detailWrap = document.createElement("div");
+    detailWrap.className = "mf-detail-wrap";
+    detailWrap.style.display = "none";
+    root.appendChild(detailWrap);
+
+    // Remplir le conteneur avec les lignes de détail
+    const ligneDetailTotal = (libelle, valeur, deltaVal = null) => {
       const row = document.createElement("div");
       row.className = "mf-row mf-total";
-      const lbl = document.createElement("span"); lbl.className = "mf-label"; lbl.textContent = "Montant imposable";
-      const amt = document.createElement("span"); amt.className = "mf-amount mf-info"; amt.textContent = fmt(m.netImposableFinal);
-      row.append(lbl, amt); root.appendChild(row);
-    })();
+      const lbl = document.createElement("span"); lbl.className = "mf-label"; lbl.textContent = libelle;
+      const wrap = document.createElement("span");
+      wrap.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;min-width:0;";
+      const amt = document.createElement("span"); amt.className = "mf-amount mf-info";
+      amt.textContent = fmtT(valeur);
+      wrap.appendChild(amt);
+      if (deltaVal != null && mB && modeComparaison && Math.abs(deltaVal) >= 0.01) {
+        const db = document.createElement("span");
+        db.className = "mf-delta-badge " + (deltaVal > 0 ? "mf-delta-pos" : "mf-delta-neg");
+        db.textContent = (deltaVal > 0 ? "+" : "") + deltaVal.toLocaleString("fr-FR",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+        wrap.appendChild(db);
+      }
+      row.append(lbl, wrap); detailWrap.appendChild(row);
+    };
+
+    ligneDetailTotal("Brut total", m.totalAPayer, mB ? (mB.totalAPayer - m.totalAPayer) : null);
+    ligneDetailTotal("Net social", m.netSocial, mB ? (mB.netSocial - m.netSocial) : null);
+    ligneDetailTotal("Montant imposable", m.netImposableFinal, mB ? (mB.netImposableFinal - m.netImposableFinal) : null);
+    ligneDetailTotal("Charges patronales", m.totalPatronal, mB ? (m.totalPatronal - mB.totalPatronal) : null);
+    ligneDetailTotal("Coût total employeur", m.coutTotalEmployeur, mB ? (m.coutTotalEmployeur - mB.coutTotalEmployeur) : null);
+
+    btnDetailTotaux.addEventListener("click", () => {
+      detailOuvert = !detailOuvert;
+      detailWrap.style.display = detailOuvert ? "" : "none";
+      const arrow = btnDetailTotaux.querySelector(".mf-detail-arrow");
+      if (arrow) arrow.textContent = detailOuvert ? "▼" : "▶";
+    });
 
     // NET À PAYER — ligne vedette (avec delta si mode comparaison)
     const rowNet = document.createElement("div");
@@ -3318,11 +3364,11 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     lblNet.className = "mf-label";
     lblNet.textContent = "NET À PAYER";
     const amtNetWrap = document.createElement("span");
-    amtNetWrap.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:2px;";
+    amtNetWrap.style.cssText = "display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;min-width:0;";
     const amtNet = document.createElement("span");
     amtNet.className = "mf-amount";
-    amtNet.textContent = (m.netFinal === 0 ? "0,00" :
-      m.netFinal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + " €";
+    amtNet.textContent = m.netFinal.toLocaleString("fr-FR",
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
     amtNetWrap.appendChild(amtNet);
     // Delta mode comparaison
     if (mB && modeComparaison) {
@@ -4554,7 +4600,7 @@ window.lancerVisiteGuidee = function (startIndex = 0) {
     // 6 — RIST & ISQ
     {
       element: "#row-201958", // sera mis à jour dynamiquement par _ristDemarrer
-      title: "Ristournes & ISQ",
+      title: "RIST & ISQ",
       description:
         `<strong>Cliquez sur chaque ligne</strong> pour configurer votre niveau.<br>` +
         `Le tutoriel vous guide ligne par ligne.<br>` +

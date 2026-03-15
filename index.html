@@ -38,16 +38,30 @@
              PANEL : Attractivité Géographique
              ══════════════════════════════════════ -->
         <div id="panel-attractivite" class="setting-panel">
-          <p class="panel-hint">Sélectionnez la prime liée à l'attractivité géographique de votre centre.</p>
-          <select id="input-attractivite" class="panel-select"></select>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <div class="panel-wip-notice">
+            <span class="panel-wip-icon">🚧</span>
+            <div>
+              <strong>Fonctionnalité en cours de développement</strong><br>
+              <span>L'Attractivité Géographique sera disponible dans une prochaine version du simulateur.</span>
+            </div>
+          </div>
+          <select id="input-attractivite" class="panel-select" style="display:none"></select>
         </div>
 
         <!-- ══════════════════════════════════════
              PANEL : Fidélisation
              ══════════════════════════════════════ -->
         <div id="panel-fidelisation" class="setting-panel">
-          <p class="panel-hint">Sélectionnez votre palier de fidélisation (Prime de Fidélisation Territoriale).</p>
-          <select id="input-fidelisation" class="panel-select"></select>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <div class="panel-wip-notice">
+            <span class="panel-wip-icon">🚧</span>
+            <div>
+              <strong>Fonctionnalité en cours de développement</strong><br>
+              <span>La Prime de Fidélisation Territoriale sera disponible dans une prochaine version du simulateur.</span>
+            </div>
+          </div>
+          <select id="input-fidelisation" class="panel-select" style="display:none"></select>
         </div>
 
         <!-- ══════════════════════════════════════
@@ -673,12 +687,14 @@
         <label>ISQ — Majoration</label>
         <select id="cmp-input-isq-majoration"></select>
 
-        <!-- Attractivité & Fidélisation -->
+        <!-- Attractivité & Fidélisation — en développement -->
         <h3 class="panel-subhead">Attractivité &amp; Fidélisation</h3>
-        <label>Attractivité Géographique</label>
-        <select id="cmp-attractivite"></select>
-        <label>Prime de Fidélisation</label>
-        <select id="cmp-fidelisation"></select>
+        <div class="panel-wip-notice" style="margin-top:8px;">
+          <span class="panel-wip-icon">🚧</span>
+          <div><strong>En cours de développement</strong><br><span>Ces primes seront disponibles dans une prochaine version.</span></div>
+        </div>
+        <select id="cmp-attractivite" style="display:none"></select>
+        <select id="cmp-fidelisation" style="display:none"></select>
 
         <!-- PSC -->
         <h3 class="panel-subhead">Participation PSC</h3>
