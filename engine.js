@@ -1594,6 +1594,13 @@ function calculerPaie() {
   dessinerFiche(profilA, mA, profilB, mB);
   majDeltaNet(mA, mB);
 
+  // Vue mobile — liste condensée (Option D)
+  // dessinerFicheMobile est appelée dans tous les cas (is-mobile vérifié en CSS)
+  // pour que ui-net-a-payer soit à jour pour la barre sticky
+  if (document.body.classList.contains("is-mobile")) {
+    dessinerFicheMobile(profilA, mA);
+  }
+
   // Indice — affiché seulement quand grade+échelon configurés
   const elIndice = document.getElementById("ui-indice");
   if (elIndice) {
@@ -1637,6 +1644,11 @@ function calculerPaie() {
   window._spotlightBloque = pending;
 
   sauvegarderProfil();
+
+  // Mobile — recalcule la hauteur du wrapper + met à jour la barre NET
+  if (document.body.classList.contains("is-mobile")) {
+    _majHauteurWrapper(); // async via rAF, met à jour #fiche-scaler-wrap
+  }
 }
 
 // =============================================================================
@@ -1961,10 +1973,523 @@ async function initialiserApplication() {
     _initEnCours = false; // à partir d'ici sauvegarderProfil() est autorisée
     calculerPaie();
     CONFIGS_RIST.forEach((cfg) => window[`resetHelper${cfg.nom}`]());
+
+    // FIX A — Créer les overlays mobiles ICI, après calculerPaie().
+    // Avant : appelé sur window.load → trop tard, dessinerFicheMobile()
+    // avait déjà tourné via DOMContentLoaded et les panneaux n'existaient pas.
+    // Maintenant : garantie que les panneaux sont prêts dès le premier tap.
+    _creerOverlaysMobile();
   } catch (erreur) {
     console.error("Erreur d'initialisation :", erreur);
   }
 }
+
+// =============================================================================
+// RESPONSIVE — PHASE 1
+// Scale dynamique de la fiche + bottom-bar mobile
+// =============================================================================
+
+/**
+ * Calcule et applique le scale CSS de la fiche A4 pour l'adapter à la largeur
+ * de l'écran. Utilise la custom property --fiche-scale sur :root.
+ * Appelée au chargement et à chaque resize.
+ *
+ * La fiche fait 210mm = 793px (+ 20px padding body = 793px de contenu utile).
+ * Sur desktop (> 820px) : pas de scale, la fiche est affichée nativement.
+ * Sur mobile (≤ 820px)  : scale = (largeur viewport - 0px marge) / 793px
+ *
+ * On ne descend jamais en dessous de 0.30 (illisible) ni au-dessus de 1.0.
+ */
+function _appliquerScaleFiche() {
+  const FICHE_LARGEUR_PX = 793; // 210mm à 96dpi
+  const BREAKPOINT       = 820;
+  const BARRES_BAS_PX    = 108; // bottom-bar 56px + NET bar 44px + marge 8px
+  const vw = window.innerWidth;
+
+  if (vw > BREAKPOINT) {
+    document.documentElement.style.removeProperty("--fiche-scale");
+    document.documentElement.style.removeProperty("--fiche-wrap-height");
+    document.body.classList.remove("is-mobile");
+    const wrap = document.getElementById("fiche-scaler-wrap");
+    if (wrap) wrap.style.height = "";
+    return;
+  }
+
+  // Scale proportionnel, plancher à 0.30
+  const scale = Math.max(0.30, Math.min(1.0, vw / FICHE_LARGEUR_PX));
+  document.documentElement.style.setProperty("--fiche-scale", scale.toFixed(4));
+  document.body.classList.add("is-mobile");
+
+  // Calcule et applique la hauteur du wrapper après repaint
+  _majHauteurWrapper(scale, BARRES_BAS_PX);
+}
+
+/**
+ * Met à jour la hauteur du wrapper #fiche-scaler-wrap.
+ * Hauteur = fiche.offsetHeight × scale + barres_bas.
+ * Appelée depuis _appliquerScaleFiche() ET depuis calculerPaie() sur mobile.
+ */
+function _majHauteurWrapper(scale, barresBas) {
+  // Récupère scale depuis CSS si non fourni (appel depuis calculerPaie)
+  if (scale === undefined) {
+    const s = getComputedStyle(document.documentElement)
+      .getPropertyValue("--fiche-scale").trim();
+    scale = parseFloat(s) || 0.47;
+  }
+  if (barresBas === undefined) barresBas = 108;
+
+  requestAnimationFrame(() => {
+    const fiche = document.querySelector(".page-a4");
+    const wrap  = document.getElementById("fiche-scaler-wrap");
+    if (!fiche || !wrap) return;
+    const h = fiche.offsetHeight; // non affecté par transform
+    const wrapH = Math.round(h * scale) + barresBas;
+    wrap.style.height = wrapH + "px";
+    document.documentElement.style.setProperty("--fiche-wrap-height", wrapH + "px");
+  });
+}
+
+/**
+ * Crée la bottom-bar mobile et l'insère dans le <body>.
+ * Elle est masquée par CSS sur desktop (@media > 820px).
+ * Chaque bouton reproduit l'action de son homologue flottant desktop.
+ */
+function _creerBottomBarMobile() {
+  if (document.getElementById("mobile-bottom-bar")) return; // idempotent
+
+  const bar = document.createElement("div");
+  bar.id = "mobile-bottom-bar";
+  bar.className = "mobile-bottom-bar";
+  bar.setAttribute("role", "navigation");
+  bar.setAttribute("aria-label", "Navigation principale");
+
+  const btns = [
+    { icon: "📅", label: "Annuel",   action: () => window.ouvrirProjectionAnnuelle?.() },
+    { icon: "⚖",  label: "Comparer", action: () => window.activerComparaison?.() },
+    { icon: "➕",  label: "Ajouter",  action: () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?") },
+    { icon: "💡",  label: "Aide",     action: () => { /* Tour désactivé mobile — affiche une info */ _mobileInfoTour(); } },
+  ];
+
+  btns.forEach(({ icon, label, action }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mobile-bottom-bar-btn";
+    btn.setAttribute("aria-label", label);
+
+    const spanIcon  = document.createElement("span");
+    spanIcon.className = "mbb-icon";
+    spanIcon.textContent = icon;
+
+    const spanLabel = document.createElement("span");
+    spanLabel.className = "mbb-label";
+    spanLabel.textContent = label;
+
+    btn.append(spanIcon, spanLabel);
+    btn.addEventListener("click", action);
+    bar.appendChild(btn);
+  });
+
+  document.body.appendChild(bar);
+}
+
+/** Message informatif quand l'utilisateur tape "Aide" sur mobile. */
+function _mobileInfoTour() {
+  const modal = document.getElementById("magic-modal");
+  if (!modal) return;
+  // Réutilise la modale existante avec un panneau temporaire
+  document.getElementById("modal-title").textContent = "💡 Aide";
+  document.querySelectorAll(".setting-panel").forEach(p => p.classList.remove("active"));
+  const tmp = document.getElementById("_mobile-aide-panel") || (() => {
+    const d = document.createElement("div");
+    d.id = "_mobile-aide-panel";
+    d.className = "setting-panel";
+    d.innerHTML = `
+      <p class="panel-hint">Le simulateur est optimisé pour desktop.<br>
+      Sur mobile, la fiche est affichée en lecture et les panneaux de configuration
+      sont accessibles via le bouton <strong>➕ Ajouter</strong> ci-dessous.</p>
+      <p class="panel-hint">Pour une expérience complète, ouvrez ce simulateur
+      sur un ordinateur ou une tablette en mode paysage.</p>
+      <button type="button" class="validate-btn"
+        onclick="document.getElementById('magic-modal').close()">Fermer</button>
+    `;
+    document.querySelector(".modal-body").appendChild(d);
+    return d;
+  })();
+  tmp.classList.add("active");
+  modal.dataset.panelOuvert = "_mobile-aide-panel";
+  if (!modal.open) modal.showModal();
+}
+
+// =============================================================================
+// RESPONSIVE — BARRE STICKY NET À PAYER
+// =============================================================================
+
+/**
+ * Crée la barre mobile sticky "NET À PAYER" épinglée entre la fiche et
+ * la bottom-bar. Affiche net-après-impôt et net-imposable en permanence.
+ * Invisible sur desktop (CSS), créée une seule fois (idempotent).
+ */
+function _creerBarreNetMobile() {
+  if (document.getElementById("mobile-net-bar")) return;
+
+  const bar = document.createElement("div");
+  bar.id        = "mobile-net-bar";
+  bar.className = "mobile-net-bar";
+  bar.setAttribute("aria-live", "polite");
+  bar.setAttribute("aria-label", "Net à payer");
+
+  // Colonne principale : NET À PAYER
+  const colNet = document.createElement("div");
+  colNet.className = "mnb-col mnb-col-main";
+
+  const lblNet = document.createElement("span");
+  lblNet.className = "mnb-label";
+  lblNet.textContent = "NET À PAYER";
+
+  const valNet = document.createElement("span");
+  valNet.id        = "mnb-net-val";
+  valNet.className = "mnb-value";
+  valNet.textContent = "—";
+
+  colNet.append(lblNet, valNet);
+
+  // Séparateur vertical
+  const sep = document.createElement("div");
+  sep.className = "mnb-sep";
+
+  // Colonne secondaire : IMPOSABLE
+  const colImp = document.createElement("div");
+  colImp.className = "mnb-col";
+
+  const lblImp = document.createElement("span");
+  lblImp.className = "mnb-label";
+  lblImp.textContent = "IMPOSABLE";
+
+  const valImp = document.createElement("span");
+  valImp.id        = "mnb-imp-val";
+  valImp.className = "mnb-value mnb-value-sec";
+  valImp.textContent = "—";
+
+  colImp.append(lblImp, valImp);
+  bar.append(colNet, sep, colImp);
+  document.body.appendChild(bar);
+}
+
+/**
+ * Met à jour les valeurs affichées dans la barre mobile NET.
+ * Lit directement les spans déjà mis à jour par dessinerFiche.
+ */
+function _majBarreNetMobile() {
+  const barNet = document.getElementById("mnb-net-val");
+  const barImp = document.getElementById("mnb-imp-val");
+  if (!barNet || !barImp) return;
+
+  const srcNet = document.getElementById("ui-net-a-payer");
+  const srcImp = document.getElementById("ui-net-imposable");
+
+  barNet.textContent = srcNet?.textContent || "—";
+  barImp.textContent = srcImp?.textContent
+    ? srcImp.textContent + " €"
+    : "—";
+}
+
+// ── Initialisation responsive ────────────────────────────────────────────────
+_appliquerScaleFiche();
+_creerBottomBarMobile();
+// FIX 1 — _creerBarreNetMobile() supprimée : la ligne NET en vert dans la
+// liste mobile suffit. La barre sticky était redondante et prenait de l'espace.
+
+// Recalcule le scale à chaque resize et changement d'orientation
+window.addEventListener("resize", _appliquerScaleFiche);
+window.addEventListener("orientationchange", () => {
+  // Léger délai : orientationchange se déclenche avant que innerWidth soit à jour
+  setTimeout(_appliquerScaleFiche, 120);
+});
+
+// =============================================================================
+// RESPONSIVE — PHASE 2
+// Overlays tactiles sur les selects de la fiche (grade, échelon, enfants, NBI)
+// Comparateur : bouton bottom-bar + indicateur actif
+// =============================================================================
+
+/**
+ * Crée un panneau de configuration mobile pour les champs de l'en-tête
+ * (grade, échelon, enfants, NBI) — des <select> transparents à 9px illisibles
+ * sur mobile. Sur mobile (.is-mobile), un overlay transparent couvre la cellule
+ * du tableau et ouvre une modale dédiée au tap.
+ *
+ * Architecture :
+ *  - Les <select> originaux restent dans le DOM et continuent de piloter le moteur
+ *  - Un <div class="mobile-cell-overlay"> est posé en absolute over chaque cellule
+ *  - Il est invisible sur desktop (display:none) et capte les taps sur mobile
+ *  - La modale affiche un <select> natif 16px dans un panneau, et recopie la
+ *    valeur choisie dans le <select> original via dispatchEvent("input")
+ */
+function _creerOverlaysMobile() {
+  if (!document.body.classList.contains("is-mobile")) return;
+  if (document.getElementById("panel-grade-mobile")) return; // idempotent
+
+  // ── Création des 4 panneaux dans la modal-body ────────────────────────────
+  const modalBody = document.querySelector(".modal-body");
+  if (!modalBody) return;
+
+  // Helper : crée un panneau simple avec un select miroir
+  function _creerPanneauSelectMobile(id, titre, sourceId, labelText) {
+    if (document.getElementById(id)) return;
+    const panel = document.createElement("div");
+    panel.id = id;
+    panel.className = "setting-panel";
+
+    const hint = document.createElement("p");
+    hint.className = "panel-hint";
+    hint.textContent = labelText;
+
+    const lbl = document.createElement("label");
+    lbl.textContent = titre;
+
+    // Clone du select original (options copiées à l'ouverture)
+    const sel = document.createElement("select");
+    sel.id = id + "-select";
+    sel.className = "panel-select";
+    sel.style.fontSize = "16px";
+
+    const validateBtn = document.createElement("button");
+    validateBtn.type = "button";
+    validateBtn.className = "validate-btn";
+    validateBtn.textContent = "Valider & Fermer ↵";
+    validateBtn.addEventListener("click", () => {
+      // Recopie la valeur dans le select original + déclenche son listener
+      const src = document.getElementById(sourceId);
+      if (src) {
+        src.value = sel.value;
+        src.dispatchEvent(new Event("input", { bubbles: true }));
+        src.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      document.getElementById("magic-modal").close();
+    });
+
+    panel.append(hint, lbl, sel, validateBtn);
+    modalBody.appendChild(panel);
+  }
+
+  // Panels séparés gardés pour compatibilité (enfants)
+  _creerPanneauSelectMobile("panel-enfants-mobile", "Enfants à charge", "input-enfants", "Nombre d'enfants à charge :");
+
+  // Panneau "Traitement brut" : grade + échelon + NBI dans un seul panneau
+  if (!document.getElementById("panel-traitement-mobile")) {
+    const panel = document.createElement("div");
+    panel.id = "panel-traitement-mobile";
+    panel.className = "setting-panel";
+
+    // Grade
+    const lblGrade = document.createElement("label");
+    lblGrade.textContent = "Grade";
+    const selGrade = document.createElement("select");
+    selGrade.id = "panel-traitement-grade-select";
+    selGrade.style.fontSize = "16px";
+    // Options copiées à l'ouverture via _ouvrirPanneauMobile
+
+    // Échelon
+    const lblEch = document.createElement("label");
+    lblEch.textContent = "Échelon";
+    lblEch.style.marginTop = "16px";
+    const selEch = document.createElement("select");
+    selEch.id = "panel-traitement-echelon-select";
+    selEch.style.fontSize = "16px";
+
+    // NBI
+    const lblNbi = document.createElement("label");
+    lblNbi.textContent = "NBI (Nouvelle Bonification Indiciaire)";
+    lblNbi.style.marginTop = "16px";
+    const nbiWrap = document.createElement("div");
+    nbiWrap.className = "ir-tabs";
+    nbiWrap.style.marginTop = "8px";
+    nbiWrap.innerHTML = `
+      <input type="radio" id="trait-nbi-oui" name="trait-nbi" value="oui">
+      <label for="trait-nbi-oui"><strong>Oui</strong><br><small>J'ai la NBI</small></label>
+      <input type="radio" id="trait-nbi-non" name="trait-nbi" value="non">
+      <label for="trait-nbi-non"><strong>Non</strong><br><small>Je n'ai pas la NBI</small></label>
+    `;
+
+    // Valider
+    const btnVal = document.createElement("button");
+    btnVal.type = "button";
+    btnVal.className = "validate-btn";
+    btnVal.textContent = "Valider & Fermer ↵";
+    btnVal.addEventListener("click", () => {
+      // Appliquer grade
+      const srcGrade = document.getElementById("input-grade");
+      if (srcGrade && selGrade.value) {
+        srcGrade.value = selGrade.value;
+        srcGrade.dispatchEvent(new Event("input", { bubbles: true }));
+        marquerConfigure("grade");
+      }
+      // Appliquer échelon (après grade car mettreAJourEchelons est déclenché par grade)
+      setTimeout(() => {
+        const srcEch = document.getElementById("input-echelon");
+        if (srcEch && selEch.value) {
+          srcEch.value = selEch.value;
+          srcEch.dispatchEvent(new Event("input", { bubbles: true }));
+          marquerConfigure("echelon");
+        }
+      }, 50);
+      // Appliquer NBI
+      const choixNbi = document.querySelector('input[name="trait-nbi"]:checked')?.value;
+      const cb = document.getElementById("input-nbi-checkbox");
+      if (cb && choixNbi) {
+        cb.checked = choixNbi === "oui";
+        cb.dispatchEvent(new Event("input", { bubbles: true }));
+        marquerConfigure("nbi");
+      }
+      calculerPaie();
+      document.getElementById("magic-modal").close();
+    });
+
+    // Mise à jour des échelons quand le grade change dans le panneau
+    selGrade.addEventListener("change", () => {
+      const srcGrade = document.getElementById("input-grade");
+      if (srcGrade) {
+        const tmpVal = srcGrade.value;
+        srcGrade.value = selGrade.value;
+        mettreAJourEchelons();
+        // Copier les nouvelles options dans selEch
+        const srcEch = document.getElementById("input-echelon");
+        selEch.innerHTML = "";
+        Array.from(srcEch.options).forEach(opt => {
+          const o = new Option(opt.text, opt.value, opt.defaultSelected, opt.selected);
+          o.disabled = opt.disabled;
+          selEch.appendChild(o);
+        });
+        srcGrade.value = tmpVal; // restore — pas encore validé
+      }
+    });
+
+    panel.append(lblGrade, selGrade, lblEch, selEch, lblNbi, nbiWrap, btnVal);
+    modalBody.appendChild(panel);
+  }
+
+  // ── Overlays transparents sur les cellules de l'info-table ───────────────
+  // Chaque overlay est un <button> positionné en absolute qui couvre toute
+  // la cellule TD. Il est rendu accessible (aria-label) et ouvre la modale.
+  const overlayDefs = [
+    { cellSelector: "#input-grade",          panelId: "panel-grade-mobile",   titre: "Grade",            ariaLabel: "Modifier le grade" },
+    { cellSelector: "#input-echelon",        panelId: "panel-echelon-mobile", titre: "Échelon",          ariaLabel: "Modifier l'échelon" },
+    { cellSelector: "#input-enfants",        panelId: "panel-enfants-mobile", titre: "Enfants à charge", ariaLabel: "Modifier le nombre d'enfants" },
+    { cellSelector: "#input-nbi-checkbox",   panelId: "panel-nbi-mobile",     titre: "NBI",              ariaLabel: "Configurer la NBI" },
+  ];
+
+  overlayDefs.forEach(({ cellSelector, panelId, titre, ariaLabel }) => {
+    const el = document.querySelector(cellSelector);
+    if (!el) return;
+    const td = el.closest("td");
+    if (!td) return;
+
+    // La TD doit être en position relative pour que l'overlay s'y positionne
+    td.style.position = "relative";
+
+    const overlay = document.createElement("button");
+    overlay.type = "button";
+    overlay.className = "mobile-cell-overlay";
+    overlay.setAttribute("aria-label", ariaLabel);
+    overlay.addEventListener("click", (e) => {
+      e.stopPropagation();
+      _ouvrirPanneauMobile(panelId, titre, cellSelector);
+    });
+    td.appendChild(overlay);
+  });
+}
+
+/**
+ * Ouvre un panneau mobile en synchronisant d'abord le select miroir
+ * avec les options actuelles du select original.
+ */
+function _ouvrirPanneauMobile(panelId, titre, sourceId) {
+  // Panneau traitement unifié (grade + échelon + NBI)
+  if (panelId === "panel-traitement-mobile") {
+    // Sync grade
+    const srcGrade = document.getElementById("input-grade");
+    const selGrade = document.getElementById("panel-traitement-grade-select");
+    if (selGrade && srcGrade) {
+      selGrade.innerHTML = "";
+      Array.from(srcGrade.options).forEach(opt => {
+        const o = new Option(opt.text, opt.value, opt.defaultSelected, opt.selected);
+        o.disabled = opt.disabled;
+        selGrade.appendChild(o);
+      });
+      selGrade.value = srcGrade.value;
+    }
+    // Sync échelon
+    const srcEch = document.getElementById("input-echelon");
+    const selEch = document.getElementById("panel-traitement-echelon-select");
+    if (selEch && srcEch) {
+      selEch.innerHTML = "";
+      Array.from(srcEch.options).forEach(opt => {
+        const o = new Option(opt.text, opt.value, opt.defaultSelected, opt.selected);
+        o.disabled = opt.disabled;
+        selEch.appendChild(o);
+      });
+      selEch.value = srcEch.value;
+    }
+    // Sync NBI
+    const cb = document.getElementById("input-nbi-checkbox");
+    const rOui = document.getElementById("trait-nbi-oui");
+    const rNon = document.getElementById("trait-nbi-non");
+    if (cb && rOui && rNon) {
+      rOui.checked =  cb.checked;
+      rNon.checked = !cb.checked;
+    }
+    ouvrirModal(panelId, titre);
+    return;
+  }
+
+  // Panneaux simples (select miroir)
+  const mirrorSel = document.getElementById(panelId + "-select");
+  const srcEl     = document.getElementById(sourceId.replace(/^#/, ""));
+  if (mirrorSel && srcEl && srcEl.tagName === "SELECT") {
+    mirrorSel.innerHTML = "";
+    Array.from(srcEl.options).forEach(opt => {
+      const o = new Option(opt.text, opt.value, opt.defaultSelected, opt.selected);
+      o.disabled = opt.disabled;
+      mirrorSel.appendChild(o);
+    });
+    mirrorSel.value = srcEl.value;
+  }
+  ouvrirModal(panelId, titre);
+}
+
+// ── Initialisation Phase 2 ────────────────────────────────────────────────────
+// FIX A — _creerOverlaysMobile() est maintenant appelée dans initialiserApplication()
+// plus besoin du window.load listener.
+
+// Re-créer les overlays si on passe en mode mobile via resize
+window.addEventListener("resize", () => {
+  if (document.body.classList.contains("is-mobile")) {
+    _creerOverlaysMobile();
+  }
+});
+
+// Mise à jour du bouton "Comparer" dans la bottom-bar selon l'état du mode
+function _majBottomBarComparer() {
+  const bar = document.getElementById("mobile-bottom-bar");
+  if (!bar) return;
+  const btnComparer = bar.querySelectorAll(".mobile-bottom-bar-btn")[1]; // index 1 = Comparer
+  if (!btnComparer) return;
+  const actif = modeComparaison;
+  btnComparer.classList.toggle("active", actif);
+  btnComparer.querySelector(".mbb-label").textContent = actif ? "Comparer ✓" : "Comparer";
+}
+
+// Patch activerComparaison / desactiverComparaison pour mettre à jour la bottom-bar
+const _origActiver     = window.activerComparaison;
+const _origDesactiver  = window.desactiverComparaison;
+window.activerComparaison = function () {
+  _origActiver?.();
+  _majBottomBarComparer();
+};
+window.desactiverComparaison = function () {
+  _origDesactiver?.();
+  _majBottomBarComparer();
+};
 
 // FIX #15 — DOMContentLoaded : ne bloque pas sur le chargement des images/fonts, et ne risque
 // pas d'écraser un autre handler onload assigné ailleurs (window.onload = ... est exclusif).
@@ -2124,6 +2649,504 @@ window.supprimerPrimeManuelle = function (index) {
     calculerPaie();
   }
 };
+
+// =============================================================================
+// 11c. VUE MOBILE — Liste condensée (Option D)
+// =============================================================================
+
+/**
+ * Dessine la vue mobile de la fiche de paie dans #fiche-mobile.
+ * Liste de lignes : libellé à gauche, montant coloré à droite.
+ * Sections séparées par des titres. Lignes cliquables → même modales que desktop.
+ * Appelée depuis calculerPaie() uniquement quand is-mobile.
+ *
+ * @param {ProfilAgent}      p - Profil agent
+ * @param {MontantsCalcules} m - Résultats calculerMontants(p)
+ */
+function dessinerFicheMobile(p, m) {
+  const root = document.getElementById("fiche-mobile");
+  if (!root) return;
+  root.innerHTML = "";
+
+  const fmt = (v) => v > 0
+    ? v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
+    : "";
+
+  // ── Helpers DOM ──────────────────────────────────────────────────────────
+
+  // FIX 8 — Sections ouvertes par défaut (les plus importantes)
+  const SECTIONS_OUVERTES = new Set(["Base", "Primes & RIST", "Résultat"]);
+
+  /**
+   * Crée un titre de section pliable.
+   * - Clic : toggle plie/déplie les .mf-row suivants jusqu'au prochain titre
+   * - Sections dans SECTIONS_OUVERTES : ouvertes au départ
+   * - Autres : fermées au départ
+   */
+  function section(titre) {
+    const ouvert = SECTIONS_OUVERTES.has(titre);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mf-section-title" + (ouvert ? "" : " mf-section-collapsed");
+    btn.setAttribute("aria-expanded", ouvert ? "true" : "false");
+    // Flèche + titre
+    const arrow = document.createElement("span");
+    arrow.className = "mf-section-arrow";
+    arrow.textContent = ouvert ? "▼" : "▶";
+    const txt = document.createElement("span");
+    txt.textContent = titre;
+    btn.append(arrow, txt);
+    btn.addEventListener("click", () => {
+      const collapsed = btn.classList.toggle("mf-section-collapsed");
+      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      arrow.textContent = collapsed ? "▶" : "▼";
+      // Cache/montre tous les .mf-row suivants jusqu'au prochain titre de section
+      let el = btn.nextElementSibling;
+      while (el && !el.classList.contains("mf-section-title")) {
+        el.style.display = collapsed ? "none" : "";
+        el = el.nextElementSibling;
+      }
+    });
+    root.appendChild(btn);
+
+    // Si section fermée par défaut, on masquera les lignes ajoutées ensuite
+    // via un requestAnimationFrame (les lignes n'existent pas encore au moment du clic)
+    if (!ouvert) {
+      requestAnimationFrame(() => {
+        let el = btn.nextElementSibling;
+        while (el && !el.classList.contains("mf-section-title")) {
+          el.style.display = "none";
+          el = el.nextElementSibling;
+        }
+      });
+    }
+  }
+
+  /**
+   * Crée une ligne de la liste.
+   * @param {string}   libelle
+   * @param {number|null} credit   - montant colonne "à payer" (vert)
+   * @param {number|null} deduction - montant colonne "à déduire" (rouge)
+   * @param {object}   [opts]
+   * @param {string}   [opts.panel]  - panelId à ouvrir au tap
+   * @param {string}   [opts.titre]  - titre de la modale
+   * @param {string}   [opts.cle]    - clé onboarding (affiche badge si non configuré)
+   * @param {string}   [opts.sub]    - sous-texte sous le libellé
+   * @param {boolean}  [opts.total]  - style ligne totaux
+   * @param {boolean}  [opts.totalNet] - style ligne NET final
+   * @param {boolean}  [opts.absence] - style ligne absence
+   * @param {Function} [opts.onDelete] - callback bouton ✖
+   */
+  function ligne(libelle, credit, deduction, opts = {}) {
+    const { panel, titre, cle, sub, total, totalNet, absence, onDelete } = opts;
+
+    // Si clé onboarding non configurée → ligne badge orange
+    if (cle && nonConfigure(cle)) {
+      const row = document.createElement("div");
+      row.className = "mf-row mf-clickable mf-pending";
+      const PANNEAUX_MOBILE_BADGE = ["panel-grade-mobile","panel-echelon-mobile","panel-enfants-mobile","panel-nbi-mobile"];
+      row.addEventListener("click", () => {
+        if (PANNEAUX_MOBILE_BADGE.includes(panel)) {
+          const srcMap = { "panel-grade-mobile": "#input-grade", "panel-echelon-mobile": "#input-echelon",
+                           "panel-enfants-mobile": "#input-enfants", "panel-nbi-mobile": "#input-nbi-checkbox" };
+          _ouvrirPanneauMobile(panel, titre, srcMap[panel] || "");
+        } else { ouvrirModal(panel, titre); }
+      });
+
+      const lbl = document.createElement("span");
+      lbl.className = "mf-label";
+      lbl.textContent = libelle;
+
+      const badge = document.createElement("button");
+      badge.type = "button";
+      badge.className = "mf-badge";
+      badge.textContent = "⚙ Configurer";
+      badge.addEventListener("click", e => { e.stopPropagation(); ouvrirModal(panel, titre); });
+
+      row.append(lbl, badge);
+      root.appendChild(row);
+      return;
+    }
+
+    const montant = credit ?? deduction ?? 0;
+    if (montant === 0 && !total && !totalNet) return; // n'affiche pas les lignes à 0
+
+    const row = document.createElement("div");
+    const classes = ["mf-row"];
+    if (panel) classes.push("mf-clickable");
+    if (total) classes.push("mf-total");
+    if (totalNet) classes.push("mf-total", "mf-total-net");
+    if (absence) classes.push("mf-absence");
+    row.className = classes.join(" ");
+
+    if (panel) {
+      // FIX 2/3/4 — Pour les panneaux mobiles (grade/échelon/NBI/enfants),
+      // appeler _ouvrirPanneauMobile() qui synchronise les options du select miroir.
+      // Pour tous les autres panneaux → ouvrirModal() standard.
+      const PANNEAUX_MOBILE = ["panel-grade-mobile","panel-echelon-mobile","panel-enfants-mobile","panel-nbi-mobile"];
+      const actionOuvrir = () => {
+        if (PANNEAUX_MOBILE.includes(panel)) {
+          const sourceMap = {
+            "panel-grade-mobile":   "#input-grade",
+            "panel-echelon-mobile": "#input-echelon",
+            "panel-enfants-mobile": "#input-enfants",
+            "panel-nbi-mobile":     "#input-nbi-checkbox",
+          };
+          _ouvrirPanneauMobile(panel, titre, sourceMap[panel] || "");
+        } else {
+          ouvrirModal(panel, titre);
+        }
+      };
+      row.addEventListener("click", actionOuvrir);
+      row.setAttribute("role", "button");
+      row.setAttribute("tabindex", "0");
+      row.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); actionOuvrir(); }
+      });
+    }
+
+    const lbl = document.createElement("span");
+    lbl.className = "mf-label";
+    // Si la ligne a un panel, la flèche › est ajoutée via CSS ::after
+    // On retire l'attribut pour les lignes non-cliquables
+    if (!panel) lbl.style.cssText = "";
+
+    const lblText = document.createTextNode(libelle);
+    lbl.appendChild(lblText);
+
+    if (sub) {
+      const s = document.createElement("span");
+      s.className = "mf-label-sub";
+      s.textContent = sub;
+      lbl.appendChild(s);
+    }
+
+    const amt = document.createElement("span");
+    amt.className = "mf-amount " + (credit ? "mf-credit" : deduction ? "mf-deduction" : "mf-info");
+
+    if (credit)    amt.textContent = "+" + fmt(credit);
+    else if (deduction) amt.textContent = "−" + fmt(deduction);
+    else           amt.textContent = fmt(montant);
+
+    // Bouton ✖ pour supprimer (primes manuelles)
+    if (onDelete) {
+      const del = document.createElement("button");
+      del.type = "button";
+      del.style.cssText = "background:none;border:none;color:#c0392b;font-size:14px;padding:0 0 0 8px;cursor:pointer;flex-shrink:0;";
+      del.textContent = "✖";
+      del.addEventListener("click", e => { e.stopPropagation(); onDelete(); });
+      row.append(lbl, del, amt);
+    } else {
+      row.append(lbl, amt);
+    }
+
+    root.appendChild(row);
+  }
+
+  // ── En-tête grade / échelon / indice ─────────────────────────────────────
+  const header = document.createElement("div");
+  header.className = "mf-header";
+
+  const hLeft = document.createElement("div");
+  hLeft.className = "mf-header-grade";
+  const gradeTxt = p.grade || "— Grade non configuré —";
+  const echelonTxt = p.echelon ? `Échelon ${p.echelon}` : "Échelon non configuré";
+  hLeft.textContent = gradeTxt;
+  const hSub = document.createElement("div");
+  hSub.className = "mf-header-sub";
+  hSub.textContent = echelonTxt + (p.enfants > 0 ? ` · ${p.enfants} enfant${p.enfants > 1 ? "s" : ""}` : "");
+  hLeft.appendChild(hSub);
+
+  const hRight = document.createElement("div");
+  if (m.indice) {
+    const iv = document.createElement("div");
+    iv.className = "mf-header-indice";
+    iv.textContent = String(m.indice).padStart(4, "0");
+    const il = document.createElement("div");
+    il.className = "mf-header-indice-lbl";
+    il.textContent = "INDICE";
+    hRight.append(iv, il);
+  }
+
+  header.append(hLeft, hRight);
+  root.appendChild(header);
+
+  // ── Config incomplète ─────────────────────────────────────────────────────
+  const pending = configurationIncomplete();
+  if (pending) {
+    const msg = document.createElement("div");
+    msg.className = "mf-config-pending";
+    msg.innerHTML = `<span class="mf-config-pending-icon">⚙</span>
+      <span>Complétez votre profil pour afficher les totaux. Appuyez sur les lignes orangées pour configurer.</span>`;
+    root.appendChild(msg);
+  }
+
+  // ── BASE ──────────────────────────────────────────────────────────────────
+  section("Base");
+
+  // Traitement brut — tap ouvre panneau traitement (grade + échelon + NBI)
+  const pendingTraitement = nonConfigure("grade") || nonConfigure("echelon") || nonConfigure("nbi");
+  const subTraitement = [
+    p.echelon ? "Éch. " + p.echelon : null,
+    m.montantNbi > 0 ? "NBI activée" : (!nonConfigure("nbi") ? "NBI non activée" : null),
+  ].filter(Boolean).join(" · ") || null;
+  {
+    const row = document.createElement("div");
+    row.className = "mf-row mf-clickable" + (pendingTraitement ? " mf-pending" : "");
+    row.setAttribute("role", "button");
+    row.setAttribute("tabindex", "0");
+    const action = () => _ouvrirPanneauMobile("panel-traitement-mobile", "Traitement", "");
+    row.addEventListener("click", action);
+    row.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); action(); }});
+    const lbl = document.createElement("span");
+    lbl.className = "mf-label";
+    lbl.textContent = "Traitement brut";
+    if (subTraitement) {
+      const sub = document.createElement("span");
+      sub.className = "mf-label-sub";
+      sub.textContent = subTraitement;
+      lbl.appendChild(sub);
+    }
+    if (pendingTraitement) {
+      const badge = document.createElement("button");
+      badge.type = "button";
+      badge.className = "mf-badge";
+      badge.textContent = "⚙ Configurer";
+      badge.addEventListener("click", e => { e.stopPropagation(); action(); });
+      row.append(lbl, badge);
+    } else {
+      const amt = document.createElement("span");
+      amt.className = "mf-amount mf-credit";
+      amt.textContent = "+" + fmt(m.traitementBrut + (m.montantNbi || 0));
+      row.append(lbl, amt);
+    }
+    root.appendChild(row);
+  }
+
+  ligne("Indemnité de résidence",   m.indemniteResidence, null,
+    { cle: "zone_residence", panel: "panel-residence", titre: "Zone de Résidence" });
+
+  if (m.montantSFT > 0)
+    ligne("Supplément familial (SFT)", m.montantSFT, null,
+      { panel: "panel-enfants-mobile", titre: "Enfants à charge" });
+
+  // ── Retenues de base ──────────────────────────────────────────────────────
+  section("Retenues de base");
+
+  ligne("Retenue PC",               null, m.retenuePC);
+  if (m.retenuePcNbi > 0)
+    ligne("Retenue PC sur NBI",     null, m.retenuePcNbi);
+  if (m.transfertPrimes > 0)
+    ligne("Transfert primes/points",null, m.transfertPrimes);
+
+  // ── Absences ──────────────────────────────────────────────────────────────
+  if (m.joursAbs > 0) {
+    section("Absences");
+    const totalAbs = m.absTraitement + m.absNbi + m.absResidence +
+                     m.absRistFct + m.absRistExp + m.absRistIsq +
+                     m.absRistCplt + m.absRistMaj + m.absIndCsg;
+    ligne(`Retenue absence (${m.joursAbs} j)`, null, totalAbs,
+      { panel: "panel-absences", titre: "Absences & Carence", absence: true });
+  }
+
+  // ── Primes & RIST ─────────────────────────────────────────────────────────
+  section("Primes & RIST");
+
+  // Nuits
+  if (m.nuit > 0)
+    ligne("Ind. travail de nuit",   m.nuit, null,
+      { panel: "panel-nuits", titre: "Travail de Nuit & Soirées" });
+
+  // FMD
+  if (p.primes.forfait_mobilites > 0)
+    ligne("Forfait mobilités",      p.primes.forfait_mobilites, null,
+      { panel: "panel-fmd", titre: "Forfait Mobilités" });
+
+  // Inflation
+  if (p.primes.inflation > 0)
+    ligne("Indemnité pouvoir d'achat", p.primes.inflation, null,
+      { panel: "panel-inflation", titre: "Indemnité Inflation" });
+
+  // PSC
+  if (p.primes.psc > 0)
+    ligne("Participation PSC",      p.primes.psc, null,
+      { panel: "panel-psc", titre: "Participation PSC" });
+
+  // PPP
+  if (p.evenements.prime_performance > 0)
+    ligne("Prime partage performance", p.evenements.prime_performance, null,
+      { panel: "panel-primes", titre: "Prime Partage Performance" });
+
+  // OTT
+  if (p.evenements.ott_pf > 0)
+    ligne("OTT Part Fixe",         p.evenements.ott_pf, null,
+      { panel: "panel-ott", titre: "Protocole (OTT)" });
+  if (p.evenements.ott_pv_globale > 0)
+    ligne("OTT Part Variable",     p.evenements.ott_pv_globale, null,
+      { panel: "panel-ott", titre: "Protocole (OTT)" });
+  if (p.evenements.ott_pv_opt32 > 0)
+    ligne("OTT PV Opt 3-1/3-2",   p.evenements.ott_pv_opt32, null,
+      { panel: "panel-ott", titre: "Protocole (OTT)" });
+
+  // Attractivité / Fidélisation
+  if (p.primes.attractivite > 0)
+    ligne("Attractivité géo.",     p.primes.attractivite, null,
+      { panel: "panel-attractivite", titre: "Attractivité Géographique" });
+  if (p.primes.fidelisation > 0)
+    ligne("Prime fidélisation",    p.primes.fidelisation, null,
+      { panel: "panel-fidelisation", titre: "Prime Fidélisation" });
+
+  // RIST (avec badge si non configuré)
+  ligne("RIST Part Fonctions",     p.primes.rist_fonctions - m.absRistFct, null,
+    { cle: "rist_fonctions", panel: "panel-rist-fonctions", titre: "Ristourne Part Fonctions" });
+  ligne("RIST Part Expérience",    p.primes.rist_exper_prof - m.absRistExp, null,
+    { cle: "rist_experience", panel: "panel-rist-experience", titre: "Ristourne Part Expérience" });
+  ligne("RIST Part LIC-ISQ",       p.primes.rist_lic_isq - m.absRistIsq, null,
+    { cle: "rist_isq_licence", panel: "panel-rist-isq-licence", titre: "Ristourne Part LIC-ISQ" });
+  ligne("RIST CPLT LIC-ISQ",       p.primes.rist_cplt_lic_isq - m.absRistCplt, null,
+    { cle: "rist_isq_complement", panel: "panel-rist-isq-complement", titre: "Ristourne CPLT LIC-ISQ" });
+  ligne("Majoration ISQ",          p.primes.rist_maj_isq - m.absRistMaj, null,
+    { cle: "rist_isq_majoration", panel: "panel-rist-isq-majoration", titre: "Majoration ISQ" });
+
+  // Ind. compensatrice CSG
+  ligne("Ind. compensatrice CSG",  p.primes.ind_compensatrice_csg - m.absIndCsg, null,
+    { cle: "ind_compensatrice_csg", panel: "panel-csg", titre: "Indemnité Compensatrice CSG" });
+
+  // Primes manuelles
+  _getPrimesManuelles().forEach(({ libelle, montant, imposable }, i) => {
+    if (montant <= 0) return;
+    ligne(libelle, montant, null, {
+      panel: "panel-primes-manuelles",
+      titre: "Primes manuelles",
+      sub: imposable ? null : "Non imposable",
+      onDelete: () => window.supprimerPrimeManuelle(i),
+    });
+  });
+
+  // ── Cotisations salariales ────────────────────────────────────────────────
+  section("Cotisations salariales");
+
+  ligne("CSG non déductible",      null, m.csgNonDeductible);
+  ligne("CSG déductible",          null, m.csgDeductible);
+  ligne("CRDS",                    null, m.crds);
+  ligne("Cotisation RAFP",         null, m.cotisationRafp);
+  if (m.retenueIsq > 0)
+    ligne("24,6% ISQ",             null, m.retenueIsq);
+
+  // ── Cotisations patronales ────────────────────────────────────────────────
+  section("Cotisations patronales");
+
+  ligne("Alloc. familiales",       null, m.charges.patAllocFam);
+  ligne("FNAL",                    null, m.charges.patFnal);
+  ligne("CSA",                     null, m.charges.patCsa);
+  ligne("Maladie",                 null, m.charges.patMaladie);
+  ligne("Pensions civiles",        null, m.charges.patPensions);
+  ligne("ATI",                     null, m.charges.patAti);
+  ligne("Versement mobilité",      null, m.charges.patMobilite);
+  ligne("RAFP patronal",           null, m.charges.patRafp);
+
+  // ── Impôt ─────────────────────────────────────────────────────────────────
+  section("Impôt");
+
+  if (nonConfigure("taux_pas")) {
+    ligne("Prélèvement à la source", null, 0,
+      { cle: "taux_pas", panel: "panel-impots", titre: "Prélèvement à la Source" });
+  } else {
+    const tauxPct = (p.taux_pas * 100).toLocaleString("fr-FR",
+      { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " %";
+    ligne("Prélèvement à la source", null, m.impotSource,
+      { panel: "panel-impots", titre: "Prélèvement à la Source", sub: `Taux ${tauxPct}` });
+  }
+
+  // ── Nets ──────────────────────────────────────────────────────────────────
+  if (!pending) {
+    section("Résultat");
+
+    ligne("Net avant impôt",       null, null,
+      { total: true });
+    // On construit manuellement cette ligne pour afficher dans "info"
+    (() => {
+      const row = document.createElement("div");
+      row.className = "mf-row mf-total";
+      const lbl = document.createElement("span");
+      lbl.className = "mf-label";
+      lbl.textContent = "Net avant impôt";
+      const amt = document.createElement("span");
+      amt.className = "mf-amount mf-info";
+      amt.textContent = fmt(m.netAPayerAvantImpot);
+      row.append(lbl, amt);
+      // Remplacer la ligne vide créée ci-dessus
+      const last = root.lastChild;
+      if (last?.classList.contains("mf-total")) root.removeChild(last);
+      root.appendChild(row);
+    })();
+
+    ligne("Net social",            null, null,
+      { total: true });
+    (() => {
+      const row = document.createElement("div");
+      row.className = "mf-row mf-total";
+      const lbl = document.createElement("span");
+      lbl.className = "mf-label";
+      lbl.textContent = "Net social";
+      const amt = document.createElement("span");
+      amt.className = "mf-amount mf-info";
+      amt.textContent = fmt(m.netSocial);
+      row.append(lbl, amt);
+      const last = root.lastChild;
+      if (last?.classList.contains("mf-total")) root.removeChild(last);
+      root.appendChild(row);
+    })();
+
+    ligne("Montant imposable",     null, null,
+      { total: true });
+    (() => {
+      const row = document.createElement("div");
+      row.className = "mf-row mf-total";
+      const lbl = document.createElement("span");
+      lbl.className = "mf-label";
+      lbl.textContent = "Montant imposable";
+      const amt = document.createElement("span");
+      amt.className = "mf-amount mf-info";
+      amt.textContent = fmt(m.netImposableFinal);
+      row.append(lbl, amt);
+      const last = root.lastChild;
+      if (last?.classList.contains("mf-total")) root.removeChild(last);
+      root.appendChild(row);
+    })();
+
+    // NET À PAYER — ligne vedette
+    const rowNet = document.createElement("div");
+    rowNet.className = "mf-row mf-total mf-total-net";
+    const lblNet = document.createElement("span");
+    lblNet.className = "mf-label";
+    lblNet.textContent = "NET À PAYER";
+    const amtNet = document.createElement("span");
+    amtNet.className = "mf-amount";
+    amtNet.textContent = (m.netFinal === 0 ? "0,00" :
+      m.netFinal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + " €";
+    rowNet.append(lblNet, amtNet);
+    root.appendChild(rowNet);
+  }
+
+  // ── Bouton ajouter élément variable ──────────────────────────────────────
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "mf-add-btn";
+  addBtn.textContent = "+ Ajouter ou modifier un élément variable";
+  addBtn.addEventListener("click", () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?"));
+  root.appendChild(addBtn);
+
+  // ── Mise à jour de la barre sticky NET ──────────────────────────────────
+  // ui-net-a-payer et ui-net-imposable sont dans le tfoot de la fiche A4 (masquée).
+  // On les met à jour manuellement pour que _majBarreNetMobile() fonctionne.
+  const elNet = document.getElementById("ui-net-a-payer");
+  const elImp = document.getElementById("ui-net-imposable");
+  if (elNet) elNet.textContent = (m.netFinal === 0 ? "0,00" :
+    m.netFinal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + " €";
+  if (elImp) elImp.textContent = m.netImposableFinal === 0 ? "0,00" :
+    m.netImposableFinal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 // =============================================================================
 // 12. PROJECTION ANNUELLE

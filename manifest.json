@@ -1,0 +1,25 @@
+{
+  "name": "Simulateur Paie ICNA",
+  "short_name": "Paie ICNA",
+  "description": "Simulateur de fiche de paie pour les contrôleurs de la navigation aérienne (ICNA). Calcul en temps réel du net à payer, RIST, ISQ et prélèvement à la source.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#3b5472",
+  "theme_color": "#3b5472",
+  "lang": "fr",
+  "orientation": "portrait-primary",
+  "icons": [],
+  "screenshots": [],
+  "categories": [
+    "finance",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "Ouvrir le simulateur",
+      "short_name": "Simulateur",
+      "url": "./index.html",
+      "description": "Ouvre la fiche de paie interactive"
+    }
+  ]
+}

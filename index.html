@@ -6,6 +6,16 @@
     <title>Simulateur Paie ICNA</title>
     <link rel="stylesheet" href="style.css" />
 
+    <!-- ── PWA ──────────────────────────────────────────────── -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#3b5472" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- iOS Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Paie ICNA" />
+    <!-- Empêche iOS de transformer les nombres en liens téléphoniques -->
+    <meta name="format-detection" content="telephone=no" />
   </head>
   <body>
     <div class="visite-btns-wrap">
@@ -336,7 +346,6 @@
           <p class="panel-footnote">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
-      </div>
         <!-- ============================================================
              PANNEAU PROJECTION ANNUELLE
              ============================================================ -->
@@ -456,8 +465,7 @@
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Fermer ↵</button>
         </div>
         <!-- /#panel-projection -->
-
-      <!-- /.modal-body -->
+      </div><!-- /.modal-body -->
     </dialog>
 
     <!-- ══════════════════════════════════════
@@ -476,7 +484,9 @@
 
     <!-- ══════════════════════════════════════
          PAGE A4 — FICHE DE PAIE
+         Wrapper mobile : clip le débordement horizontal de la fiche scalée
          ══════════════════════════════════════ -->
+    <div id="fiche-scaler-wrap">
     <div class="page-a4">
       <div class="bareme-header">
         <span id="ui-version-bareme" class="bareme-version"></span>
@@ -597,7 +607,14 @@
         </tfoot>
       </table>
     </div>
-    <!-- /.page-a4 -->
+    </div>
+    <!-- /.page-a4 /.fiche-scaler-wrap -->
+
+    <!-- ══════════════════════════════════════
+         VUE MOBILE — liste condensée
+         Masquée sur desktop (CSS), alimentée par dessinerFicheMobile()
+         ══════════════════════════════════════ -->
+    <div id="fiche-mobile" aria-label="Fiche de paie" aria-live="polite"></div>
 
     <!-- ============================================================
          PANNEAU COMPARATEUR DE SCÉNARIOS (Scénario B)
@@ -727,6 +744,17 @@
     </div>
     <!-- ═══ FIN TOUR ═══ -->
     <script src="engine.js"></script>
+    <script>
+      /* Enregistrement du Service Worker — PWA offline */
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").then(
+            (reg) => console.info("SW enregistré :", reg.scope),
+            (err) => console.warn("SW échec :", err)
+          );
+        });
+      }
+    </script>
 
   </body>
 </html>
