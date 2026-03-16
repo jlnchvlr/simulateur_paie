@@ -2693,10 +2693,7 @@ select.champ-non-configure {
     padding-top: 12px;
     border-top: 1px solid var(--dgfip-light);
   }
-  /* Bouton "Quitter" ancré en bas */
-  #panneau-comparaison
-
-  /* ── Fix 1 — masquer la barre NET sticky ────────────────────── */
+  /* ── Fix 1 — masquer la barre NET sticky (ancienne barre supprimée) ── */
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3228,11 +3225,8 @@ select.champ-non-configure {
   .pm-nonimposable-label {
     font-size: 13px;
   }
-  /* Zone résidence : pas de cadre orange dans la modale (badge suffit) */
-  #panel-residence .ir-tabs label,
-  #panel-residence .ir-tabs input:checked + label {
-    /* ne pas modifier — le badge orange dans la liste suffit */
-  }
+  /* Zone résidence : le cadre orange est déjà neutralisé
+     par la règle #zone-radios-wrap.champ-non-configure mobile ci-dessus */
   .mbb-icon svg {
     display: block;
   }
