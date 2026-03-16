@@ -50,34 +50,6 @@ body {
 }
 
 /* En-tête et Infos */
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 15px;
-}
-.header-title-box {
-  background-color: var(--dgfip-dark);
-  color: white;
-  text-align: center;
-  padding: 2px 0;
-  width: 250px;
-}
-.header-title-main {
-  font-size: 14px;
-  font-weight: bold;
-  letter-spacing: 4px;
-}
-.header-title-sub {
-  font-size: 10px;
-  background-color: var(--dgfip-medium);
-  margin-top: 2px;
-  padding: 2px;
-}
-.header-right {
-  text-align: right;
-  font-size: 10px;
-}
 .info-table {
   width: 100%;
   border-collapse: collapse;
@@ -1022,9 +994,6 @@ body.navigation-clavier .resultat-item:focus {
 .float-right {
   float: right;
 }
-.page-top-spacer {
-  height: 20px;
-}
 .bareme-header {
   display: flex;
   justify-content: flex-end;
@@ -1560,17 +1529,6 @@ body.navigation-clavier .resultat-item:focus {
   font-weight: bold;
   font-size: 13px !important;
 }
-.proj-mensuel-note {
-  text-align: right !important;
-  font-size: 11px;
-  color: var(--color-text-muted);
-  padding-top: 8px !important;
-  font-family: var(--font-main) !important;
-}
-.proj-mensuel-note strong {
-  font-family: var(--font-numbers);
-  color: var(--dgfip-dark);
-}
 .proj-table-sm td {
   font-size: 11px;
   padding: 3px 8px;
@@ -1638,13 +1596,15 @@ body.navigation-clavier .resultat-item:focus {
 
 /* ── Champs info-table non configurés (onboarding) ── */
 @keyframes badge-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(253, 126, 20, 0.6); }
-  50%       { box-shadow: 0 0 0 5px rgba(253, 126, 20, 0); }
+  /* PERF — opacity+outline-offset : composite-friendly, pas de Paint */
+  0%, 100% { outline-color: rgba(253, 126, 20, 0.6); outline-offset: 0px; }
+  50%       { outline-color: rgba(253, 126, 20, 0);   outline-offset: 5px; }
 }
 .champ-non-configure {
   outline: 2px solid #fd7e14 !important;
   border-radius: 4px;
   animation: badge-pulse 1.8s ease-in-out infinite;
+  will-change: outline-color, outline-offset; /* PERF — isole la couche GPU */
 }
 select.champ-non-configure {
   background-color: #fff5ec !important;
@@ -1914,9 +1874,10 @@ select.champ-non-configure {
   animation: tour-next-pulse 0.4s ease-out forwards;
 }
 @keyframes tour-next-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(44,110,73,0.7); }
-  60%  { box-shadow: 0 0 0 7px rgba(44,110,73,0); }
-  100% { box-shadow: none; }
+  /* PERF — transform:scale seul = GPU, zéro Paint */
+  0%   { transform: scale(1);    opacity: 1; }
+  60%  { transform: scale(1.08); opacity: 0.85; }
+  100% { transform: scale(1);    opacity: 1; }
 }
 
 /* Confirmation quitter */
@@ -1967,8 +1928,11 @@ select.champ-non-configure {
 
 /* ── Lignes pulsantes phase 2 ── */
 @keyframes tour-ligne-pulse {
-  0%,100% { background-color: transparent; }
-  50%     { background-color: rgba(40,167,69,0.11); }
+  /* PERF — opacity sur pseudo-element serait idéal mais ici on garde
+     background-color car la ligne doit rester lisible : on réduit la fréquence
+     via will-change pour que le browser isole la couche */
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.6; }
 }
 .tour-ligne-pulsante td { animation: tour-ligne-pulse 1.5s ease-in-out infinite !important; }
 .tour-ligne-pulsante:hover td {
@@ -1978,8 +1942,9 @@ select.champ-non-configure {
 
 /* ── Reset button highlight ── */
 @keyframes tour-pulse-reset {
-  0%,100% { box-shadow: 0 0 0 0 rgba(220,53,69,0.7); }
-  50%     { box-shadow: 0 0 0 8px rgba(220,53,69,0); }
+  /* PERF — transform:scale + opacity = GPU-only */
+  0%,100% { transform: scale(1);    opacity: 1; }
+  50%     { transform: scale(1.06); opacity: 0.8; }
 }
 #btn-reset-profil.tour-highlight-reset {
   opacity: 1 !important; color: #dc3545 !important; font-size: 16px !important;
@@ -1998,8 +1963,9 @@ select.champ-non-configure {
 
 /* ── Pulsation post-tour ── */
 @keyframes badge-post-attention {
-  0%,100% { box-shadow: 0 0 0 0 rgba(253,126,20,0.9); transform: scale(1); }
-  40%     { box-shadow: 0 0 0 8px rgba(253,126,20,0); transform: scale(1.1); }
+  /* PERF — transform+opacity seuls = GPU compositor, zéro Paint */
+  0%,100% { transform: scale(1);    opacity: 1; }
+  40%     { transform: scale(1.12); opacity: 0.85; }
 }
 .badge-configurer.tour-post-attention {
   animation: badge-post-attention 0.7s ease-out 4 !important;
@@ -2207,7 +2173,6 @@ select.champ-non-configure {
     border-radius: 10px;
     box-shadow: 0 -6px 16px rgba(0,0,0,0.10);
   }
-  .modal-footer { display: none; }
 
 
   /* ── 6. Panneau comparateur — masqué en phase 1 ─────────────── */
@@ -2416,68 +2381,8 @@ select.champ-non-configure {
    Épinglée juste au-dessus de la bottom-bar (bottom: 56px).
    Masquée sur desktop.
    ═══════════════════════════════════════════════════════════════ */
-.mobile-net-bar {
-  display: none; /* masquée sur desktop */
-}
 
 @media (max-width: 820px) {
-  .mobile-net-bar {
-    display: flex;
-    position: fixed;
-    bottom: 56px; /* au-dessus de la bottom-bar */
-    left: 0;
-    right: 0;
-    height: 44px;
-    background: var(--dgfip-dark);
-    border-top: 1px solid rgba(255,255,255,0.15);
-    align-items: center;
-    z-index: 1045; /* entre fiche (z=auto) et bottom-bar (z=1050) */
-    padding-bottom: 0;
-  }
-
-  .mnb-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    height: 100%;
-    padding: 0 8px;
-  }
-  .mnb-col-main {
-    flex: 1.4; /* légèrement plus large pour le net */
-  }
-
-  .mnb-sep {
-    width: 1px;
-    height: 28px;
-    background: rgba(255,255,255,0.18);
-    flex-shrink: 0;
-  }
-
-  .mnb-label {
-    font-family: var(--font-main);
-    font-size: 8px;
-    font-weight: normal;
-    color: rgba(255,255,255,0.6);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    line-height: 1;
-    margin-bottom: 2px;
-  }
-
-  .mnb-value {
-    font-family: var(--font-numbers);
-    font-size: 15px;
-    font-weight: bold;
-    color: white;
-    line-height: 1;
-    letter-spacing: 0.3px;
-  }
-  .mnb-value-sec {
-    font-size: 12px;
-    color: rgba(255,255,255,0.8);
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2670,25 +2575,6 @@ select.champ-non-configure {
   }
 
   /* ── Bouton ajouter élément variable ─────────────────── */
-  .mf-add-btn {
-    display: block;
-    width: calc(100% - 32px);
-    margin: 12px 16px 0;
-    padding: 12px;
-    background: transparent;
-    border: 1.5px dashed var(--dgfip-medium);
-    border-radius: 8px;
-    color: var(--dgfip-medium);
-    font-family: var(--font-main);
-    font-size: 13px;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .mf-add-btn:active {
-    background: var(--color-blue-tint);
-  }
 
   /* ── Bloc config incomplet ────────────────────────────── */
   .mf-config-pending {
@@ -2808,18 +2694,9 @@ select.champ-non-configure {
     border-top: 1px solid var(--dgfip-light);
   }
   /* Bouton "Quitter" ancré en bas */
-  #panneau-comparaison .cmp-footer-mobile {
-    position: sticky;
-    bottom: 0;
-    background: white;
-    padding: 12px 16px;
-    border-top: 1px solid var(--dgfip-light);
-  }
+  #panneau-comparaison
 
   /* ── Fix 1 — masquer la barre NET sticky ────────────────────── */
-  .mobile-net-bar {
-    display: none !important;
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3240,21 +3117,6 @@ select.champ-non-configure {
     color: #7eb8f7;
   }
   /* Checkbox Non imposable */
-  .pm-nonImp-cb {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    cursor: pointer;
-    accent-color: var(--dgfip-dark);
-  }
-  .pm-nonImp-label {
-    font-family: var(--font-main);
-    font-size: 13px;
-    color: #555;
-    cursor: pointer;
-    white-space: nowrap;
-    user-select: none;
-  }
   /* pm-toggle avec checkbox unique — plus de styles pilule complexes */
   .pm-row2 .pm-toggle {
     display: flex;
@@ -3373,9 +3235,5 @@ select.champ-non-configure {
   }
   .mbb-icon svg {
     display: block;
-  }
-  /* Remove old pm-row2 .pm-toggle rules that referenced radio toggle */
-  .pm-row2 .pm-toggle {
-    display: none; /* ancienne version radio — plus utilisée */
   }
 }

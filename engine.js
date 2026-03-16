@@ -1163,6 +1163,8 @@ const ROUTAGE_MODAL = {
 function dessinerFiche(p, m, pB = null, mB = null) {
   const tbody = document.getElementById("lignes-paie");
   tbody.innerHTML = "";
+  // PERF — DocumentFragment : 12 appends hors DOM → 1 seul reflow
+  const tbodyFrag = document.createDocumentFragment();
   const enComparaison = pB !== null && mB !== null;
 
   const detailAbs = [m.joursGreve > 0 && `GREVE ${m.joursGreve}J`, m.joursCarence > 0 && `CAR ${m.joursCarence}J`, m.jours90 > 0 && `MAL 90% ${m.jours90}J`, m.jours50 > 0 && `MAL 50% ${m.jours50}J`]
@@ -1265,7 +1267,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       <td class="col-amount">${fmtCell(aDeduire, 3)}</td>
       <td class="col-amount">${fmtCell(pourInfo, 4)}</td>
     `;
-    tbody.appendChild(tr);
+    tbodyFrag.appendChild(tr);
   }
 
   /**
@@ -1305,7 +1307,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
         ${colonne === 2 ? `<td class="col-amount">${badge}</td><td class="col-amount"></td><td class="col-amount"></td>` : ""}
         ${colonne === 3 ? `<td class="col-amount"></td><td class="col-amount">${badge}</td><td class="col-amount"></td>` : ""}
       `;
-      tbody.appendChild(tr);
+      tbodyFrag.appendChild(tr);
     } else {
       const aPayer   = colonne === 2 ? valeur : null;
       const aDeduire = colonne === 3 ? valeur : null;
@@ -1325,7 +1327,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
         <td class="col-amount"></td>
         <td class="col-amount"></td>
       `;
-      tbody.appendChild(tr);
+      tbodyFrag.appendChild(tr);
     } else {
       ajouterLigneRist(code, libelle, montantA, absence, montantB);
     }
@@ -1425,6 +1427,9 @@ function dessinerFiche(p, m, pB = null, mB = null) {
 
   // Previews des totaux OTT dans le panneau de configuration
   majPreview("preview-ott-pf", p.evenements.ott_pf);
+  // PERF — flush tbody
+  tbody.appendChild(tbodyFrag);
+
   majPreview("preview-ott-pv", p.evenements.ott_pv_globale + p.evenements.ott_pv_opt32);
 
   // ── Primes manuelles (insérées juste avant la CSG) ──────────────────────────
@@ -1503,7 +1508,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
         <span class="badge-configurer" onclick="ouvrirModal('panel-impots','Prélèvement à la Source')">⚙ Taux PAS à configurer</span>
       </td>
     `;
-    tbody.appendChild(tr);
+    tbodyFrag.appendChild(tr);
   } else {
     ajouterLigne("", `(TAUX PERSONNALISE ${formaterMontant(p.taux_pas * 100)}%)`, null, null, null, null, null, "row-taux-impot");
   }
@@ -1513,7 +1518,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   trAjout.className = "add-row";
   trAjout.innerHTML = `<td colspan="5"> + AJOUTER OU MODIFIER UN ÉLÉMENT VARIABLE (Options protocolaires, Absences, Indemnité de Nuit...) </td>`;
   trAjout.onclick = () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?");
-  tbody.appendChild(trAjout);
+  tbodyFrag.appendChild(trAjout);
 
   // ── Ressort magique (lignes fantômes pour combler l'espace vide du tableau) ──
   const trRessort = document.createElement("tr");
@@ -1526,7 +1531,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     <td style="border-right:1px solid var(--dgfip-light);"></td>
     <td></td>
   `;
-  tbody.appendChild(trRessort);
+  tbodyFrag.appendChild(trRessort);
 
   // ── Totaux dans le pied de page ───────────────────────────────────────────────
   const pending = configurationIncomplete();
@@ -2215,79 +2220,6 @@ function _mobileConfirmReset() {
   if (!modal.open) modal.showModal();
 }
 
-// =============================================================================
-// RESPONSIVE — BARRE STICKY NET À PAYER
-// =============================================================================
-
-/**
- * Crée la barre mobile sticky "NET À PAYER" épinglée entre la fiche et
- * la bottom-bar. Affiche net-après-impôt et net-imposable en permanence.
- * Invisible sur desktop (CSS), créée une seule fois (idempotent).
- */
-function _creerBarreNetMobile() {
-  if (document.getElementById("mobile-net-bar")) return;
-
-  const bar = document.createElement("div");
-  bar.id        = "mobile-net-bar";
-  bar.className = "mobile-net-bar";
-  bar.setAttribute("aria-live", "polite");
-  bar.setAttribute("aria-label", "Net à payer");
-
-  // Colonne principale : NET À PAYER
-  const colNet = document.createElement("div");
-  colNet.className = "mnb-col mnb-col-main";
-
-  const lblNet = document.createElement("span");
-  lblNet.className = "mnb-label";
-  lblNet.textContent = "NET À PAYER";
-
-  const valNet = document.createElement("span");
-  valNet.id        = "mnb-net-val";
-  valNet.className = "mnb-value";
-  valNet.textContent = "—";
-
-  colNet.append(lblNet, valNet);
-
-  // Séparateur vertical
-  const sep = document.createElement("div");
-  sep.className = "mnb-sep";
-
-  // Colonne secondaire : IMPOSABLE
-  const colImp = document.createElement("div");
-  colImp.className = "mnb-col";
-
-  const lblImp = document.createElement("span");
-  lblImp.className = "mnb-label";
-  lblImp.textContent = "IMPOSABLE";
-
-  const valImp = document.createElement("span");
-  valImp.id        = "mnb-imp-val";
-  valImp.className = "mnb-value mnb-value-sec";
-  valImp.textContent = "—";
-
-  colImp.append(lblImp, valImp);
-  bar.append(colNet, sep, colImp);
-  document.body.appendChild(bar);
-}
-
-/**
- * Met à jour les valeurs affichées dans la barre mobile NET.
- * Lit directement les spans déjà mis à jour par dessinerFiche.
- */
-function _majBarreNetMobile() {
-  const barNet = document.getElementById("mnb-net-val");
-  const barImp = document.getElementById("mnb-imp-val");
-  if (!barNet || !barImp) return;
-
-  const srcNet = document.getElementById("ui-net-a-payer");
-  const srcImp = document.getElementById("ui-net-imposable");
-
-  barNet.textContent = srcNet?.textContent || "—";
-  barImp.textContent = srcImp?.textContent
-    ? srcImp.textContent + " €"
-    : "—";
-}
-
 // ── Initialisation responsive ────────────────────────────────────────────────
 _appliquerScaleFiche();
 _creerBottomBarMobile();
@@ -2737,8 +2669,11 @@ function _majDeltaMobile() {
       bar.className = "cmp-mobile-delta-bar";
     }
 
-    // Aussi déclencher le recalcul complet pour mettre à jour la liste en arrière-plan
-    calculerPaie();
+    // PERF — recalcul complet différé (debounce 250ms)
+    // _majDeltaMobile a déjà calculé mA+mB — on évite de les recalculer immédiatement
+    // Le recalcul complet met à jour les deltas dans la liste mobile
+    clearTimeout(_majDeltaMobile._timer);
+    _majDeltaMobile._timer = setTimeout(calculerPaie, 250);
   } catch (e) {
     bar.textContent = "Δ NET : —";
   }
@@ -2916,7 +2851,10 @@ window.supprimerPrimeManuelle = function (index) {
 function dessinerFicheMobile(p, m, pB = null, mB = null) {
   const root = document.getElementById("fiche-mobile");
   if (!root) return;
+  // PERF — DocumentFragment : tous les appends se font hors DOM visible
+  // → 1 seul reflow à la fin au lieu de ~35
   root.innerHTML = "";
+  const frag = document.createDocumentFragment();
 
   const fmt = (v) => v > 0
     ? v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
@@ -2957,7 +2895,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
         el = el.nextElementSibling;
       }
     });
-    root.appendChild(btn);
+    frag.appendChild(btn);
 
     // Si section fermée par défaut, on masquera les lignes ajoutées ensuite
     // via un requestAnimationFrame (les lignes n'existent pas encore au moment du clic)
@@ -3016,7 +2954,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       badge.addEventListener("click", e => { e.stopPropagation(); ouvrirModal(panel, titre); });
 
       row.append(lbl, badge);
-      root.appendChild(row);
+      frag.appendChild(row);
       return;
     }
 
@@ -3107,7 +3045,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       row.append(lbl, amtWrap);
     }
 
-    root.appendChild(row);
+    frag.appendChild(row);
   }
 
   // ── En-tête grade / échelon / indice ─────────────────────────────────────
@@ -3136,7 +3074,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
   }
 
   header.append(hLeft, hRight);
-  root.appendChild(header);
+  frag.appendChild(header);
 
   // ── Config incomplète ─────────────────────────────────────────────────────
   const pending = configurationIncomplete();
@@ -3145,7 +3083,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     msg.className = "mf-config-pending";
     msg.innerHTML = `<span class="mf-config-pending-icon">⚙</span>
       <span>Complétez votre profil pour afficher les totaux. Appuyez sur les lignes orangées pour configurer.</span>`;
-    root.appendChild(msg);
+    frag.appendChild(msg);
   }
 
   // ── BASE ──────────────────────────────────────────────────────────────────
@@ -3189,7 +3127,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       }
       row.append(lbl, amtW);
     }
-    root.appendChild(row);
+    frag.appendChild(row);
   }
 
   // NBI — affichée uniquement si activée (montantNbi > 0)
@@ -3381,7 +3319,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
           { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
         wrap.appendChild(db);
       }
-      row.append(lbl, wrap); root.appendChild(row);
+      row.append(lbl, wrap); frag.appendChild(row);
     };
 
     // ── Lignes TOUJOURS visibles (hors pliable) ─────────────────────────────
@@ -3396,13 +3334,13 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     btnDetailTotaux.className = "mf-detail-toggle";
     btnDetailTotaux.innerHTML = '<span class="mf-detail-arrow">▶</span> Détail des totaux';
     let detailOuvert = false;
-    root.appendChild(btnDetailTotaux);
+    frag.appendChild(btnDetailTotaux);
 
     // Conteneur des lignes de détail (caché par défaut)
     const detailWrap = document.createElement("div");
     detailWrap.className = "mf-detail-wrap";
     detailWrap.style.display = "none";
-    root.appendChild(detailWrap);
+    frag.appendChild(detailWrap);
 
     // Remplir le conteneur avec les lignes de détail
     const ligneDetailTotal = (libelle, valeur, deltaVal = null) => {
@@ -3463,14 +3401,15 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       }
     }
     rowNet.append(lblNet, amtNetWrap);
-    root.appendChild(rowNet);
+    frag.appendChild(rowNet);
   }
 
   // Bouton "Ajouter" supprimé — fonction disponible via le bouton ➕ de la bottom-bar
 
+  // PERF — flush : on injecte le fragment en 1 seul reflow
+  root.appendChild(frag);
+
   // ── Mise à jour de la barre sticky NET ──────────────────────────────────
-  // ui-net-a-payer et ui-net-imposable sont dans le tfoot de la fiche A4 (masquée).
-  // On les met à jour manuellement pour que _majBarreNetMobile() fonctionne.
   const elNet = document.getElementById("ui-net-a-payer");
   const elImp = document.getElementById("ui-net-imposable");
   if (elNet) elNet.textContent = (m.netFinal === 0 ? "0,00" :
