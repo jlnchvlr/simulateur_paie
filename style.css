@@ -2507,11 +2507,15 @@ select.champ-non-configure {
     color: var(--color-text-muted);
     margin-top: 1px;
   }
-  /* Petite flèche indiquant que la ligne est cliquable */
-  .mf-clickable .mf-label::after {
+  /* Petite flèche sur le TITRE uniquement — pas sur le sous-texte */
+  .mf-clickable .mf-label-title::after {
     content: " ›";
     color: var(--dgfip-medium);
     font-size: 14px;
+  }
+  /* Variante sans flèche pour les lignes non-cliquables */
+  .mf-label-title--plain::after {
+    content: none;
   }
 
   .mf-amount {

@@ -3001,8 +3001,12 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     // On retire l'attribut pour les lignes non-cliquables
     if (!panel) lbl.style.cssText = "";
 
-    const lblText = document.createTextNode(libelle);
-    lbl.appendChild(lblText);
+    // .mf-label-title porte le ::after "›" — séparé du sous-texte
+    // pour que la flèche reste sur le titre, pas sous le taux/sous-titre
+    const lblTitle = document.createElement("span");
+    lblTitle.className = panel ? "mf-label-title" : "mf-label-title mf-label-title--plain";
+    lblTitle.textContent = libelle;
+    lbl.appendChild(lblTitle);
 
     if (sub) {
       const s = document.createElement("span");
