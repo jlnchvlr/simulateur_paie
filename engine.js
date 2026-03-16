@@ -811,14 +811,13 @@ function getProfilDepuisInterface() {
   let manuelles_imposables = 0, manuelles_non_imposables = 0;
   document.querySelectorAll("#primes-manuelles-liste .prime-manuelle-row").forEach(row => {
     const montant   = parseFloat(row.querySelector(".pm-montant")?.value) || 0;
-    const imposable = row.querySelector(".pm-imp-oui")?.checked !== false
-                   && row.querySelector(".pm-imp-oui")?.checked === true;
+    const imposable = !(row.querySelector(".pm-imp-non-cb")?.checked === true);
     if (imposable) manuelles_imposables     += montant;
     else           manuelles_non_imposables += montant;
   });
 
   return {
-    grade: document.getElementById("input-grade")?.value || "ING.DIV. CONT.NAV.AE",
+    grade: document.getElementById("input-grade")?.value || "",
     echelon: document.getElementById("input-echelon")?.value || "",
     zone: document.querySelector('input[name="ir-zone"]:checked')?.value || "Zone 1",
     taux_pas: lireFloat("input-pas") / 100,
@@ -2086,11 +2085,17 @@ function _creerBottomBarMobile() {
   bar.setAttribute("role", "navigation");
   bar.setAttribute("aria-label", "Navigation principale");
 
+  const _SVG = {
+    annuel:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="15" r="1" fill="currentColor"/><circle cx="16" cy="15" r="1" fill="currentColor"/></svg>',
+    comparer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><rect x="2" y="6" width="8" height="12" rx="1"/><rect x="14" y="6" width="8" height="12" rx="1"/><line x1="12" y1="4" x2="12" y2="20"/><polyline points="9.5 9 12 6 14.5 9"/><polyline points="9.5 15 12 18 14.5 15"/></svg>',
+    ajouter:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+    reset:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>',
+  };
   const btns = [
-    { icon: "📅", label: "Annuel",   action: () => window.ouvrirProjectionAnnuelle?.() },
-    { icon: "⚖",  label: "Comparer", action: () => _ouvrirComparateurMobile() },
-    { icon: "➕",  label: "Ajouter",  action: () => ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?") },
-    { icon: "↺",  label: "Reset",    action: () => _mobileConfirmReset() },
+    { icon: _SVG.annuel,   label: "Annuel",   action: () => _mbbAction("annuel") },
+    { icon: _SVG.comparer, label: "Comparer", action: () => _mbbAction("comparer") },
+    { icon: _SVG.ajouter,  label: "Ajouter",  action: () => _mbbAction("ajouter") },
+    { icon: _SVG.reset,    label: "Reset",    action: () => _mobileConfirmReset() },
   ];
 
   btns.forEach(({ icon, label, action }) => {
@@ -2101,7 +2106,8 @@ function _creerBottomBarMobile() {
 
     const spanIcon  = document.createElement("span");
     spanIcon.className = "mbb-icon";
-    spanIcon.textContent = icon;
+    if (typeof icon === "string" && icon.trim().startsWith("<svg")) spanIcon.innerHTML = icon;
+    else spanIcon.textContent = icon;
 
     const spanLabel = document.createElement("span");
     spanLabel.className = "mbb-label";
@@ -2113,6 +2119,44 @@ function _creerBottomBarMobile() {
   });
 
   document.body.appendChild(bar);
+}
+
+/**
+ * Action de la bottom-bar — bloque si configuration incomplète
+ * sauf pour Reset qui est toujours disponible.
+ */
+function _mbbAction(action) {
+  if (configurationIncomplete() && action !== "reset") {
+    // Afficher un message d'invite plutôt que bloquer silencieusement
+    const modal = document.getElementById("magic-modal");
+    if (!modal) return;
+    document.getElementById("modal-title").textContent = "⚙ Configuration requise";
+    document.querySelectorAll(".setting-panel").forEach(p => p.classList.remove("active"));
+    const tmp = document.getElementById("_mobile-config-required") || (() => {
+      const d = document.createElement("div");
+      d.id = "_mobile-config-required";
+      d.className = "setting-panel";
+      d.innerHTML = `
+        <p class="panel-hint" style="margin-bottom:16px;">
+          Complétez d'abord votre profil de base avant d'accéder à cette fonctionnalité :<br><br>
+          <strong>• Grade &amp; Échelon</strong> → tap sur "Traitement brut"<br>
+          <strong>• Zone de résidence</strong> → tap sur "Indemnité de résidence"<br>
+          <strong>• RIST</strong> → tap sur chaque ligne RIST dans la liste
+        </p>
+        <button type="button" class="validate-btn"
+          onclick="document.getElementById('magic-modal').close()">Fermer</button>
+      `;
+      document.querySelector(".modal-body").appendChild(d);
+      return d;
+    })();
+    tmp.classList.add("active");
+    modal.dataset.panelOuvert = "_mobile-config-required";
+    if (!modal.open) modal.showModal();
+    return;
+  }
+  if (action === "annuel")   window.ouvrirProjectionAnnuelle?.();
+  if (action === "comparer") _ouvrirComparateurMobile();
+  if (action === "ajouter")  ouvrirModal("panel-menu-ajout", "Que voulez-vous ajouter ?");
 }
 
 /** Message informatif quand l'utilisateur tape "Aide" sur mobile. */
@@ -2748,38 +2792,25 @@ function _creerLignePrimeManuelle(libelle = "", montant = "", imposable = true) 
   inputVal.addEventListener("focus",  () => inputVal.select());
   inputVal.addEventListener("input",  () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
 
-  // Toggle Imposable / Non imposable
+  // Toggle : checkbox unique "Non imposable"
+  // Non cochée = imposable (défaut), cochée = non imposable
   const toggle = document.createElement("div");
-  toggle.className = "pm-toggle";
+  toggle.className = "pm-toggle-cb";
 
-  const rOuiId  = `pm-imp-oui-${id}`;
-  const rNonId  = `pm-imp-non-${id}`;
-  const rName   = `pm-imposable-${id}`;
+  const cbNonImpId = `pm-nonimposable-${id}`;
+  const cbNonImp = document.createElement("input");
+  cbNonImp.type      = "checkbox";
+  cbNonImp.id        = cbNonImpId;
+  cbNonImp.className = "pm-imp-non-cb";
+  cbNonImp.checked   = !imposable; // cochée = non imposable
+  cbNonImp.addEventListener("change", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
 
-  const rOui  = document.createElement("input");
-  rOui.type   = "radio"; rOui.name = rName;
-  rOui.id     = rOuiId;  rOui.className = "pm-imp-oui";
-  rOui.value  = "1";     rOui.checked = imposable;
+  const lblCb = document.createElement("label");
+  lblCb.htmlFor     = cbNonImpId;
+  lblCb.textContent = "Non imposable";
+  lblCb.className   = "pm-nonimposable-label";
 
-  const lOui  = document.createElement("label");
-  lOui.htmlFor    = rOuiId;
-  // Labels abrégés sur mobile pour éviter le débordement
-  const isMob = document.body.classList.contains("is-mobile");
-  lOui.textContent = isMob ? "Imp." : "Imposable";
-
-  const rNon  = document.createElement("input");
-  rNon.type   = "radio"; rNon.name = rName;
-  rNon.id     = rNonId;  rNon.className = "pm-imp-non";
-  rNon.value  = "0";     rNon.checked = !imposable;
-
-  const lNon  = document.createElement("label");
-  lNon.htmlFor    = rNonId;
-  lNon.textContent = isMob ? "Non imp." : "Non imposable";
-
-  rOui.addEventListener("change", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
-  rNon.addEventListener("change", () => { _sauvegarderPrimesManuelles(); calculerPaie(); });
-
-  toggle.append(rOui, lOui, rNon, lNon);
+  toggle.append(cbNonImp, lblCb);
 
   // Bouton suppression
   const btnSuppr  = document.createElement("button");
@@ -2807,7 +2838,7 @@ function _getPrimesManuelles() {
   document.querySelectorAll("#primes-manuelles-liste .prime-manuelle-row").forEach(row => {
     const libelle   = row.querySelector(".pm-libelle")?.value?.trim() || "Prime manuelle";
     const montant   = parseFloat(row.querySelector(".pm-montant")?.value) || 0;
-    const imposable = row.querySelector(".pm-imp-oui")?.checked === true;
+    const imposable = !(row.querySelector(".pm-imp-non-cb")?.checked === true);
     result.push({ libelle, montant, imposable });
   });
   return result;
@@ -3085,9 +3116,9 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
 
   const hLeft = document.createElement("div");
   hLeft.className = "mf-header-grade";
-  const gradeTxt = p.grade || "— Grade non configuré —";
-  const echelonTxt = p.echelon ? `Échelon ${p.echelon}` : "Échelon non configuré";
+  const gradeTxt = (!p.grade || nonConfigure("grade")) ? "— Grade non configuré —" : p.grade;
   hLeft.textContent = gradeTxt;
+  const echelonTxt = p.echelon ? `Échelon ${p.echelon}` : "Échelon non configuré";
   const hSub = document.createElement("div");
   hSub.className = "mf-header-sub";
   hSub.textContent = echelonTxt + (p.enfants > 0 ? ` · ${p.enfants} enfant${p.enfants > 1 ? "s" : ""}` : "");
@@ -3122,10 +3153,6 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
 
   // Traitement brut — tap ouvre panneau traitement (grade + échelon + NBI)
   const pendingTraitement = nonConfigure("grade") || nonConfigure("echelon") || nonConfigure("nbi");
-  const subTraitement = [
-    p.echelon ? "Éch. " + p.echelon : null,
-    m.montantNbi > 0 ? "NBI activée" : (!nonConfigure("nbi") ? "NBI non activée" : null),
-  ].filter(Boolean).join(" · ") || null;
   {
     const row = document.createElement("div");
     row.className = "mf-row mf-clickable" + (pendingTraitement ? " mf-pending" : "");
@@ -3138,12 +3165,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     const lbl = document.createElement("span");
     lbl.className = "mf-label";
     lbl.textContent = "Traitement brut";
-    if (subTraitement) {
-      const sub = document.createElement("span");
-      sub.className = "mf-label-sub";
-      sub.textContent = subTraitement;
-      lbl.appendChild(sub);
-    }
+
     if (pendingTraitement) {
       const badge = document.createElement("button");
       badge.type = "button";
