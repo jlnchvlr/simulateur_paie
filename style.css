@@ -19,8 +19,8 @@
   /* ── Texte ──────────────────────────────────────────────────────── */
   --color-text:           #333;
   --color-text-secondary: #555;
-  --color-text-muted:     #888;
-  --color-text-disabled:  #bbb;
+  --color-text-muted:     #696969; /* WCAG AA : 5.5:1 sur blanc (était 3.5:1) */
+  --color-text-disabled:  #767676; /* WCAG AA : 4.5:1 sur blanc (était 1.9:1) */
 
   /* ── Sémantique : Succès (vert) ─────────────────────────────────── */
   --color-success:      #1a6b2f;
@@ -32,7 +32,7 @@
   --color-danger-bg:  #f8d7da;
 
   /* ── Sémantique : Warning (orange) ─────────────────────────────── */
-  --color-warning:          #fd7e14;
+  --color-warning:          #fd7e14; /* Déco/fond uniquement — texte : --color-warning-dark */
   --color-warning-dark:     #b85c00;
   --color-warning-text:     #5d4037;
   --color-warning-bg:       #fff8f3;
@@ -637,8 +637,12 @@ body {
   background-size: 18px 18px; /* Taille de l'icône */
 }
 #recherche-ajout:focus {
-  outline: none;
+  outline: none;               /* supprimé car border-color remplace visuellement */
   border-color: var(--dgfip-medium);
+}
+#recherche-ajout:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: 2px;        /* indicateur clavier explicite (A11y) */
 }
 
 #resultats-recherche {
@@ -730,9 +734,14 @@ body:not(.navigation-clavier) .resultat-item:hover {
   border: none;
   font-size: 18px;
   font-family: var(--font-main);
-  outline: none;
+  outline: none;               /* design custom — focus via conteneur */
   color: var(--dgfip-dark);
   background: transparent;
+}
+#spotlight-input:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: 2px;        /* indicateur clavier (A11y) */
+  border-radius: 2px;
 }
 
 #spotlight-input::placeholder {
@@ -777,9 +786,15 @@ body:not(.navigation-clavier) .resultat-item:hover {
   }
 }
 
-/* Focus navigateur supprimé — style propre appliqué uniquement en navigation clavier */
+/* outline:none sur :focus — remplacé par :focus-visible ci-dessous (A11y)
+   body.navigation-clavier assure le fallback pour les navigateurs anciens */
 .resultat-item:focus {
   outline: none;
+}
+.resultat-item:focus-visible {
+  outline: 2px solid var(--dgfip-dark);
+  outline-offset: -2px;
+  background-color: var(--color-surface);
 }
 
 /* Bordure visible uniquement en navigation clavier (accessibilité) */
@@ -841,7 +856,12 @@ body.navigation-clavier .resultat-item:focus {
   background-color: white;
   color: var(--dgfip-dark);
   cursor: pointer;
-  outline: none;
+  outline: none;               /* design custom — :focus-visible ci-dessous */
+}
+.panel-select:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: -2px;        /* indicateur clavier (A11y) */
+  border-color: var(--dgfip-medium);
 }
 .select-light {
   width: 100%;
@@ -861,7 +881,11 @@ body.navigation-clavier .resultat-item:focus {
   font-size: inherit;
   font-weight: inherit;
   cursor: pointer;
-  outline: none;
+  outline: none;               /* design intégré — :focus-visible ci-dessous */
+}
+.select-transparent:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: 2px;         /* indicateur clavier (A11y) */
 }
 
 /* RIST / ISQ helpers */
@@ -1620,7 +1644,7 @@ body.navigation-clavier .resultat-item:focus {
 /* ── Badge "À configurer" (onboarding profil vierge) ── */
 .badge-configurer {
   display: inline-block;
-  background-color: var(--color-warning);
+  background-color: var(--color-warning-dark);
   color: white;
   font-size: 9px;
   font-weight: bold;
@@ -1663,7 +1687,7 @@ select.champ-non-configure {
   font-size: 9px;
   background: transparent;
   border: 1px solid var(--color-warning);
-  color: var(--color-warning);
+  color: var(--color-warning-dark);
   border-radius: 3px;
   padding: 1px 4px;
   cursor: pointer;
@@ -2269,7 +2293,10 @@ select.champ-non-configure {
      Les lignes restent dans leur taille visuelle mais la zone de clic
      s'étend via padding compensé.
   */
-  .clickable-row td {
+  /* Tap targets — scoped à la liste mobile UNIQUEMENT
+     (ne doit pas affecter .pay-table .clickable-row sur desktop) */
+  #fiche-mobile .clickable-row,
+  #fiche-mobile .mf-row {
     padding-top: 10px !important;
     padding-bottom: 10px !important;
   }

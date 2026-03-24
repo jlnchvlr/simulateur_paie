@@ -1427,9 +1427,6 @@ function dessinerFiche(p, m, pB = null, mB = null) {
 
   // Previews des totaux OTT dans le panneau de configuration
   majPreview("preview-ott-pf", p.evenements.ott_pf);
-  // PERF — flush tbody
-  tbody.appendChild(tbodyFrag);
-
   majPreview("preview-ott-pv", p.evenements.ott_pv_globale + p.evenements.ott_pv_opt32);
 
   // ── Primes manuelles (insérées juste avant la CSG) ──────────────────────────
@@ -1532,6 +1529,9 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     <td></td>
   `;
   tbodyFrag.appendChild(trRessort);
+
+  // PERF — flush unique : toutes les lignes injectées en 1 seul reflow
+  tbody.appendChild(tbodyFrag);
 
   // ── Totaux dans le pied de page ───────────────────────────────────────────────
   const pending = configurationIncomplete();

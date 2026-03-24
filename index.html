@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Simulateur de paie pour les ingénieurs du contrôle de la navigation aérienne (ICNA) — calcul du net mensuel, RIST, OTT et projection annuelle." />
     <title>Simulateur Paie ICNA</title>
     <link rel="stylesheet" href="style.css" />
 
@@ -27,10 +28,10 @@
   <button id="btn-comparer-flottant" class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
   <button id="btn-projection-flottant" class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
 
-    <dialog id="magic-modal" class="magic-modal">
+    <dialog id="magic-modal" class="magic-modal" aria-labelledby="modal-title" aria-modal="true">
       <div class="modal-header">
         <h2 id="modal-title">Modifier l'élément</h2>
-        <button class="close-btn" onclick="document.getElementById('magic-modal').close()">✖</button>
+        <button class="close-btn" aria-label="Fermer" onclick="document.getElementById('magic-modal').close()">✖</button>
       </div>
 
       <div class="modal-body">
@@ -485,7 +486,7 @@
     <!-- ══════════════════════════════════════
          SPOTLIGHT (Ctrl + K)
          ══════════════════════════════════════ -->
-    <dialog id="spotlight-modal" class="spotlight-modal">
+    <dialog id="spotlight-modal" class="spotlight-modal" aria-label="Recherche rapide" aria-modal="true">
       <div class="spotlight-container">
         <div class="spotlight-header">
           <span class="spotlight-icon">🔍</span>
