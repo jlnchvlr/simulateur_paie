@@ -1,43 +1,43 @@
 :root {
   /* ── Palette DGFiP ──────────────────────────────────────────────── */
-  --dgfip-dark:        #3b5472;
-  --dgfip-medium:      #8397af;
-  --dgfip-light:       #e0e6ed;
+  --dgfip-dark: #3b5472;
+  --dgfip-medium: #8397af;
+  --dgfip-light: #e0e6ed;
   --dgfip-gray-border: #9ba8b6;
 
   /* ── Typographie ────────────────────────────────────────────────── */
-  --font-main:    "Arial", Helvetica, sans-serif;
+  --font-main: "Arial", Helvetica, sans-serif;
   --font-numbers: "Lucida Console", "Courier New", monospace;
 
   /* ── Surfaces & neutres ─────────────────────────────────────────── */
-  --color-surface:     #f8f9fa;
+  --color-surface: #f8f9fa;
   --color-surface-alt: #f0f4f8;
-  --color-border:      #ccc;
-  --color-border-alt:  #d0daea;
-  --color-blue-tint:   #e8f0fe;
+  --color-border: #ccc;
+  --color-border-alt: #d0daea;
+  --color-blue-tint: #e8f0fe;
 
   /* ── Texte ──────────────────────────────────────────────────────── */
-  --color-text:           #333;
+  --color-text: #333;
   --color-text-secondary: #555;
-  --color-text-muted:     #696969; /* WCAG AA : 5.5:1 sur blanc (était 3.5:1) */
-  --color-text-disabled:  #767676; /* WCAG AA : 4.5:1 sur blanc (était 1.9:1) */
+  --color-text-muted: #696969; /* WCAG AA : 5.5:1 sur blanc (était 3.5:1) */
+  --color-text-disabled: #767676; /* WCAG AA : 4.5:1 sur blanc (était 1.9:1) */
 
   /* ── Sémantique : Succès (vert) ─────────────────────────────────── */
-  --color-success:      #1a6b2f;
+  --color-success: #1a6b2f;
   --color-success-dark: #155724;
-  --color-success-bg:   #d4edda;
+  --color-success-bg: #d4edda;
 
   /* ── Sémantique : Danger (rouge) ────────────────────────────────── */
-  --color-danger:     #c0392b;
-  --color-danger-bg:  #f8d7da;
+  --color-danger: #c0392b;
+  --color-danger-bg: #f8d7da;
 
   /* ── Sémantique : Warning (orange) ─────────────────────────────── */
-  --color-warning:          #fd7e14; /* Déco/fond uniquement — texte : --color-warning-dark */
-  --color-warning-dark:     #b85c00;
-  --color-warning-text:     #5d4037;
-  --color-warning-bg:       #fff8f3;
+  --color-warning: #fd7e14; /* Déco/fond uniquement — texte : --color-warning-dark */
+  --color-warning-dark: #b85c00;
+  --color-warning-text: #5d4037;
+  --color-warning-bg: #fff8f3;
   --color-warning-bg-light: #fff8e1;
-  --color-warning-border:   #ffe082;
+  --color-warning-border: #ffe082;
 
   /* ── Variables supplémentaires ─────────────────────────────────── */
   --color-print-bg: #525659;
@@ -168,6 +168,7 @@ body {
   height: 18px !important;
   font-family: var(--font-numbers);
   font-size: 10px;
+  line-height: 16px; /* ← explicite → identique sur tous les OS */
   font-weight: bold;
   border-right: 1px solid var(--dgfip-light);
   color: black !important;
@@ -641,12 +642,12 @@ body {
   background-size: 18px 18px; /* Taille de l'icône */
 }
 #recherche-ajout:focus {
-  outline: none;               /* supprimé car border-color remplace visuellement */
+  outline: none; /* supprimé car border-color remplace visuellement */
   border-color: var(--dgfip-medium);
 }
 #recherche-ajout:focus-visible {
   outline: 2px solid var(--dgfip-medium);
-  outline-offset: 2px;        /* indicateur clavier explicite (A11y) */
+  outline-offset: 2px; /* indicateur clavier explicite (A11y) */
 }
 
 #resultats-recherche {
@@ -738,13 +739,13 @@ body:not(.navigation-clavier) .resultat-item:hover {
   border: none;
   font-size: 1.125rem;
   font-family: var(--font-main);
-  outline: none;               /* design custom — focus via conteneur */
+  outline: none; /* design custom — focus via conteneur */
   color: var(--dgfip-dark);
   background: transparent;
 }
 #spotlight-input:focus-visible {
   outline: 2px solid var(--dgfip-medium);
-  outline-offset: 2px;        /* indicateur clavier (A11y) */
+  outline-offset: 2px; /* indicateur clavier (A11y) */
   border-radius: 2px;
 }
 
@@ -860,11 +861,11 @@ body.navigation-clavier .resultat-item:focus {
   background-color: white;
   color: var(--dgfip-dark);
   cursor: pointer;
-  outline: none;               /* design custom — :focus-visible ci-dessous */
+  outline: none; /* design custom — :focus-visible ci-dessous */
 }
 .panel-select:focus-visible {
   outline: 2px solid var(--dgfip-medium);
-  outline-offset: -2px;        /* indicateur clavier (A11y) */
+  outline-offset: -2px; /* indicateur clavier (A11y) */
   border-color: var(--dgfip-medium);
 }
 .select-light {
@@ -885,11 +886,11 @@ body.navigation-clavier .resultat-item:focus {
   font-size: inherit;
   font-weight: inherit;
   cursor: pointer;
-  outline: none;               /* design intégré — :focus-visible ci-dessous */
+  outline: none; /* design intégré — :focus-visible ci-dessous */
 }
 .select-transparent:focus-visible {
   outline: 2px solid var(--dgfip-medium);
-  outline-offset: 2px;         /* indicateur clavier (A11y) */
+  outline-offset: 2px; /* indicateur clavier (A11y) */
 }
 
 /* RIST / ISQ helpers */
@@ -1115,7 +1116,10 @@ body.navigation-clavier .resultat-item:focus {
   font-family: var(--font-main);
   font-size: 0.875rem;
   font-weight: bold;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s;
   z-index: 1000;
 }
 .btn-comparer-flottant:hover {
@@ -1338,12 +1342,18 @@ body.navigation-clavier .resultat-item:focus {
   margin-left: 3px;
   vertical-align: middle;
 }
-.delta-net-b.delta-pos { color: var(--color-success-dark); }
-.delta-net-b.delta-neg { color: var(--color-danger-text); }
+.delta-net-b.delta-pos {
+  color: var(--color-success-dark);
+}
+.delta-net-b.delta-neg {
+  color: var(--color-danger-text);
+}
 
 @media print {
   .btn-comparer-flottant,
-  #panneau-comparaison { display: none !important; }
+  #panneau-comparaison {
+    display: none !important;
+  }
 }
 
 /* =========================================
@@ -1365,7 +1375,10 @@ body.navigation-clavier .resultat-item:focus {
   font-family: var(--font-main);
   font-size: 0.875rem;
   font-weight: bold;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s;
   z-index: 1000;
 }
 .btn-projection-flottant:hover {
@@ -1475,7 +1488,7 @@ body.navigation-clavier .resultat-item:focus {
 .prime-manuelle-row .pm-libelle {
   flex: 1;
   min-width: 0;
-  width: auto;           /* neutralise width:100% de .modal-body input */
+  width: auto; /* neutralise width:100% de .modal-body input */
   padding: 4px 8px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -1503,11 +1516,11 @@ body.navigation-clavier .resultat-item:focus {
 .pm-toggle {
   display: flex;
   border: 1px solid var(--color-toggle-border);
-  border-radius: 20px;      /* pilule */
+  border-radius: 20px; /* pilule */
   overflow: hidden;
   flex-shrink: 0;
   background: var(--color-surface-alt);
-  padding: 3px;             /* marge interne entre bord et labels */
+  padding: 3px; /* marge interne entre bord et labels */
   gap: 2px;
 }
 .pm-toggle input[type="radio"] {
@@ -1524,15 +1537,18 @@ body.navigation-clavier .resultat-item:focus {
   line-height: 1.5;
   white-space: nowrap;
   text-align: center;
-  border-radius: 16px;      /* label aussi en pilule */
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  border-radius: 16px; /* label aussi en pilule */
+  transition:
+    background 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   user-select: none;
 }
 .pm-toggle input[type="radio"]:checked + label {
   background: white;
   color: var(--dgfip-dark);
   font-weight: bold;
-  box-shadow: 0 1px 4px rgba(59,84,114,0.15);
+  box-shadow: 0 1px 4px rgba(59, 84, 114, 0.15);
 }
 .pm-suppr {
   background: transparent;
@@ -1609,7 +1625,9 @@ body.navigation-clavier .resultat-item:focus {
 }
 
 @media print {
-  .btn-projection-flottant { display: none !important; }
+  .btn-projection-flottant {
+    display: none !important;
+  }
 }
 
 /* Projection annuelle — modale plus large + padding forcé */
@@ -1671,8 +1689,15 @@ body.navigation-clavier .resultat-item:focus {
 /* ── Champs info-table non configurés (onboarding) ── */
 @keyframes badge-pulse {
   /* PERF — opacity+outline-offset : composite-friendly, pas de Paint */
-  0%, 100% { outline-color: rgba(253, 126, 20, 0.6); outline-offset: 0px; }
-  50%       { outline-color: rgba(253, 126, 20, 0);   outline-offset: 5px; }
+  0%,
+  100% {
+    outline-color: rgba(253, 126, 20, 0.6);
+    outline-offset: 0px;
+  }
+  50% {
+    outline-color: rgba(253, 126, 20, 0);
+    outline-offset: 5px;
+  }
 }
 .champ-non-configure {
   outline: 2px solid var(--color-warning) !important;
@@ -1742,7 +1767,6 @@ select.champ-non-configure {
   animation: badge-pulse 1.8s ease-in-out infinite;
 }
 
-
 /* ═══════════════════════════════════════════════════════════════
    VISITE GUIDÉE CUSTOM — Tour from scratch, zéro driver.js
    ═══════════════════════════════════════════════════════════════ */
@@ -1766,21 +1790,31 @@ select.champ-non-configure {
   border: none;
   padding: 11px 20px;
   border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   font-family: var(--font-main);
   font-size: 0.8125rem;
   font-weight: bold;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
-.btn-visite-flottant        { background-color: var(--dgfip-dark); }
-.btn-visite-avance-flottant { background-color: var(--color-success); }
+.btn-visite-flottant {
+  background-color: var(--dgfip-dark);
+}
+.btn-visite-avance-flottant {
+  background-color: var(--color-success);
+}
 .btn-visite-flottant:hover,
 .btn-visite-avance-flottant:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.36);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.36);
 }
-@media print { .visite-btns-wrap { display: none !important; } }
+@media print {
+  .visite-btns-wrap {
+    display: none !important;
+  }
+}
 
 /* ── Spotlight ── */
 #tour-spotlight {
@@ -1789,11 +1823,12 @@ select.champ-non-configure {
   border-radius: 5px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
   z-index: 9998;
-  transition: top 0.32s cubic-bezier(0.4,0,0.2,1),
-              left 0.32s cubic-bezier(0.4,0,0.2,1),
-              width 0.32s cubic-bezier(0.4,0,0.2,1),
-              height 0.32s cubic-bezier(0.4,0,0.2,1),
-              opacity 0.15s ease;
+  transition:
+    top 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.15s ease;
 }
 /* Invisible mais présent dans le DOM → les transitions top/left/width/height jouent */
 #tour-spotlight.tour-spotlight-invisible {
@@ -1817,7 +1852,9 @@ select.champ-non-configure {
   pointer-events: none;
   z-index: 10001;
   opacity: 0;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 #tour-toast.tour-toast-visible {
   opacity: 1;
@@ -1830,7 +1867,9 @@ select.champ-non-configure {
   z-index: 9999;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   width: 320px;
   max-width: calc(100vw - 32px);
   font-family: var(--font-main);
@@ -1869,11 +1908,17 @@ select.champ-non-configure {
   color: var(--color-success);
   font-size: 0.8125rem;
   display: inline-block;
-  animation: tour-coche-pop 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation: tour-coche-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 @keyframes tour-coche-pop {
-  from { opacity: 0; transform: scale(0.3); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Corps — fade sur changement de contenu uniquement */
@@ -1901,10 +1946,15 @@ select.champ-non-configure {
   padding: 6px 10px;
   cursor: pointer;
   font-family: var(--font-main);
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 }
-.tour-pop-prev:hover { color: var(--color-text-secondary); border-color: var(--color-text-disabled); }
+.tour-pop-prev:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-disabled);
+}
 
 .tour-pop-skip {
   font-size: 0.6875rem;
@@ -1919,7 +1969,9 @@ select.champ-non-configure {
   text-align: center;
   transition: color 0.15s;
 }
-.tour-pop-skip:hover { color: var(--color-text-muted); }
+.tour-pop-skip:hover {
+  color: var(--color-text-muted);
+}
 
 .tour-pop-next {
   font-size: 0.8125rem;
@@ -1931,7 +1983,10 @@ select.champ-non-configure {
   padding: 7px 16px;
   cursor: pointer;
   font-family: var(--font-main);
-  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.15s ease;
   white-space: nowrap;
 }
 .tour-pop-next:not([disabled]):hover {
@@ -1949,15 +2004,24 @@ select.champ-non-configure {
 }
 @keyframes tour-next-pulse {
   /* PERF — transform:scale seul = GPU, zéro Paint */
-  0%   { transform: scale(1);    opacity: 1; }
-  60%  { transform: scale(1.08); opacity: 0.85; }
-  100% { transform: scale(1);    opacity: 1; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Confirmation quitter */
 .tour-confirm-quit {
   padding: 8px 10px;
-  background: var(--color-white)3cd;
+  background: var(--color-white) 3cd;
   border: 1px solid var(--color-note-border);
   border-radius: 6px;
   font-size: 0.75rem;
@@ -1969,35 +2033,72 @@ select.champ-non-configure {
   margin-top: 4px;
 }
 .tour-confirm-quit button {
-  font-size: 0.6875rem; padding: 2px 8px; border-radius: 4px;
-  border: 1px solid currentColor; cursor: pointer; background: white;
+  font-size: 0.6875rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  cursor: pointer;
+  background: white;
   font-family: var(--font-main);
 }
-.tour-confirm-quit .btn-oui { color: var(--color-danger); border-color: var(--color-danger); }
-.tour-confirm-quit .btn-non { color: var(--color-success); border-color: var(--color-success); }
+.tour-confirm-quit .btn-oui {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.tour-confirm-quit .btn-non {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
 
 /* ── Checklist RIST dans le corps ── */
-.tour-rist-checklist { margin-top: 10px; font-size: 0.75rem; }
+.tour-rist-checklist {
+  margin-top: 10px;
+  font-size: 0.75rem;
+}
 .tour-rist-item {
-  display: flex; align-items: center; gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 3px 0;
   transition: color 0.25s;
 }
 .tour-rist-check {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--color-border-neutral);
-  flex-shrink: 0; font-size: 0.5625rem; font-weight: bold;
-  transition: background 0.25s, border-color 0.25s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-neutral);
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+  font-weight: bold;
+  transition:
+    background 0.25s,
+    border-color 0.25s;
 }
-.tour-rist-item.done .tour-rist-check { background: var(--color-success); border-color: var(--color-success); color: white; }
-.tour-rist-item.done > span:last-child { color: var(--color-success); text-decoration: line-through; }
+.tour-rist-item.done .tour-rist-check {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+.tour-rist-item.done > span:last-child {
+  color: var(--color-success);
+  text-decoration: line-through;
+}
 /* Ligne RIST actuellement spotlightée */
-.tour-rist-item.actif > span:last-child { font-weight: bold; color: var(--dgfip-dark); }
+.tour-rist-item.actif > span:last-child {
+  font-weight: bold;
+  color: var(--dgfip-dark);
+}
 
 /* Hint italique */
 .tour-hint {
-  display: block; margin-top: 8px;
-  font-size: 0.6875rem; color: var(--color-text-disabled); font-style: italic;
+  display: block;
+  margin-top: 8px;
+  font-size: 0.6875rem;
+  color: var(--color-text-disabled);
+  font-style: italic;
 }
 
 /* ── Lignes pulsantes phase 2 ── */
@@ -2005,41 +2106,77 @@ select.champ-non-configure {
   /* PERF — opacity sur pseudo-element serait idéal mais ici on garde
      background-color car la ligne doit rester lisible : on réduit la fréquence
      via will-change pour que le browser isole la couche */
-  0%,100% { opacity: 1; }
-  50%     { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
-.tour-ligne-pulsante td { animation: tour-ligne-pulse 1.5s ease-in-out infinite !important; }
+.tour-ligne-pulsante td {
+  animation: tour-ligne-pulse 1.5s ease-in-out infinite !important;
+}
 .tour-ligne-pulsante:hover td {
-  background-color: rgba(40,167,69,0.22) !important;
+  background-color: rgba(40, 167, 69, 0.22) !important;
   animation-play-state: paused !important;
 }
 
 /* ── Reset button highlight ── */
 @keyframes tour-pulse-reset {
   /* PERF — transform:scale + opacity = GPU-only */
-  0%,100% { transform: scale(1);    opacity: 1; }
-  50%     { transform: scale(1.06); opacity: 0.8; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.8;
+  }
 }
 #btn-reset-profil.tour-highlight-reset {
-  opacity: 1 !important; color: var(--color-danger) !important; font-size: 1rem !important;
+  opacity: 1 !important;
+  color: var(--color-danger) !important;
+  font-size: 1rem !important;
   animation: tour-pulse-reset 1.2s ease-in-out 3;
 }
 
 /* ── Bouton démo ── */
 .tour-demo-btn {
-  display: inline-block; margin-top: 10px; padding: 6px 14px;
-  background: var(--dgfip-dark); color: white; border: none;
-  border-radius: 6px; cursor: pointer; font-family: var(--font-main);
-  font-size: 0.75rem; font-weight: bold; transition: opacity 0.2s;
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 14px;
+  background: var(--dgfip-dark);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: bold;
+  transition: opacity 0.2s;
 }
-.tour-demo-btn:hover    { opacity: 0.85; }
-.tour-demo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.tour-demo-btn:hover {
+  opacity: 0.85;
+}
+.tour-demo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* ── Pulsation post-tour ── */
 @keyframes badge-post-attention {
   /* PERF — transform+opacity seuls = GPU compositor, zéro Paint */
-  0%,100% { transform: scale(1);    opacity: 1; }
-  40%     { transform: scale(1.12); opacity: 0.85; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
 }
 .badge-configurer.tour-post-attention {
   animation: badge-post-attention 0.7s ease-out 4 !important;
@@ -2057,7 +2194,6 @@ select.champ-non-configure {
    ═══════════════════════════════════════════════════════════════ */
 
 @media (max-width: 820px) {
-
   /* ── 1. html + body ────────────────────────────────────────────── */
   /*
      overflow-x:clip retiré : il créait un "overflow clip edge" qui devenait
@@ -2177,8 +2313,14 @@ select.champ-non-configure {
     flex-direction: column;
   }
   @keyframes mobileModalIn {
-    from { opacity: 0; transform: translate(-50%, calc(-50% + 20px)); }
-    to   { opacity: 1; transform: translate(-50%, -50%); }
+    from {
+      opacity: 0;
+      transform: translate(-50%, calc(-50% + 20px));
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
   }
   /* modal-body : scroll interne, flex-grow pour remplir l'espace disponible */
   .modal-body {
@@ -2206,7 +2348,6 @@ select.champ-non-configure {
     border-radius: 16px 16px 0 0;
     flex-shrink: 0;
   }
-
 
   /* ── 5. Fix iOS — zoom auto sur focus input (font-size < 16px) ─ */
   /*
@@ -2245,9 +2386,8 @@ select.champ-non-configure {
     margin-top: 16px;
     font-size: 1rem;
     border-radius: 10px;
-    box-shadow: 0 -6px 16px rgba(0,0,0,0.10);
+    box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.1);
   }
-
 
   /* ── 6. Panneau comparateur — masqué en phase 1 ─────────────── */
   /*
@@ -2341,7 +2481,7 @@ select.champ-non-configure {
     min-width: unset !important;
     max-height: 80vh !important;
     border-radius: 16px 16px 0 0 !important;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3) !important;
     overflow-y: auto !important;
     z-index: 1040 !important;
     transform: none !important;
@@ -2365,7 +2505,7 @@ select.champ-non-configure {
   right: 0;
   height: 56px;
   background: var(--dgfip-dark);
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 1050;
   align-items: stretch;
   /* safe-area-inset pour iPhone avec barre de geste en bas */
@@ -2381,14 +2521,16 @@ select.champ-non-configure {
   height: 100%;
   background: transparent;
   border: none;
-  border-right: 1px solid rgba(255,255,255,0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--color-mobile-muted);
   font-family: var(--font-main);
   font-size: 0.625rem;
   font-weight: normal;
   cursor: pointer;
   padding: 0 4px;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   -webkit-tap-highlight-color: transparent;
   min-width: 44px; /* guideline tap target Apple/Google */
 }
@@ -2397,7 +2539,7 @@ select.champ-non-configure {
 }
 .mobile-bottom-bar-btn:active,
 .mobile-bottom-bar-btn.active {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 .mobile-bottom-bar-btn .mbb-icon {
@@ -2426,11 +2568,11 @@ select.champ-non-configure {
   .mobile-cell-overlay {
     display: block;
     position: absolute;
-    inset: 0;              /* couvre toute la TD parente */
+    inset: 0; /* couvre toute la TD parente */
     background: transparent;
     border: none;
     cursor: pointer;
-    z-index: 10;           /* par-dessus le select sous-jacent */
+    z-index: 10; /* par-dessus le select sous-jacent */
     -webkit-tap-highlight-color: rgba(59, 84, 114, 0.15);
   }
   .mobile-cell-overlay:active {
@@ -2446,10 +2588,10 @@ select.champ-non-configure {
   /* Bouton actif dans la bottom-bar (ex: Comparer activé) */
   .mobile-bottom-bar-btn.active {
     color: white;
-    background: rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.12);
   }
   .mobile-bottom-bar-btn.active .mbb-icon {
-    filter: drop-shadow(0 0 4px rgba(255,255,255,0.6));
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   }
 }
 
@@ -2469,12 +2611,15 @@ select.champ-non-configure {
    ═══════════════════════════════════════════════════════════════ */
 
 /* Desktop : masquer la vue mobile */
-#fiche-mobile { display: none; }
+#fiche-mobile {
+  display: none;
+}
 
 @media (max-width: 820px) {
-
   /* Masquer la fiche A4 scalée et son wrapper */
-  #fiche-scaler-wrap { display: none !important; }
+  #fiche-scaler-wrap {
+    display: none !important;
+  }
 
   /* FIX 3 — Afficher la vue mobile, pleine largeur viewport */
   /* FIX 1 — padding-bottom réduit : barre NET supprimée, seulement bottom-bar (56px) + marge */
@@ -2574,7 +2719,7 @@ select.champ-non-configure {
     font-size: 0.75rem;
     color: var(--color-text);
     flex: 1;
-    min-width: 0;          /* FIX 4a — permet l'ellipsis sur flex child */
+    min-width: 0; /* FIX 4a — permet l'ellipsis sur flex child */
     padding-right: 8px;
     line-height: 1.3;
   }
@@ -2601,16 +2746,22 @@ select.champ-non-configure {
     font-weight: bold;
     white-space: nowrap;
     text-align: right;
-    flex-shrink: 0;        /* FIX 4b — jamais compressé, montant toujours visible */
+    flex-shrink: 0; /* FIX 4b — jamais compressé, montant toujours visible */
     min-width: 78px;
-    max-width: 45%;        /* FIX 4c — cap pour les très longs montants */
+    max-width: 45%; /* FIX 4c — cap pour les très longs montants */
   }
   /* Crédit : vert */
-  .mf-credit  { color: var(--color-success); }
+  .mf-credit {
+    color: var(--color-success);
+  }
   /* Déduction : rouge */
-  .mf-deduction { color: var(--color-danger); }
+  .mf-deduction {
+    color: var(--color-danger);
+  }
   /* Pour information : gris */
-  .mf-info    { color: var(--color-text-secondary); }
+  .mf-info {
+    color: var(--color-text-secondary);
+  }
   /* Badge "À configurer" mobile */
   .mf-badge {
     background: var(--color-warning);
@@ -2634,7 +2785,7 @@ select.champ-non-configure {
     margin-top: 4px;
   }
   .mf-row.mf-total .mf-label {
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: bold;
     font-size: 0.75rem;
   }
@@ -2682,10 +2833,11 @@ select.champ-non-configure {
    ═══════════════════════════════════════════════════════════════ */
 
 /* Desktop : pas de changement */
-.mf-section-arrow { display: none; }
+.mf-section-arrow {
+  display: none;
+}
 
 @media (max-width: 820px) {
-
   /* ── Fix 8 — Sections pliables ──────────────────────────────── */
   .mf-section-title {
     display: flex;
@@ -2731,7 +2883,7 @@ select.champ-non-configure {
     display: block;
     width: 40px;
     height: 4px;
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 2px;
     margin: 10px auto 0;
   }
@@ -2782,7 +2934,6 @@ select.champ-non-configure {
    ═══════════════════════════════════════════════════════════════ */
 
 @media (max-width: 820px) {
-
   /* ── Menu d'ajout : 1 colonne sur mobile, boutons pleine largeur ── */
   .add-buttons-grid {
     grid-template-columns: 1fr;
@@ -2904,7 +3055,6 @@ select.champ-non-configure {
 }
 
 @media (max-width: 820px) {
-
   /* ── Fix 3 : OTT Protocole — 1 colonne, layout horizontal par carte ─────
      Sur desktop : 2 colonnes, titre + montant empilés verticalement.
      Sur mobile  : 1 colonne, titre à gauche + montant badge à droite.
@@ -3030,8 +3180,6 @@ select.champ-non-configure {
   #panneau-comparaison.visible {
     display: none !important;
   }
-
-
 
   /* Panel comparateur mobile : inputs de taille correcte */
   #panel-cmp-mobile .cmp-body,
@@ -3248,7 +3396,9 @@ select.champ-non-configure {
   text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
-.mf-detail-toggle:active { opacity: 0.7; }
+.mf-detail-toggle:active {
+  opacity: 0.7;
+}
 .mf-detail-arrow {
   font-size: 0.5625rem;
   flex-shrink: 0;
@@ -3323,9 +3473,9 @@ select.champ-non-configure {
   *,
   *::before,
   *::after {
-    animation-duration:        0.01ms !important;
-    animation-iteration-count: 1      !important;
-    transition-duration:       0.01ms !important;
-    scroll-behavior:           auto   !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
