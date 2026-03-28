@@ -66,6 +66,10 @@
   --color-close-hover: #ccc;
 }
 
+html {
+  font-size: 100%; /* base 16px navigateur — rem relatif à cette valeur */
+}
+
 body {
   background-color: var(--color-print-bg);
   display: flex;
@@ -321,7 +325,7 @@ body {
 }
 .modal-header h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-family: var(--font-main);
   letter-spacing: 1px;
 }
@@ -329,7 +333,7 @@ body {
   background: transparent;
   color: white;
   border: none;
-  font-size: 20px;
+  font-size: 1.25rem;
   cursor: pointer;
   font-weight: bold;
 }
@@ -354,7 +358,7 @@ body {
   margin-top: 12px;
   margin-bottom: 4px;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .modal-body select,
 .modal-body input {
@@ -375,7 +379,7 @@ body {
   border: none;
   color: var(--color-info-text);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-bottom: 15px;
   padding: 0;
   text-decoration: underline;
@@ -394,7 +398,7 @@ body {
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: var(--font-main);
   font-weight: bold;
   cursor: pointer;
@@ -414,7 +418,7 @@ body {
 .validate-btn:disabled::after {
   content: " — faites un choix ↑";
   font-weight: normal;
-  font-size: 12px;
+  font-size: 0.75rem;
   opacity: 0.85;
 }
 
@@ -465,13 +469,13 @@ body {
   border: 1px solid var(--dgfip-light);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   transition: all 0.2s;
   margin: 0;
 }
 .ir-tabs label small {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--color-text-muted);
   margin-top: 4px;
   line-height: 1.2;
@@ -498,7 +502,7 @@ body {
 .rist-option {
   padding: 8px 12px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   border-bottom: 1px solid var(--color-border-muted);
   transition: background-color 0.1s;
 }
@@ -537,14 +541,14 @@ body {
 .ott-card-title {
   display: block;
   width: 100%;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-secondary);
   line-height: 1.3;
   margin-bottom: 8px;
 }
 .ott-card-amount {
   display: inline-block;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--dgfip-dark);
   background-color: var(--color-blue-tint);
   padding: 3px 8px;
@@ -625,7 +629,7 @@ body {
   border: 2px solid var(--dgfip-light);
   border-radius: 6px;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 15px;
   box-sizing: border-box;
   transition: border-color 0.2s;
@@ -660,7 +664,7 @@ body {
   cursor: pointer;
   text-align: left;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--dgfip-dark);
   transition: all 0.2s;
   display: flex;
@@ -681,7 +685,7 @@ body:not(.navigation-clavier) .resultat-item:hover {
   color: var(--color-text-muted);
   font-style: italic;
   padding: 20px 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 /* =========================================
    SPOTLIGHT (Ctrl + K / Cmd + K)
@@ -724,7 +728,7 @@ body:not(.navigation-clavier) .resultat-item:hover {
 }
 
 .spotlight-icon {
-  font-size: 20px;
+  font-size: 1.25rem;
   color: var(--dgfip-medium);
   margin-right: 15px;
 }
@@ -732,7 +736,7 @@ body:not(.navigation-clavier) .resultat-item:hover {
 #spotlight-input {
   flex: 1;
   border: none;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-family: var(--font-main);
   outline: none;               /* design custom — focus via conteneur */
   color: var(--dgfip-dark);
@@ -749,7 +753,7 @@ body:not(.navigation-clavier) .resultat-item:hover {
 }
 
 .spotlight-shortcut {
-  font-size: 10px;
+  font-size: 0.625rem;
   background: var(--color-surface-alt);
   padding: 4px 8px;
   border-radius: 4px;
@@ -812,13 +816,13 @@ body.navigation-clavier .resultat-item:focus {
 .panel-hint {
   margin-top: 0;
   margin-bottom: 15px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
 }
 .panel-notice {
   margin-top: 0;
   margin-bottom: 20px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   line-height: 1.5;
   background-color: var(--color-surface);
@@ -827,19 +831,19 @@ body.navigation-clavier .resultat-item:focus {
 }
 .panel-footnote {
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--color-text-muted);
   font-style: italic;
 }
 .panel-hint-small {
   margin-top: 0;
   margin-bottom: 10px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
 }
 .panel-subhead {
   margin-top: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--dgfip-dark);
   border-bottom: 1px solid var(--color-border-neutral);
   padding-bottom: 5px;
@@ -852,7 +856,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 2px solid var(--dgfip-light);
   border-radius: 6px;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   background-color: white;
   color: var(--dgfip-dark);
   cursor: pointer;
@@ -869,7 +873,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border-neutral);
   border-radius: 4px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 20px;
   cursor: pointer;
   box-sizing: border-box;
@@ -890,7 +894,7 @@ body.navigation-clavier .resultat-item:focus {
 
 /* RIST / ISQ helpers */
 .helper-text {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-info-text);
   background-color: var(--color-info-bg);
   padding: 10px;
@@ -912,7 +916,7 @@ body.navigation-clavier .resultat-item:focus {
 }
 .preview-amount strong {
   color: var(--dgfip-dark);
-  font-size: 16px;
+  font-size: 1rem;
 }
 .preview-amount--compact {
   padding: 8px;
@@ -920,7 +924,7 @@ body.navigation-clavier .resultat-item:focus {
   margin-bottom: 20px;
 }
 .preview-amount--compact strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* OTT — saisie manuelle */
@@ -988,7 +992,7 @@ body.navigation-clavier .resultat-item:focus {
   background: white;
   padding: 3px 5px;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
   display: flex;
   justify-content: space-between;
@@ -998,7 +1002,7 @@ body.navigation-clavier .resultat-item:focus {
 .cout-employeur-lbl {
   background-color: var(--dgfip-medium);
   color: white;
-  font-size: 8px;
+  font-size: 0.5rem;
   text-align: center;
   padding: 3px 0;
   border: 1px solid var(--dgfip-dark);
@@ -1009,7 +1013,7 @@ body.navigation-clavier .resultat-item:focus {
 .totaux-badge {
   background-color: var(--dgfip-dark);
   color: white;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: bold;
   padding: 2px 15px;
   height: 20px;
@@ -1082,7 +1086,7 @@ body.navigation-clavier .resultat-item:focus {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--dgfip-medium);
   opacity: 0.4;
   padding: 0;
@@ -1109,7 +1113,7 @@ body.navigation-clavier .resultat-item:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
   z-index: 1000;
@@ -1149,7 +1153,7 @@ body.navigation-clavier .resultat-item:focus {
   align-items: center;
   font-weight: bold;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   flex-shrink: 0;
   letter-spacing: 0.5px;
 }
@@ -1160,7 +1164,7 @@ body.navigation-clavier .resultat-item:focus {
   border-radius: 4px;
   padding: 3px 10px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: var(--font-main);
   transition: background-color 0.15s;
 }
@@ -1175,11 +1179,11 @@ body.navigation-clavier .resultat-item:focus {
   font-family: var(--font-main);
 }
 .cmp-body .panel-hint {
-  font-size: 11px;
+  font-size: 0.6875rem;
   margin-bottom: 12px;
 }
 .cmp-body .panel-subhead {
-  font-size: 11px;
+  font-size: 0.6875rem;
   margin-top: 14px;
   margin-bottom: 6px;
   padding-bottom: 4px;
@@ -1190,7 +1194,7 @@ body.navigation-clavier .resultat-item:focus {
   margin-top: 8px;
   margin-bottom: 3px;
   color: var(--color-text);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 .cmp-body select,
 .cmp-body input[type="number"] {
@@ -1199,7 +1203,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-main);
-  font-size: 11px;
+  font-size: 0.6875rem;
   box-sizing: border-box;
 }
 .cmp-body select:focus,
@@ -1210,7 +1214,7 @@ body.navigation-clavier .resultat-item:focus {
   margin-bottom: 0;
 }
 .cmp-body .ir-tabs label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   padding: 6px 4px;
   margin: 0;
   font-weight: normal;
@@ -1230,7 +1234,7 @@ body.navigation-clavier .resultat-item:focus {
 .cmp-nbi-row label {
   margin: 0;
   font-weight: bold;
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
 }
 .cmp-nbi-row input[type="checkbox"] {
@@ -1256,7 +1260,7 @@ body.navigation-clavier .resultat-item:focus {
   cursor: pointer;
   background: var(--color-surface);
   text-align: center;
-  font-size: 9px;
+  font-size: 0.5625rem;
   line-height: 1.4;
   transition: all 0.15s;
   color: var(--color-text);
@@ -1277,7 +1281,7 @@ body.navigation-clavier .resultat-item:focus {
   align-items: center;
   justify-content: space-between;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: bold;
   color: var(--color-text);
   font-family: var(--font-main);
@@ -1322,7 +1326,7 @@ body.navigation-clavier .resultat-item:focus {
 .delta-net-b {
   display: block;
   font-family: var(--font-numbers);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: normal;
   margin-top: 2px;
   text-align: right;
@@ -1359,7 +1363,7 @@ body.navigation-clavier .resultat-item:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
   z-index: 1000;
@@ -1385,7 +1389,7 @@ body.navigation-clavier .resultat-item:focus {
   gap: 12px;
 }
 .proj-row label {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
   color: var(--color-text);
   flex: 1;
@@ -1397,7 +1401,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
   text-align: right;
 }
 
@@ -1413,7 +1417,7 @@ body.navigation-clavier .resultat-item:focus {
   padding: 4px 8px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: var(--font-main);
 }
 .proj-libre-row .proj-libre-val {
@@ -1422,7 +1426,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
   text-align: right;
 }
 .proj-libre-row button {
@@ -1430,7 +1434,7 @@ body.navigation-clavier .resultat-item:focus {
   border: none;
   color: var(--color-danger);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 2px 4px;
 }
 
@@ -1443,7 +1447,7 @@ body.navigation-clavier .resultat-item:focus {
   padding: 5px 12px;
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   width: 100%;
   margin-top: 6px;
   transition: all 0.15s;
@@ -1475,7 +1479,7 @@ body.navigation-clavier .resultat-item:focus {
   padding: 4px 8px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: var(--font-main);
   box-sizing: border-box;
 }
@@ -1486,7 +1490,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
   text-align: right;
   box-sizing: border-box;
 }
@@ -1512,7 +1516,7 @@ body.navigation-clavier .resultat-item:focus {
 .pm-toggle label {
   flex: 1;
   padding: 4px 10px;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-family: var(--font-main);
   cursor: pointer;
   background: transparent;
@@ -1535,7 +1539,7 @@ body.navigation-clavier .resultat-item:focus {
   border: none;
   color: var(--color-danger);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   padding: 2px 4px;
   flex-shrink: 0;
   line-height: 1;
@@ -1548,7 +1552,7 @@ body.navigation-clavier .resultat-item:focus {
   content: "Aucune prime saisie — cliquez « + Ajouter » ci-dessous.";
   display: block;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-style: italic;
   padding: 8px 0 4px;
 }
@@ -1558,7 +1562,7 @@ body.navigation-clavier .resultat-item:focus {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-top: 4px;
 }
 .proj-table th {
@@ -1566,7 +1570,7 @@ body.navigation-clavier .resultat-item:focus {
   color: white;
   padding: 6px 8px;
   text-align: right;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: bold;
 }
 .proj-table th:first-child {
@@ -1577,7 +1581,7 @@ body.navigation-clavier .resultat-item:focus {
   border-bottom: 1px solid var(--dgfip-light);
   text-align: right;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .proj-table td:first-child {
   text-align: left;
@@ -1597,10 +1601,10 @@ body.navigation-clavier .resultat-item:focus {
 }
 .proj-total-cell {
   font-weight: bold;
-  font-size: 13px !important;
+  font-size: 0.8125rem !important;
 }
 .proj-table-sm td {
-  font-size: 11px;
+  font-size: 0.6875rem;
   padding: 3px 8px;
 }
 
@@ -1619,7 +1623,7 @@ body.navigation-clavier .resultat-item:focus {
 /* Hint moyenne sous le label nuits/soirées */
 .proj-hint-moy {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: normal;
   color: var(--color-text-muted, var(--color-text-muted));
   margin-top: 1px;
@@ -1636,7 +1640,7 @@ body.navigation-clavier .resultat-item:focus {
   width: 80px;
 }
 .proj-unit {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted, var(--color-text-muted));
   white-space: nowrap;
 }
@@ -1646,7 +1650,7 @@ body.navigation-clavier .resultat-item:focus {
   display: inline-block;
   background-color: var(--color-warning-dark);
   color: white;
-  font-size: 9px;
+  font-size: 0.5625rem;
   font-weight: bold;
   padding: 2px 7px;
   border-radius: 4px;
@@ -1684,7 +1688,7 @@ select.champ-non-configure {
 /* ── Bouton NBI "Je ne l'ai pas" ── */
 .nbi-sans-btn {
   display: none;
-  font-size: 9px;
+  font-size: 0.5625rem;
   background: transparent;
   border: 1px solid var(--color-warning);
   color: var(--color-warning-dark);
@@ -1711,13 +1715,13 @@ select.champ-non-configure {
   justify-content: center;
   gap: 8px;
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
   color: var(--color-warning-dark);
   letter-spacing: 0.3px;
 }
 .footer-pending-icon {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* ── Boutons flottants désactivés (config incomplète) ── */
@@ -1765,7 +1769,7 @@ select.champ-non-configure {
   box-shadow: 0 4px 12px rgba(0,0,0,0.28);
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: bold;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
@@ -1807,7 +1811,7 @@ select.champ-non-configure {
   color: var(--color-white);
   padding: 9px 18px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: var(--font-main);
   white-space: nowrap;
   pointer-events: none;
@@ -1844,7 +1848,7 @@ select.champ-non-configure {
   gap: 8px;
 }
 .tour-pop-step {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--color-text-disabled);
   font-weight: bold;
   letter-spacing: 0.5px;
@@ -1852,7 +1856,7 @@ select.champ-non-configure {
   flex-shrink: 0;
 }
 .tour-pop-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
   color: var(--dgfip-dark);
   flex: 1;
@@ -1863,7 +1867,7 @@ select.champ-non-configure {
 .tour-pop-header.tour-valide .tour-pop-title::after {
   content: "\00a0 ✓";
   color: var(--color-success);
-  font-size: 13px;
+  font-size: 0.8125rem;
   display: inline-block;
   animation: tour-coche-pop 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards;
 }
@@ -1875,7 +1879,7 @@ select.champ-non-configure {
 /* Corps — fade sur changement de contenu uniquement */
 .tour-pop-body {
   padding: 12px 16px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.55;
   color: var(--color-text);
   min-height: 60px;
@@ -1889,7 +1893,7 @@ select.champ-non-configure {
   border-top: 1px solid var(--color-surface-alt);
 }
 .tour-pop-prev {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
   background: none;
   border: 1px solid var(--color-border-light);
@@ -1903,7 +1907,7 @@ select.champ-non-configure {
 .tour-pop-prev:hover { color: var(--color-text-secondary); border-color: var(--color-text-disabled); }
 
 .tour-pop-skip {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-disabled);
   background: none;
   border: none;
@@ -1918,7 +1922,7 @@ select.champ-non-configure {
 .tour-pop-skip:hover { color: var(--color-text-muted); }
 
 .tour-pop-next {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: bold;
   color: white;
   background: var(--dgfip-dark);
@@ -1956,7 +1960,7 @@ select.champ-non-configure {
   background: var(--color-white)3cd;
   border: 1px solid var(--color-note-border);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-note-text);
   display: flex;
   align-items: center;
@@ -1965,7 +1969,7 @@ select.champ-non-configure {
   margin-top: 4px;
 }
 .tour-confirm-quit button {
-  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.6875rem; padding: 2px 8px; border-radius: 4px;
   border: 1px solid currentColor; cursor: pointer; background: white;
   font-family: var(--font-main);
 }
@@ -1973,7 +1977,7 @@ select.champ-non-configure {
 .tour-confirm-quit .btn-non { color: var(--color-success); border-color: var(--color-success); }
 
 /* ── Checklist RIST dans le corps ── */
-.tour-rist-checklist { margin-top: 10px; font-size: 12px; }
+.tour-rist-checklist { margin-top: 10px; font-size: 0.75rem; }
 .tour-rist-item {
   display: flex; align-items: center; gap: 8px;
   padding: 3px 0;
@@ -1982,7 +1986,7 @@ select.champ-non-configure {
 .tour-rist-check {
   display: inline-flex; align-items: center; justify-content: center;
   width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--color-border-neutral);
-  flex-shrink: 0; font-size: 9px; font-weight: bold;
+  flex-shrink: 0; font-size: 0.5625rem; font-weight: bold;
   transition: background 0.25s, border-color 0.25s;
 }
 .tour-rist-item.done .tour-rist-check { background: var(--color-success); border-color: var(--color-success); color: white; }
@@ -1993,7 +1997,7 @@ select.champ-non-configure {
 /* Hint italique */
 .tour-hint {
   display: block; margin-top: 8px;
-  font-size: 11px; color: var(--color-text-disabled); font-style: italic;
+  font-size: 0.6875rem; color: var(--color-text-disabled); font-style: italic;
 }
 
 /* ── Lignes pulsantes phase 2 ── */
@@ -2017,7 +2021,7 @@ select.champ-non-configure {
   50%     { transform: scale(1.06); opacity: 0.8; }
 }
 #btn-reset-profil.tour-highlight-reset {
-  opacity: 1 !important; color: var(--color-danger) !important; font-size: 16px !important;
+  opacity: 1 !important; color: var(--color-danger) !important; font-size: 1rem !important;
   animation: tour-pulse-reset 1.2s ease-in-out 3;
 }
 
@@ -2026,7 +2030,7 @@ select.champ-non-configure {
   display: inline-block; margin-top: 10px; padding: 6px 14px;
   background: var(--dgfip-dark); color: white; border: none;
   border-radius: 6px; cursor: pointer; font-family: var(--font-main);
-  font-size: 12px; font-weight: bold; transition: opacity 0.2s;
+  font-size: 0.75rem; font-weight: bold; transition: opacity 0.2s;
 }
 .tour-demo-btn:hover    { opacity: 0.85; }
 .tour-demo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -2214,7 +2218,7 @@ select.champ-non-configure {
   .modal-body input,
   .modal-body select,
   .modal-body textarea {
-    font-size: 16px;
+    font-size: 1rem;
     min-height: 48px;
     padding: 0 12px;
     line-height: 48px;
@@ -2228,7 +2232,7 @@ select.champ-non-configure {
     height: 20px;
   }
   .modal-body label {
-    font-size: 14px;
+    font-size: 0.875rem;
     margin-top: 16px;
     margin-bottom: 6px;
   }
@@ -2239,7 +2243,7 @@ select.champ-non-configure {
     bottom: 0;
     z-index: 2;
     margin-top: 16px;
-    font-size: 16px;
+    font-size: 1rem;
     border-radius: 10px;
     box-shadow: 0 -6px 16px rgba(0,0,0,0.10);
   }
@@ -2281,7 +2285,7 @@ select.champ-non-configure {
 
   /* ── 8. Largeur de la barre de recherche ajout ──────────────── */
   #recherche-ajout {
-    font-size: 16px; /* iOS fix aussi sur ce champ */
+    font-size: 1rem; /* iOS fix aussi sur ce champ */
   }
 
   /* ── 9. Tap targets — zones de toucher ≥ 44px (Apple HIG / Material) ─── */
@@ -2316,7 +2320,7 @@ select.champ-non-configure {
   }
   /* select-transparent : font-size 16px pour iOS */
   .select-transparent {
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   /* ── 10. Comparateur — drawer bottom-sheet ───────────────────── */
@@ -2380,7 +2384,7 @@ select.champ-non-configure {
   border-right: 1px solid rgba(255,255,255,0.08);
   color: var(--color-mobile-muted);
   font-family: var(--font-main);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: normal;
   cursor: pointer;
   padding: 0 4px;
@@ -2397,11 +2401,11 @@ select.champ-non-configure {
   color: white;
 }
 .mobile-bottom-bar-btn .mbb-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
 }
 .mobile-bottom-bar-btn .mbb-label {
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1;
   white-space: nowrap;
 }
@@ -2496,23 +2500,23 @@ select.champ-non-configure {
   }
   .mf-header-grade {
     font-family: var(--font-main);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: bold;
     line-height: 1.3;
   }
   .mf-header-sub {
-    font-size: 11px;
+    font-size: 0.6875rem;
     opacity: 0.75;
     margin-top: 2px;
   }
   .mf-header-indice {
     font-family: var(--font-numbers);
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: bold;
     text-align: right;
   }
   .mf-header-indice-lbl {
-    font-size: 9px;
+    font-size: 0.5625rem;
     opacity: 0.65;
     text-align: right;
     margin-top: 1px;
@@ -2521,7 +2525,7 @@ select.champ-non-configure {
   /* ── Séparateur de section ────────────────────────────── */
   .mf-section-title {
     font-family: var(--font-main);
-    font-size: 10px;
+    font-size: 0.625rem;
     font-weight: bold;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -2567,7 +2571,7 @@ select.champ-non-configure {
 
   .mf-label {
     font-family: var(--font-main);
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--color-text);
     flex: 1;
     min-width: 0;          /* FIX 4a — permet l'ellipsis sur flex child */
@@ -2576,7 +2580,7 @@ select.champ-non-configure {
   }
   .mf-label-sub {
     display: block;
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--color-text-muted);
     margin-top: 1px;
   }
@@ -2584,7 +2588,7 @@ select.champ-non-configure {
   .mf-clickable .mf-label-title::after {
     content: " ›";
     color: var(--dgfip-medium);
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   /* Variante sans flèche pour les lignes non-cliquables */
   .mf-label-title--plain::after {
@@ -2593,7 +2597,7 @@ select.champ-non-configure {
 
   .mf-amount {
     font-family: var(--font-numbers);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: bold;
     white-space: nowrap;
     text-align: right;
@@ -2612,7 +2616,7 @@ select.champ-non-configure {
     background: var(--color-warning);
     color: white;
     font-family: var(--font-main);
-    font-size: 10px;
+    font-size: 0.625rem;
     font-weight: bold;
     padding: 3px 8px;
     border-radius: 4px;
@@ -2632,17 +2636,17 @@ select.champ-non-configure {
   .mf-row.mf-total .mf-label {
     color: rgba(255,255,255,0.85);
     font-weight: bold;
-    font-size: 12px;
+    font-size: 0.75rem;
   }
   .mf-row.mf-total .mf-amount {
     color: white;
-    font-size: 16px;
+    font-size: 1rem;
   }
   .mf-row.mf-total-net {
     background: var(--color-success);
   }
   .mf-row.mf-total-net .mf-amount {
-    font-size: 19px;
+    font-size: 1.1875rem;
   }
 
   /* ── Ligne absence (retrait en rouge léger) ───────────── */
@@ -2664,11 +2668,11 @@ select.champ-non-configure {
     align-items: center;
     gap: 10px;
     font-family: var(--font-main);
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--color-pending-text);
   }
   .mf-config-pending-icon {
-    font-size: 20px;
+    font-size: 1.25rem;
     flex-shrink: 0;
   }
 }
@@ -2694,7 +2698,7 @@ select.champ-non-configure {
     cursor: pointer;
     padding: 10px 16px 6px;
     font-family: var(--font-main);
-    font-size: 10px;
+    font-size: 0.625rem;
     font-weight: bold;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -2706,7 +2710,7 @@ select.champ-non-configure {
   }
   .mf-section-arrow {
     display: inline-block;
-    font-size: 9px;
+    font-size: 0.5625rem;
     flex-shrink: 0;
     transition: transform 0.2s;
     color: var(--dgfip-medium);
@@ -2734,26 +2738,26 @@ select.champ-non-configure {
   /* Header comparateur plus spacieux, bouton Quitter agrandi */
   #panneau-comparaison .cmp-header {
     padding: 8px 16px 12px;
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   #panneau-comparaison .cmp-header button {
     padding: 8px 16px;
-    font-size: 14px;
+    font-size: 0.875rem;
     border-radius: 8px;
   }
   /* Corps avec inputs agrandis */
   #panneau-comparaison .cmp-body {
     padding: 12px 16px 80px; /* 80px pour le bouton sticky */
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   #panneau-comparaison .cmp-body label {
-    font-size: 14px;
+    font-size: 0.875rem;
     margin-top: 14px;
   }
   #panneau-comparaison .cmp-body select,
   #panneau-comparaison .cmp-body input[type="text"],
   #panneau-comparaison .cmp-body input[type="number"] {
-    font-size: 16px;
+    font-size: 1rem;
     min-height: 44px;
     padding: 0 12px;
   }
@@ -2764,7 +2768,7 @@ select.champ-non-configure {
   }
   /* Titres de sections dans le comparateur */
   #panneau-comparaison .panel-subhead {
-    font-size: 12px;
+    font-size: 0.75rem;
     margin-top: 16px;
     margin-bottom: 8px;
     padding-top: 12px;
@@ -2786,14 +2790,14 @@ select.champ-non-configure {
   }
   .add-buttons-grid button {
     padding: 14px 16px;
-    font-size: 15px;
+    font-size: 0.9375rem;
     border-radius: 10px;
     min-height: 52px;
   }
 
   /* ── Champ de recherche dans le menu d'ajout ────────────────── */
   #recherche-ajout {
-    font-size: 16px;
+    font-size: 1rem;
     min-height: 48px;
     /* padding-left:40px préserve l'espace pour l'icône loupe (background-position:10px) */
     padding: 0 14px 0 40px;
@@ -2808,14 +2812,14 @@ select.champ-non-configure {
     height: 36px;
     padding: 0 8px;
     line-height: 36px;
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   /* ── Back-btn : zone de tap 44px ────────────────────────────── */
   .back-btn {
     min-height: 44px;
     display: flex;
     align-items: center;
-    font-size: 14px;
+    font-size: 0.875rem;
     margin-bottom: 8px;
     padding: 4px 0;
   }
@@ -2823,7 +2827,7 @@ select.champ-non-configure {
   /* ── panel-hint + panel-notice : taille lisible ─────────────── */
   .panel-hint,
   .panel-notice {
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.5;
   }
 
@@ -2842,7 +2846,7 @@ select.champ-non-configure {
     text-align: center;
     border-radius: 8px !important;
     padding: 10px 8px;
-    font-size: 13px;
+    font-size: 0.8125rem;
     min-height: 52px;
     display: flex;
     flex-direction: column;
@@ -2853,7 +2857,7 @@ select.champ-non-configure {
   /* ── RIST list : options plus grandes ──────────────────────────── */
   .rist-option {
     padding: 12px 14px !important;
-    font-size: 14px !important;
+    font-size: 0.875rem !important;
     min-height: 48px;
     display: flex;
     align-items: center;
@@ -2861,11 +2865,11 @@ select.champ-non-configure {
 
   /* ── modal-header : titre plus petit sur mobile ──────────────── */
   .modal-header h2 {
-    font-size: 14px;
+    font-size: 0.875rem;
     letter-spacing: 0.5px;
   }
   .close-btn {
-    font-size: 22px;
+    font-size: 1.375rem;
     padding: 4px 8px;
     min-width: 44px;
     min-height: 44px;
@@ -2884,7 +2888,7 @@ select.champ-non-configure {
 
   /* ── panel-subhead : titre de section dans les panels ─────────── */
   .panel-subhead {
-    font-size: 13px;
+    font-size: 0.8125rem;
     margin-top: 16px;
     padding-top: 12px;
     border-top: 1px solid var(--dgfip-light);
@@ -2892,7 +2896,7 @@ select.champ-non-configure {
 
   /* ── Footnote ────────────────────────────────────────────────── */
   .panel-footnote {
-    font-size: 12px;
+    font-size: 0.75rem;
     line-height: 1.5;
     color: var(--color-text-muted);
     margin-top: 12px;
@@ -2919,13 +2923,13 @@ select.champ-non-configure {
   }
   .ott-card-title {
     flex: 1;
-    font-size: 13px;
+    font-size: 0.8125rem;
     margin-bottom: 0;
     line-height: 1.3;
   }
   .ott-card-amount {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 0.75rem;
     white-space: nowrap;
     margin-top: 0;
   }
@@ -2943,7 +2947,7 @@ select.champ-non-configure {
   }
   .prime-manuelle-row .pm-libelle {
     width: 100%;
-    font-size: 15px;
+    font-size: 0.9375rem;
     padding: 10px 12px;
     min-height: unset;
     line-height: 1.4;
@@ -2961,7 +2965,7 @@ select.champ-non-configure {
     flex: 0 0 90px;
     min-height: unset;
     padding: 8px 10px;
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.2;
     box-sizing: border-box;
   }
@@ -2981,7 +2985,7 @@ select.champ-non-configure {
     accent-color: var(--dgfip-dark);
   }
   .pm-toggle-cb .pm-nonimposable-label {
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-family: var(--font-main);
     color: var(--color-text-secondary);
     cursor: pointer;
@@ -2991,7 +2995,7 @@ select.champ-non-configure {
   .pm-row2 .pm-suppr {
     flex: 0 0 auto;
     padding: 6px;
-    font-size: 18px;
+    font-size: 1.125rem;
     min-height: unset;
     line-height: 1;
     display: flex;
@@ -3004,7 +3008,7 @@ select.champ-non-configure {
    ═══════════════════════════════════════════════════════════════ */
 .mf-delta-badge {
   font-family: var(--font-numbers);
-  font-size: 11px;
+  font-size: 0.6875rem; /* 11px */
   font-weight: bold;
   padding: 2px 7px;
   border-radius: 10px;
@@ -3037,7 +3041,7 @@ select.champ-non-configure {
   #panel-cmp-mobile select,
   #panel-cmp-mobile input[type="text"],
   #panel-cmp-mobile input[type="number"] {
-    font-size: 16px;
+    font-size: 1rem;
     min-height: 44px;
     padding: 0 12px;
   }
@@ -3047,19 +3051,19 @@ select.champ-non-configure {
     height: 20px;
   }
   #panel-cmp-mobile .panel-subhead {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: bold;
     margin-top: 16px;
     padding-top: 12px;
     border-top: 1px solid var(--dgfip-light);
   }
   #panel-cmp-mobile label {
-    font-size: 14px;
+    font-size: 0.875rem;
     margin-top: 12px;
     margin-bottom: 4px;
   }
   #panel-cmp-mobile .panel-hint {
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
     margin-bottom: 8px;
   }
@@ -3083,7 +3087,7 @@ select.champ-non-configure {
   padding: 10px 14px;
   margin-bottom: 12px;
   font-family: var(--font-main);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   line-height: 1.5;
   text-align: center;
@@ -3094,7 +3098,7 @@ select.champ-non-configure {
 .cmp-delta-pill {
   display: inline-block;
   font-family: var(--font-numbers);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: bold;
   padding: 3px 12px;
   border-radius: 12px;
@@ -3119,7 +3123,7 @@ select.champ-non-configure {
   border: none;
   color: var(--color-danger);
   font-family: var(--font-main);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   text-align: center;
   text-decoration: underline;
@@ -3143,12 +3147,12 @@ select.champ-non-configure {
   }
   #panel-cmp-mobile .cmp-body select,
   #panel-cmp-mobile .cmp-body input[type="number"] {
-    font-size: 16px;
+    font-size: 1rem;
     min-height: 44px;
     padding: 0 12px;
   }
   #panel-cmp-mobile .cmp-body .panel-subhead {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: bold;
     letter-spacing: 0.5px;
     margin-top: 18px;
@@ -3157,7 +3161,7 @@ select.champ-non-configure {
     text-transform: uppercase;
   }
   #panel-cmp-mobile .cmp-body label {
-    font-size: 14px;
+    font-size: 0.875rem;
     margin-top: 10px;
     margin-bottom: 4px;
   }
@@ -3182,7 +3186,7 @@ select.champ-non-configure {
   /* Icônes bottom-bar : taille uniforme, couleur unique */
   .mbb-icon {
     font-family: var(--font-main);
-    font-size: 18px;
+    font-size: 1.125rem;
     font-style: normal;
     color: var(--color-mobile-muted);
     line-height: 1;
@@ -3215,12 +3219,12 @@ select.champ-non-configure {
   padding: 14px 16px;
   margin: 8px 0 16px;
   font-family: var(--font-main);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-warning-text);
   line-height: 1.5;
 }
 .panel-wip-icon {
-  font-size: 22px;
+  font-size: 1.375rem;
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -3236,7 +3240,7 @@ select.champ-non-configure {
   border-top: 1px solid var(--dgfip-light);
   padding: 10px 16px;
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
   color: var(--dgfip-medium);
   letter-spacing: 0.5px;
@@ -3246,7 +3250,7 @@ select.champ-non-configure {
 }
 .mf-detail-toggle:active { opacity: 0.7; }
 .mf-detail-arrow {
-  font-size: 9px;
+  font-size: 0.5625rem;
   flex-shrink: 0;
 }
 .mf-detail-wrap .mf-row.mf-total {
@@ -3256,11 +3260,11 @@ select.champ-non-configure {
 .mf-detail-wrap .mf-row.mf-total .mf-label {
   color: var(--color-text-secondary);
   font-weight: normal;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .mf-detail-wrap .mf-row.mf-total .mf-amount {
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* ── Checkbox "Non imposable" (remplace le toggle radio) ─────────── */
@@ -3279,7 +3283,7 @@ select.champ-non-configure {
 }
 .pm-nonimposable-label {
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   cursor: pointer;
   white-space: nowrap;
@@ -3300,7 +3304,7 @@ select.champ-non-configure {
     min-height: unset;
   }
   .pm-nonimposable-label {
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
   /* Zone résidence : le cadre orange est déjà neutralisé
      par la règle #zone-radios-wrap.champ-non-configure mobile ci-dessus */
