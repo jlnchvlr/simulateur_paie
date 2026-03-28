@@ -3312,3 +3312,20 @@ select.champ-non-configure {
     display: block;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ACCESSIBILITÉ — prefers-reduced-motion
+   Respecte le réglage "Réduire les animations" de l'OS.
+   Désactive toutes les transitions et animations pour les
+   utilisateurs sensibles aux mouvements (épilepsie, vertiges).
+   ═══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1      !important;
+    transition-duration:       0.01ms !important;
+    scroll-behavior:           auto   !important;
+  }
+}

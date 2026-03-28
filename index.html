@@ -47,7 +47,7 @@
               <span>L'Attractivité Géographique sera disponible dans une prochaine version du simulateur.</span>
             </div>
           </div>
-          <select id="input-attractivite" class="panel-select" style="display:none"></select>
+          <select id="input-attractivite" class="panel-select" style="display:none" aria-label="Attractivité Géographique"></select>
         </div>
 
         <!-- ══════════════════════════════════════
@@ -62,7 +62,7 @@
               <span>La Prime de Fidélisation Territoriale sera disponible dans une prochaine version du simulateur.</span>
             </div>
           </div>
-          <select id="input-fidelisation" class="panel-select" style="display:none"></select>
+          <select id="input-fidelisation" class="panel-select" style="display:none" aria-label="Prime de Fidélisation"></select>
         </div>
 
         <!-- ══════════════════════════════════════
@@ -92,7 +92,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-rist-fonctions" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de la Part Fonctions (RIST)</label>
+          <label for="input-fonction">Niveau de la Part Fonctions (RIST)</label>
           <input type="hidden" id="input-fonction" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperRist()"></div>
           <div id="rist-helper-text" class="helper-text">Sélectionnez un niveau pour voir les fonctions...</div>
@@ -107,7 +107,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-rist-experience" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de la Part Expérience Professionnelle</label>
+          <label for="input-experience">Niveau de la Part Expérience Professionnelle</label>
           <input type="hidden" id="input-experience" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperExp()"></div>
           <div id="exp-helper-text" class="helper-text">Sélectionnez un niveau pour voir les grades correspondants...</div>
@@ -122,7 +122,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-rist-isq-licence" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de la Licence ISQ</label>
+          <label for="input-isq-licence">Niveau de la Licence ISQ</label>
           <input type="hidden" id="input-isq-licence" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqLicence()"></div>
           <div id="isq-licence-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
@@ -137,7 +137,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-rist-isq-complement" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau du Complément ISQ</label>
+          <label for="input-isq-complement">Niveau du Complément ISQ</label>
           <input type="hidden" id="input-isq-complement" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqComplement()"></div>
           <div id="isq-complement-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
@@ -152,7 +152,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-rist-isq-majoration" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de Majoration du Complément ISQ</label>
+          <label for="input-isq-majoration">Niveau de Majoration du Complément ISQ</label>
           <input type="hidden" id="input-isq-majoration" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqMajoration()"></div>
           <div id="isq-majoration-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
@@ -202,7 +202,7 @@
           <div class="ott-manual-row">
             <label class="ott-manual-label">
               <span>Autre Option / Saisie manuelle (€) :</span>
-              <input type="number" id="pf-manuel" class="ott-manual-input" value="0.00" step="10" />
+              <input type="number" id="pf-manuel" class="ott-manual-input" value="0.00" step="10" / aria-label="Montant OTT Part Fixe — Autre (€)">
             </label>
           </div>
           <div class="preview-amount preview-amount--compact">
@@ -211,9 +211,9 @@
 
           <h3 class="panel-subhead">2. Mon Bonus Annuel (Part Variable)</h3>
           <p class="panel-hint-small">Remplissez ces champs uniquement les mois où la DGAC vous verse votre bonus.</p>
-          <label>Montant Part Variable Globale (€)</label>
+          <label for="pv-globale">Montant Part Variable Globale (€)</label>
           <input type="number" id="pv-globale" value="0.00" step="10" />
-          <label>Montant Part Variable Option 3-1 / 3-2 (€)</label>
+          <label for="pv-opt32">Montant Part Variable Option 3-1 / 3-2 (€)</label>
           <input type="number" id="pv-opt32" value="0.00" step="10" />
           <div class="preview-amount preview-amount--compact">
             Total Part Variable (Ce mois-ci) : <strong><span id="preview-ott-pv">0,00</span> €</strong>
@@ -226,9 +226,9 @@
              ══════════════════════════════════════ -->
         <div id="panel-nuits" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Nombre de Nuits complètes (N)</label>
+          <label for="input-nuit-n">Nombre de Nuits complètes (N)</label>
           <input type="number" id="input-nuit-n" value="0" step="1" />
-          <label>Nombre de Soirées (S2)</label>
+          <label for="input-nuit-s2">Nombre de Soirées (S2)</label>
           <input type="number" id="input-nuit-s2" value="0" step="1" />
           <div class="preview-amount">
             Montant estimé : <strong><span id="preview-nuits">0,00</span> €</strong>
@@ -241,13 +241,13 @@
              ══════════════════════════════════════ -->
         <div id="panel-absences" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Service Non Fait / Grève (Retenue 100%)</label>
+          <label for="input-greve">Service Non Fait / Grève (Retenue 100%)</label>
           <input type="number" id="input-greve" value="0" min="0" max="31" title="Retenue d'un 1/30ème par jour" />
-          <label>Jour(s) de Carence Maladie (Retenue 100%)</label>
+          <label for="input-carence">Jour(s) de Carence Maladie (Retenue 100%)</label>
           <input type="number" id="input-carence" value="0" min="0" max="3" />
-          <label>Jours de Maladie rémunérés à 90%</label>
+          <label for="input-maladie-90">Jours de Maladie rémunérés à 90%</label>
           <input type="number" id="input-maladie-90" value="0" min="0" max="31" title="Retenue de 10% d'un 1/30ème par jour" />
-          <label>Jours de Maladie à demi-traitement (50%)</label>
+          <label for="input-maladie-50">Jours de Maladie à demi-traitement (50%)</label>
           <input type="number" id="input-maladie-50" value="0" min="0" max="31" title="Retenue de 50% d'un 1/30ème par jour" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -280,7 +280,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-menu-ajout" class="setting-panel">
           <p class="panel-hint">Sélectionnez ou recherchez l'élément à ajouter à votre fiche :</p>
-          <input type="text" id="recherche-ajout" placeholder="Rechercher une prime, absence, indemnité..." autocomplete="off" />
+          <input type="text" id="recherche-ajout" placeholder="Rechercher une prime, absence, indemnité..." autocomplete="off" / aria-label="Rechercher un élément variable">
           <div id="resultats-recherche" style="display: none"></div>
           <div id="boutons-ajout-defaut" class="add-buttons-grid">
             <button type="button" onclick="ouvrirModal('panel-nuits', '🌙 Travail de Nuit &amp; Soirées')">🌙 Nuits &amp; Soirées</button>
@@ -301,7 +301,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-fmd" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Montant du Forfait Mobilités Durables</label>
+          <label for="input-fmd">Montant du Forfait Mobilités Durables</label>
           <select id="input-fmd" class="select-light">
             <option value="0">-- Aucun --</option>
             <option value="100">100 € (30 à 59 jours)</option>
@@ -317,7 +317,7 @@
         <div id="panel-inflation" class="setting-panel">
           <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <p class="panel-hint">Saisissez manuellement le montant de l'indemnité inflation / pouvoir d'achat.</p>
-          <label>Montant de l'indemnité (€)</label>
+          <label for="input-inflation">Montant de l'indemnité (€)</label>
           <input type="number" id="input-inflation" value="0.00" step="10" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -327,7 +327,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-primes" class="setting-panel">
           <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Prime Partage Performance (€)</label>
+          <label for="input-perf">Prime Partage Performance (€)</label>
           <input type="number" id="input-perf" value="0.00" step="10" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -336,7 +336,7 @@
              PANEL : Prélèvement à la Source
              ══════════════════════════════════════ -->
         <div id="panel-impots" class="setting-panel">
-          <label>Taux de Prélèvement à la Source (%)</label>
+          <label for="input-pas">Taux de Prélèvement à la Source (%)</label>
           <input type="text" inputmode="decimal" id="input-pas" value="" placeholder="ex : 7.5" autocomplete="off" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -356,7 +356,7 @@
              PANEL : Indemnité Compensatrice CSG
              ══════════════════════════════════════ -->
         <div id="panel-csg" class="setting-panel">
-          <label>Indemnité Compensatrice CSG (€)</label>
+          <label for="input-ind-csg">Indemnité Compensatrice CSG (€)</label>
           <input type="text" inputmode="decimal" id="input-ind-csg" value="" placeholder="ex : 115.18" autocomplete="off" />
           <p class="panel-footnote">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
@@ -379,7 +379,7 @@
                 <span class="proj-hint-moy">~28 / an (hors congés)</span>
               </label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-nuits"   value="28" min="0" step="1" onfocus="this.select()" />
+                <input type="number" id="proj-nuits"   value="28" min="0" step="1" onfocus="this.select()" / aria-label="Nuits projetées">
                 <span class="proj-unit">nuits / an</span>
               </div>
             </div>
@@ -389,33 +389,33 @@
                 <span class="proj-hint-moy">~28 / an (hors congés)</span>
               </label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-soirees" value="28" min="0" step="1" onfocus="this.select()" />
+                <input type="number" id="proj-soirees" value="28" min="0" step="1" onfocus="this.select()" / aria-label="Soirées projetées">
                 <span class="proj-unit">S2 / an</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>OTT Part Variable globale</label>
+              <label for="proj-ottPv">OTT Part Variable globale</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-ottPv"   value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>OTT PV Opt 3-1 / 3-2</label>
+              <label for="proj-ottPv32">OTT PV Opt 3-1 / 3-2</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-ottPv32" value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>Prime Partage Performance</label>
+              <label for="proj-ppp">Prime Partage Performance</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-ppp"     value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>Forfait Mobilités Durables</label>
+              <label for="proj-fmd">Forfait Mobilités Durables</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-fmd"     value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
@@ -490,7 +490,7 @@
       <div class="spotlight-container">
         <div class="spotlight-header">
           <span class="spotlight-icon">🔍</span>
-          <input type="text" id="spotlight-input" placeholder="Rechercher (Primes, Absences, Impôts...)" autocomplete="off" />
+          <input type="text" id="spotlight-input" placeholder="Rechercher (Primes, Absences, Impôts...)" autocomplete="off" / aria-label="Recherche rapide">
         </div>
         <div id="spotlight-results" class="spotlight-results"></div>
       </div>
@@ -645,11 +645,11 @@
 
         <!-- Grade & Échelon -->
         <h3 class="panel-subhead">Grade &amp; Échelon</h3>
-        <label>Grade</label>
+        <label for="cmp-grade">Grade</label>
         <select id="cmp-grade"></select>
-        <label>Échelon</label>
+        <label for="cmp-echelon">Échelon</label>
         <select id="cmp-echelon"></select>
-        <label>Enfants à charge</label>
+        <label for="cmp-enfants">Enfants à charge</label>
         <select id="cmp-enfants">
           <option value="0">0 enfant</option>
           <option value="1">1 enfant</option>
@@ -677,15 +677,15 @@
 
         <!-- RIST / ISQ -->
         <h3 class="panel-subhead">RIST / ISQ</h3>
-        <label>Part Fonctions</label>
+        <label for="cmp-input-fonction">Part Fonctions</label>
         <select id="cmp-input-fonction"></select>
-        <label>Part Expérience</label>
+        <label for="cmp-input-experience">Part Expérience</label>
         <select id="cmp-input-experience"></select>
-        <label>ISQ — Licence</label>
+        <label for="cmp-input-isq-licence">ISQ — Licence</label>
         <select id="cmp-input-isq-licence"></select>
-        <label>ISQ — Complément</label>
+        <label for="cmp-input-isq-complement">ISQ — Complément</label>
         <select id="cmp-input-isq-complement"></select>
-        <label>ISQ — Majoration</label>
+        <label for="cmp-input-isq-majoration">ISQ — Majoration</label>
         <select id="cmp-input-isq-majoration"></select>
 
         <!-- Attractivité & Fidélisation — en développement -->
@@ -694,8 +694,8 @@
           <span class="panel-wip-icon">🚧</span>
           <div><strong>En cours de développement</strong><br><span>Ces primes seront disponibles dans une prochaine version.</span></div>
         </div>
-        <select id="cmp-attractivite" style="display:none"></select>
-        <select id="cmp-fidelisation" style="display:none"></select>
+        <select id="cmp-attractivite" style="display:none" aria-label="Attractivité Géographique — Scénario B"></select>
+        <select id="cmp-fidelisation" style="display:none" aria-label="Prime de Fidélisation — Scénario B"></select>
 
         <!-- PSC -->
         <h3 class="panel-subhead">Participation PSC</h3>
@@ -726,14 +726,14 @@
         </div>
         <div class="cmp-ott-manuel-row">
           <span>Autre / Manuel (€)</span>
-          <input type="number" id="cmp-pf-manuel" value="0" step="10" onfocus="this.select()" />
+          <input type="number" id="cmp-pf-manuel" value="0" step="10" onfocus="this.select()" / aria-label="OTT Part Fixe Autre — Scénario B (€)">
         </div>
 
         <!-- OTT Part Variable -->
         <h3 class="panel-subhead">OTT — Part Variable</h3>
-        <label>Part Variable Globale (€)</label>
+        <label for="cmp-pv-globale">Part Variable Globale (€)</label>
         <input type="number" id="cmp-pv-globale" value="0" step="10" onfocus="this.select()" />
-        <label>Part Variable Opt 3-1 / 3-2 (€)</label>
+        <label for="cmp-pv-opt32">Part Variable Opt 3-1 / 3-2 (€)</label>
         <input type="number" id="cmp-pv-opt32" value="0" step="10" onfocus="this.select()" />
       </div>
     </aside>
