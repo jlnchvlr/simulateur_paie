@@ -19,22 +19,22 @@
     <meta name="format-detection" content="telephone=no" />
   </head>
   <body>
-    <div class="visite-btns-wrap">
+    <nav class="visite-btns-wrap" aria-label="Aide et visite guidée">
       <button id="btn-visite-avance-flottant" class="btn-visite-avance-flottant" onclick="lancerVisiteAvancee(0)">🚀 Fonctions avancées</button>
       <button id="btn-visite-flottant" class="btn-visite-flottant" onclick="lancerVisiteGuidee(0)">
         💡 Démarrage
       </button>
-    </div>
+    </nav>
   <button id="btn-comparer-flottant" class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
   <button id="btn-projection-flottant" class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
 
     <dialog id="magic-modal" class="magic-modal" aria-labelledby="modal-title" aria-modal="true">
-      <div class="modal-header">
+      <header class="modal-header">
         <h2 id="modal-title">Modifier l'élément</h2>
         <button class="close-btn" aria-label="Fermer" onclick="document.getElementById('magic-modal').close()">✖</button>
-      </div>
+      </header>
 
-      <div class="modal-body">
+      <section class="modal-body" aria-label="Configuration">
         <!-- ══════════════════════════════════════
              PANEL : Attractivité Géographique
              ══════════════════════════════════════ -->
@@ -480,7 +480,7 @@
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Fermer ↵</button>
         </div>
         <!-- /#panel-projection -->
-      </div><!-- /.modal-body -->
+      </section><!-- /.modal-body -->
     </dialog>
 
     <!-- ══════════════════════════════════════
@@ -500,14 +500,15 @@
          PAGE A4 — FICHE DE PAIE
          Wrapper mobile : clip le débordement horizontal de la fiche scalée
          ══════════════════════════════════════ -->
+    <main id="app-content" aria-label="Simulateur de paie">
     <div id="fiche-scaler-wrap">
     <div class="page-a4">
-      <div class="bareme-header">
+      <header class="bareme-header">
         <span id="ui-version-bareme" class="bareme-version"></span>
         <button type="button" id="btn-reset-profil" onclick="effacerProfil()" class="reset-profil" title="Réinitialiser le profil sauvegardé">↺</button>
-      </div>
+      </header>
 
-      <table class="info-table">
+      <table class="info-table" aria-label="Identité et grade de l'agent">
         <thead>
           <tr>
             <th>GRADE</th>
@@ -628,16 +629,16 @@
          VUE MOBILE — liste condensée
          Masquée sur desktop (CSS), alimentée par dessinerFicheMobile()
          ══════════════════════════════════════ -->
-    <div id="fiche-mobile" aria-label="Fiche de paie" aria-live="polite"></div>
+    <section id="fiche-mobile" aria-label="Fiche de paie" aria-live="polite"></section>
 
     <!-- ============================================================
          PANNEAU COMPARATEUR DE SCÉNARIOS (Scénario B)
          ============================================================ -->
-    <div id="panneau-comparaison">
-      <div class="cmp-header">
+    <aside id="panneau-comparaison" aria-label="Scénario B — Comparaison">
+      <header class="cmp-header">
         <span>⚖ Scénario B</span>
         <button type="button" onclick="desactiverComparaison()">✕ Quitter</button>
-      </div>
+      </header>
 
       <div class="cmp-body">
         <p class="panel-hint">Modifiez les paramètres pour simuler un autre scénario. Les différences apparaissent directement sur la fiche.</p>
@@ -735,28 +736,30 @@
         <label>Part Variable Opt 3-1 / 3-2 (€)</label>
         <input type="number" id="cmp-pv-opt32" value="0" step="10" onfocus="this.select()" />
       </div>
-    </div>
+    </aside>
     <!-- /#panneau-comparaison -->
 
 
+
+    </main>
 
     <!-- ════════════════════════════════════════════
          MOTEUR — chargé après tout le DOM
          ════════════════════════════════════════════ -->
     <!-- ═══ TOUR GUIDÉ — DOM fixe, jamais détruit ═══ -->
     <div id="tour-spotlight" aria-hidden="true" style="display:none"></div>
-    <div id="tour-toast" aria-live="polite"></div>
+    <output id="tour-toast" aria-live="polite" aria-atomic="true"></output>
     <div id="tour-popover" role="dialog" aria-modal="true" aria-label="Tutoriel" style="display:none">
       <div class="tour-pop-header">
         <span class="tour-pop-step"></span>
         <span class="tour-pop-title"></span>
       </div>
       <div class="tour-pop-body"></div>
-      <div class="tour-pop-footer">
+      <footer class="tour-pop-footer">
         <button class="tour-pop-prev" onclick="window._tourPrev()">⬅ Précédent</button>
         <button class="tour-pop-skip" onclick="window._tourSkip()">Passer ⏭</button>
         <button class="tour-pop-next" onclick="window._tourNext()">Suivant ➔</button>
-      </div>
+      </footer>
     </div>
     <!-- ═══ FIN TOUR ═══ -->
     <script src="engine.js" defer></script>
