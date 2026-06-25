@@ -164,6 +164,12 @@ const CHAMPS_PROFIL = [
   { id: "input-fmd",         type: "value" },
   { id: "input-inflation",   type: "value" },
   { id: "input-perf",        type: "value" },
+  // Mutuelle ALAN
+  { id: "alan-forfait",        type: "value" },
+  { id: "alan-solidaire",      type: "value" },
+  { id: "alan-action-sociale", type: "value" },
+  { id: "alan-aide-retraites", type: "value" },
+  { id: "alan-employeur",      type: "value" },
 ];
 
 /**
@@ -272,7 +278,8 @@ const INDEX_RECHERCHE = [
   { titre: "🤒 Jours d'absence (Grève, Maladie)", motsCles: ["grève", "greve", "maladie", "carence", "absence", "arrêt", "arret", "snf", "1/30", "jour"], cible: "panel-absences" },
   { titre: "🚲 Forfait Mobilités Durables", motsCles: ["vélo", "velo", "fmd", "mobilité", "mobilite", "covoiturage", "voiture", "transport"], cible: "panel-fmd" },
   { titre: "📊 Protocole (OTT)", motsCles: ["ott", "protocole", "part fixe", "part variable", "pf", "pv", "option", "enac", "cdg", "liste"], cible: "panel-ott" },
-  { titre: "🛡️ Participation PSC (Mutuelle)", motsCles: ["psc", "mutuelle", "santé", "sante", "prévoyance", "prevoyance", "alan", "mgas", "aide"], cible: "panel-psc" },
+  { titre: "🛡️ Participation PSC (Mutuelle)", motsCles: ["psc", "mutuelle", "santé", "sante", "prévoyance", "prevoyance", "mgas", "aide"], cible: "panel-psc" },
+  { titre: "🏥 Mutuelle ALAN", motsCles: ["alan", "mutuelle", "santé", "sante", "complémentaire", "complementaire", "cotisation"], cible: "panel-alan" },
   { titre: "💰 Partage Performance (PPP)", motsCles: ["prime", "ppp", "performance", "partage", "exceptionnelle"], cible: "panel-primes" },
   { titre: "📈 Indemnité Inflation", motsCles: ["inflation", "pouvoir", "achat", "gpa", "indemnité"], cible: "panel-inflation" },
   { titre: "Impôt sur le Revenu (PAS)", motsCles: ["impôt", "impot", "pas", "source", "taux", "prélèvement", "prelevement", "personnalisé"], cible: "panel-impots" },
@@ -852,6 +859,13 @@ function getProfilDepuisInterface() {
       manuelles_imposables,
       manuelles_non_imposables,
     },
+    alan: {
+      forfait:        lireFloat("alan-forfait"),
+      solidaire:      lireFloat("alan-solidaire"),
+      action_sociale: lireFloat("alan-action-sociale"),
+      aide_retraites: lireFloat("alan-aide-retraites"),
+      employeur:      lireFloat("alan-employeur"),
+    },
   };
 }
 
@@ -993,7 +1007,7 @@ function calculerMontants(p) {
   const transfertPrimes = Math.max(0, transfertPrimesBase - abs(transfertPrimesBase));
 
   // ── CSG / CRDS ───────────────────────────────────────────────────────────────
-  const baseCsgCrds = Math.max(0, (baseSoumisePC + totalPrimesSoumises + p.primes.psc + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds);
+  const baseCsgCrds = Math.max(0, (baseSoumisePC + totalPrimesSoumises + p.primes.psc + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + (p.alan?.employeur || 0));
   const csgDeductible = arrondir(baseCsgCrds * cst.taux_csg_deductible);
   const csgNonDeductible = arrondir(baseCsgCrds * cst.taux_csg_non_deductible);
   const crds = arrondir(baseCsgCrds * cst.taux_crds);
@@ -1049,16 +1063,20 @@ function calculerMontants(p) {
       (joursAbs > 0 ? absTraitement : 0) +
       (joursAbs > 0 ? absResidence : 0) +
       transfertPrimes +
-      retenueIsq,
+      retenueIsq +
+      (p.alan?.forfait        || 0) +
+      (p.alan?.solidaire      || 0) +
+      (p.alan?.action_sociale || 0) +
+      (p.alan?.aide_retraites || 0),
   );
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
   const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.manuelles_non_imposables + retenueIsq);
-  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables);
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
-  const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal - transfertPrimes);
+  const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal + (p.alan?.employeur || 0) - transfertPrimes);
 
   return {
     // --- champs existants ---
@@ -1098,6 +1116,11 @@ function calculerMontants(p) {
     charges,
     totalPatronal,
     psc: p.primes.psc,
+    alanForfait:       p.alan?.forfait        || 0,
+    alanSolidaire:     p.alan?.solidaire      || 0,
+    alanActionSociale: p.alan?.action_sociale || 0,
+    alanAideRetraites: p.alan?.aide_retraites || 0,
+    alanEmployeur:     p.alan?.employeur      || 0,
     // --- champs ajoutés à l'étape 5 ---
     totalAPayer,
     totalADeduire,
@@ -1395,6 +1418,29 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     ajouterLigne("202354", "PARTICIPATION A LA PSC", psc.affiche, null, null, ["psc-15", "psc-7", "psc-5"], null, null,
       { delta: psc.delta, deltaCol: 2, isGhost: psc.isGhost });
 
+  // ── ALAN ──────────────────────────────────────────────────────────────────────
+  const alanForfait  = paire(m.alanForfait,       mB?.alanForfait);
+  const alanSol      = paire(m.alanSolidaire,     mB?.alanSolidaire);
+  const alanAction   = paire(m.alanActionSociale, mB?.alanActionSociale);
+  const alanAide     = paire(m.alanAideRetraites, mB?.alanAideRetraites);
+  const alanEmp      = paire(m.alanEmployeur,     mB?.alanEmployeur);
+  const alanInputs   = ["alan-forfait","alan-solidaire","alan-action-sociale","alan-aide-retraites","alan-employeur"];
+  if (alanForfait.affiche > 0 || alanForfait.isGhost)
+    ajouterLigne("720376", "ALAN PART FORFAIT.", null, alanForfait.affiche || null, null, alanInputs, null, null,
+      { delta: alanForfait.delta, deltaCol: 3, isGhost: alanForfait.isGhost });
+  if (alanSol.affiche > 0 || alanSol.isGhost)
+    ajouterLigne("720377", "ALAN PART SOLIDAIRE", null, alanSol.affiche || null, null, alanInputs, null, null,
+      { delta: alanSol.delta, deltaCol: 3, isGhost: alanSol.isGhost });
+  if (alanAction.affiche > 0 || alanAction.isGhost)
+    ajouterLigne("720378", "ALAN ACTION SOCIALE", null, alanAction.affiche || null, null, alanInputs, null, null,
+      { delta: alanAction.delta, deltaCol: 3, isGhost: alanAction.isGhost });
+  if (alanAide.affiche > 0 || alanAide.isGhost)
+    ajouterLigne("720379", "ALAN AIDE RETRAITES", null, alanAide.affiche || null, null, alanInputs, null, null,
+      { delta: alanAide.delta, deltaCol: 3, isGhost: alanAide.isGhost });
+  if (alanEmp.affiche > 0 || alanEmp.isGhost)
+    ajouterLigne("720380", "ALAN PART EMPLOYEUR", null, null, alanEmp.affiche || null, alanInputs, null, null,
+      { delta: alanEmp.delta, deltaCol: 4, isGhost: alanEmp.isGhost });
+
   if (p.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", p.evenements.prime_performance, null, null, ["input-perf"]);
 
   // ── OTT ───────────────────────────────────────────────────────────────────────
@@ -1543,9 +1589,9 @@ function dessinerFiche(p, m, pB = null, mB = null) {
 
   if (!pending) {
     document.getElementById("ui-total-a-payer").textContent      = formaterMontant(m.totalAPayer);
-    document.getElementById("ui-total-a-deduire").textContent    = formaterMontant(m.totalADeduire);
+    document.getElementById("ui-total-a-deduire").textContent    = formaterMontant(arrondir(m.totalADeduire + m.impotSource));
     document.getElementById("ui-cout-employeur").textContent     = formaterMontant(m.coutTotalEmployeur);
-    document.getElementById("ui-charges-patronales").textContent = formaterMontant(m.totalPatronal);
+    document.getElementById("ui-charges-patronales").textContent = formaterMontant(arrondir(m.totalPatronal + m.alanEmployeur));
     document.getElementById("ui-net-a-payer").textContent        = (m.netFinal === 0 ? "0,00" : formaterMontant(m.netFinal)) + " €";
     document.getElementById("ui-net-imposable").textContent      = m.netImposableFinal === 0 ? "0,00" : formaterMontant(m.netImposableFinal);
   }
@@ -3217,6 +3263,13 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       { panel: "panel-psc", titre: "Participation PSC",
         onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["psc-15","psc-7","psc-5"]) });
 
+  // 10b. ALAN
+  const alanTotalSal = (p.alan?.forfait||0) + (p.alan?.solidaire||0) + (p.alan?.action_sociale||0) + (p.alan?.aide_retraites||0);
+  if (alanTotalSal > 0 || (p.alan?.employeur||0) > 0)
+    ligne("Mutuelle ALAN", null, alanTotalSal || null,
+      { panel: "panel-alan", titre: "Mutuelle ALAN",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["alan-forfait","alan-solidaire","alan-action-sociale","alan-aide-retraites","alan-employeur"]) });
+
   // 11. PPP
   if (p.evenements.prime_performance > 0)
     ligne("Prime partage performance", p.evenements.prime_performance, null,
@@ -3732,6 +3785,13 @@ function getProfilComparaisonDepuisPanneau() {
       attractivite:      parseFloat(document.getElementById("cmp-attractivite")?.value) || 0,
       fidelisation:      parseFloat(document.getElementById("cmp-fidelisation")?.value) || 0,
       psc:               pscTotal,
+    },
+    alan: {
+      forfait:        lireFloat("cmp-alan-forfait"),
+      solidaire:      lireFloat("cmp-alan-solidaire"),
+      action_sociale: lireFloat("cmp-alan-action-sociale"),
+      aide_retraites: lireFloat("cmp-alan-aide-retraites"),
+      employeur:      lireFloat("cmp-alan-employeur"),
     },
   };
 }

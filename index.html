@@ -276,6 +276,25 @@
         </div>
 
         <!-- ══════════════════════════════════════
+             PANEL : Mutuelle ALAN
+             ══════════════════════════════════════ -->
+        <div id="panel-alan" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">Saisissez les montants figurant sur votre bulletin de paie :</p>
+          <label for="alan-forfait">ALAN PART FORFAIT (à déduire)</label>
+          <input type="number" id="alan-forfait" min="0" step="0.01" value="0" />
+          <label for="alan-solidaire">ALAN PART SOLIDAIRE (à déduire)</label>
+          <input type="number" id="alan-solidaire" min="0" step="0.01" value="0" />
+          <label for="alan-action-sociale">ALAN ACTION SOCIALE (à déduire)</label>
+          <input type="number" id="alan-action-sociale" min="0" step="0.01" value="0" />
+          <label for="alan-aide-retraites">ALAN AIDE RETRAITES (à déduire)</label>
+          <input type="number" id="alan-aide-retraites" min="0" step="0.01" value="0" />
+          <label for="alan-employeur">ALAN PART EMPLOYEUR (pour information)</label>
+          <input type="number" id="alan-employeur" min="0" step="0.01" value="34.23" />
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
              PANEL : Menu d'ajout
              ══════════════════════════════════════ -->
         <div id="panel-menu-ajout" class="setting-panel">
@@ -292,6 +311,7 @@
             <button type="button" onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
             <button type="button" onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
             <button type="button" onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">🛡️ Participation PSC</button>
+            <button type="button" onclick="ouvrirModal('panel-alan', '🏥 Mutuelle ALAN')">🏥 Mutuelle ALAN</button>
             <button type="button" onclick="ouvrirModal('panel-primes-manuelles', '✏️ Primes manuelles')">✏️ Primes manuelles</button>
           </div>
         </div>
@@ -707,6 +727,19 @@
           <input type="checkbox" id="cmp-psc-5" class="cmp-psc-checkbox" value="5" />
           <label for="cmp-psc-5"><strong>5 €</strong><br /><small>ALAN</small></label>
         </div>
+
+        <!-- ALAN -->
+        <h3 class="panel-subhead">Mutuelle ALAN</h3>
+        <label for="cmp-alan-forfait">ALAN PART FORFAIT (€)</label>
+        <input type="number" id="cmp-alan-forfait" min="0" step="0.01" value="0" aria-label="ALAN PART FORFAIT — Scénario B" />
+        <label for="cmp-alan-solidaire">ALAN PART SOLIDAIRE (€)</label>
+        <input type="number" id="cmp-alan-solidaire" min="0" step="0.01" value="0" aria-label="ALAN PART SOLIDAIRE — Scénario B" />
+        <label for="cmp-alan-action-sociale">ALAN ACTION SOCIALE (€)</label>
+        <input type="number" id="cmp-alan-action-sociale" min="0" step="0.01" value="0" aria-label="ALAN ACTION SOCIALE — Scénario B" />
+        <label for="cmp-alan-aide-retraites">ALAN AIDE RETRAITES (€)</label>
+        <input type="number" id="cmp-alan-aide-retraites" min="0" step="0.01" value="0" aria-label="ALAN AIDE RETRAITES — Scénario B" />
+        <label for="cmp-alan-employeur">ALAN PART EMPLOYEUR (€)</label>
+        <input type="number" id="cmp-alan-employeur" min="0" step="0.01" value="0" aria-label="ALAN PART EMPLOYEUR — Scénario B" />
 
         <!-- OTT Part Fixe -->
         <h3 class="panel-subhead">OTT — Part Fixe</h3>
