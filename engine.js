@@ -1418,29 +1418,6 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     ajouterLigne("202354", "PARTICIPATION A LA PSC", psc.affiche, null, null, ["psc-15", "psc-7", "psc-5"], null, null,
       { delta: psc.delta, deltaCol: 2, isGhost: psc.isGhost });
 
-  // ── ALAN ──────────────────────────────────────────────────────────────────────
-  const alanForfait  = paire(m.alanForfait,       mB?.alanForfait);
-  const alanSol      = paire(m.alanSolidaire,     mB?.alanSolidaire);
-  const alanAction   = paire(m.alanActionSociale, mB?.alanActionSociale);
-  const alanAide     = paire(m.alanAideRetraites, mB?.alanAideRetraites);
-  const alanEmp      = paire(m.alanEmployeur,     mB?.alanEmployeur);
-  const alanInputs   = ["alan-forfait","alan-solidaire","alan-action-sociale","alan-aide-retraites","alan-employeur"];
-  if (alanForfait.affiche > 0 || alanForfait.isGhost)
-    ajouterLigne("720376", "ALAN PART FORFAIT.", null, alanForfait.affiche || null, null, alanInputs, null, null,
-      { delta: alanForfait.delta, deltaCol: 3, isGhost: alanForfait.isGhost });
-  if (alanSol.affiche > 0 || alanSol.isGhost)
-    ajouterLigne("720377", "ALAN PART SOLIDAIRE", null, alanSol.affiche || null, null, alanInputs, null, null,
-      { delta: alanSol.delta, deltaCol: 3, isGhost: alanSol.isGhost });
-  if (alanAction.affiche > 0 || alanAction.isGhost)
-    ajouterLigne("720378", "ALAN ACTION SOCIALE", null, alanAction.affiche || null, null, alanInputs, null, null,
-      { delta: alanAction.delta, deltaCol: 3, isGhost: alanAction.isGhost });
-  if (alanAide.affiche > 0 || alanAide.isGhost)
-    ajouterLigne("720379", "ALAN AIDE RETRAITES", null, alanAide.affiche || null, null, alanInputs, null, null,
-      { delta: alanAide.delta, deltaCol: 3, isGhost: alanAide.isGhost });
-  if (alanEmp.affiche > 0 || alanEmp.isGhost)
-    ajouterLigne("720380", "ALAN PART EMPLOYEUR", null, null, alanEmp.affiche || null, alanInputs, null, null,
-      { delta: alanEmp.delta, deltaCol: 4, isGhost: alanEmp.isGhost });
-
   if (p.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", p.evenements.prime_performance, null, null, ["input-perf"]);
 
   // ── OTT ───────────────────────────────────────────────────────────────────────
@@ -1532,6 +1509,30 @@ function dessinerFiche(p, m, pB = null, mB = null) {
 
   if (gradeEchelonPrets) {
     ajouterLigne("604970", "TRANSFERT PRIMES / POINTS", null, m.transfertPrimes, null, null, null, null, { delta: deltaVal(m.transfertPrimes, mB?.transfertPrimes), deltaCol: 3 });
+
+    // ── ALAN (720376–720380) ───────────────────────────────────────────────────
+    const alanForfait  = paire(m.alanForfait,       mB?.alanForfait);
+    const alanSol      = paire(m.alanSolidaire,     mB?.alanSolidaire);
+    const alanAction   = paire(m.alanActionSociale, mB?.alanActionSociale);
+    const alanAide     = paire(m.alanAideRetraites, mB?.alanAideRetraites);
+    const alanEmp      = paire(m.alanEmployeur,     mB?.alanEmployeur);
+    const alanInputs   = ["alan-forfait","alan-solidaire","alan-action-sociale","alan-aide-retraites","alan-employeur"];
+    if (alanForfait.affiche > 0 || alanForfait.isGhost)
+      ajouterLigne("720376", "ALAN PART FORFAIT.", null, alanForfait.affiche || null, null, alanInputs, null, null,
+        { delta: alanForfait.delta, deltaCol: 3, isGhost: alanForfait.isGhost });
+    if (alanSol.affiche > 0 || alanSol.isGhost)
+      ajouterLigne("720377", "ALAN PART SOLIDAIRE", null, alanSol.affiche || null, null, alanInputs, null, null,
+        { delta: alanSol.delta, deltaCol: 3, isGhost: alanSol.isGhost });
+    if (alanAction.affiche > 0 || alanAction.isGhost)
+      ajouterLigne("720378", "ALAN ACTION SOCIALE", null, alanAction.affiche || null, null, alanInputs, null, null,
+        { delta: alanAction.delta, deltaCol: 3, isGhost: alanAction.isGhost });
+    if (alanAide.affiche > 0 || alanAide.isGhost)
+      ajouterLigne("720379", "ALAN AIDE RETRAITES", null, alanAide.affiche || null, null, alanInputs, null, null,
+        { delta: alanAide.delta, deltaCol: 3, isGhost: alanAide.isGhost });
+    if (alanEmp.affiche > 0 || alanEmp.isGhost)
+      ajouterLigne("720380", "ALAN PART EMPLOYEUR", null, null, alanEmp.affiche || null, alanInputs, null, null,
+        { delta: alanEmp.delta, deltaCol: 4, isGhost: alanEmp.isGhost });
+
     ajouterLigne("751095", "24,6% ISQ",                 null, m.retenueIsq,      null, null, null, null, { delta: deltaVal(m.retenueIsq,      mB?.retenueIsq),      deltaCol: 3 });
 
     // ── Nets ──────────────────────────────────────────────────────────────────────
