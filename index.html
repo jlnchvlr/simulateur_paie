@@ -38,16 +38,77 @@
         <!-- ══════════════════════════════════════
              PANEL : Attractivité Géographique
              ══════════════════════════════════════ -->
+        <!-- ══════════════════════════════════════
+             PANEL : Majoration Géographique
+             ══════════════════════════════════════ -->
+        <div id="panel-geo-majo" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">
+            Majoration géographique accordée aux agents affectés dans certaines directions.<br>
+            Ce montant est soumis aux cotisations sociales et imposable.
+          </p>
+          <div class="ir-tabs" style="flex-wrap:wrap;gap:6px;">
+            <input type="radio" id="geo-majo-none" name="geo-majo-radio" value="0"      data-code=""      checked onchange="calculerPaie()" />
+            <label for="geo-majo-none">Aucune</label>
+            <input type="radio" id="geo-majo-nord" name="geo-majo-radio" value="163.29" data-code="201987" onchange="calculerPaie()" />
+            <label for="geo-majo-nord"><strong>Nord / NE</strong><small>163,29 €</small></label>
+            <input type="radio" id="geo-majo-cdg"  name="geo-majo-radio" value="0"      data-code="201986" onchange="calculerPaie()" />
+            <label for="geo-majo-cdg"><strong>CDG / Ouest</strong><small>à venir</small></label>
+            <input type="radio" id="geo-majo-pyr"  name="geo-majo-radio" value="0"      data-code="202550" onchange="calculerPaie()" />
+            <label for="geo-majo-pyr"><strong>Pyr. / Cayenne</strong><small>à venir</small></label>
+          </div>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Attractivité Géographique
+             ══════════════════════════════════════ -->
         <div id="panel-attractivite" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <div class="panel-wip-notice">
-            <span class="panel-wip-icon">🚧</span>
-            <div>
-              <strong>Fonctionnalité en cours de développement</strong><br>
-              <span>L'Attractivité Géographique sera disponible dans une prochaine version du simulateur.</span>
-            </div>
+          <p class="panel-notice">
+            Prime d'attractivité géographique accordée aux agents recrutés dans certaines zones.<br>
+            Ce montant est soumis aux cotisations sociales et imposable.
+          </p>
+          <div class="ir-tabs">
+            <input type="radio" id="attract-none" name="attract-radio" value="0"      checked onchange="calculerPaie()" />
+            <label for="attract-none">Aucune</label>
+            <input type="radio" id="attract-oui"  name="attract-radio" value="105.05" onchange="calculerPaie()" />
+            <label for="attract-oui"><strong>Attractivité</strong><small>105,05 €</small></label>
           </div>
-          <select id="input-attractivite" class="panel-select" style="display:none" aria-label="Attractivité Géographique"></select>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Remboursement Domicile-Travail
+             ══════════════════════════════════════ -->
+        <div id="panel-rembt" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">
+            Remboursement partiel du titre de transport domicile-travail.<br>
+            Non imposable et non soumis aux cotisations sociales.
+          </p>
+          <div class="ir-tabs" style="margin-bottom:12px;">
+            <input type="radio" id="rembt-mode-pass" name="rembt-mode" value="pass" checked onchange="majRembt()" />
+            <label for="rembt-mode-pass"><strong>🎫 Coût du pass</strong><small>→ % remboursé</small></label>
+            <input type="radio" id="rembt-mode-direct" name="rembt-mode" value="direct" onchange="majRembt()" />
+            <label for="rembt-mode-direct"><strong>💶 Montant direct</strong><small>saisie libre</small></label>
+          </div>
+          <div id="rembt-pass-fields">
+            <label for="input-rembt-base" style="display:block;margin-bottom:4px;">Coût mensuel du pass (€)</label>
+            <input type="number" id="input-rembt-base" class="panel-input-number" min="0" step="0.01" placeholder="ex : 122,10" oninput="majRembt()" />
+            <label for="input-rembt-pct" style="display:block;margin:8px 0 4px;">Taux de remboursement</label>
+            <select id="input-rembt-pct" class="panel-select" onchange="majRembt()">
+              <option value="50">50 % (standard)</option>
+              <option value="75">75 %</option>
+              <option value="100">100 %</option>
+            </select>
+          </div>
+          <div id="rembt-direct-field" style="display:none">
+            <label for="input-rembt-direct" style="display:block;margin-bottom:4px;">Montant remboursé (€)</label>
+            <input type="number" id="input-rembt-direct" class="panel-input-number" min="0" step="0.01" placeholder="ex : 61,05" oninput="majRembt()" />
+          </div>
+          <input type="hidden" id="input-rembt-domicile" value="0" />
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
         <!-- ══════════════════════════════════════
@@ -312,8 +373,10 @@
             <button type="button" onclick="ouvrirModal('panel-absences', '🤒 Absences &amp; Carence')">🤒 Jours d'absence</button>
             <button type="button" onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">📊 Protocole (OTT)</button>
             <button type="button" onclick="ouvrirModal('panel-primes', '💰 Partage Performance (PPP)')">💰 Partage Performance</button>
+            <button type="button" onclick="ouvrirModal('panel-geo-majo', '📍 Majoration Géographique')">📍 Majo Géographique</button>
             <button type="button" onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')">📍 Attractivité Géo</button>
             <button type="button" onclick="ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')">⏳ Prime Fidélisation</button>
+            <button type="button" onclick="ouvrirModal('panel-rembt', '🚌 Rembt Domicile-Travail')">🚌 Rembt Domicile-Travail</button>
             <button type="button" onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
             <button type="button" onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
             <button type="button" onclick="ouvrirModal('panel-mgas-alan', '🏥 MGAS / ALAN')">🏥 MGAS / ALAN</button>
@@ -327,13 +390,16 @@
              ══════════════════════════════════════ -->
         <div id="panel-fmd" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label for="input-fmd">Montant du Forfait Mobilités Durables</label>
-          <select id="input-fmd" class="select-light">
-            <option value="0">-- Aucun --</option>
-            <option value="100">100 € (30 à 59 jours)</option>
-            <option value="200">200 € (60 à 99 jours)</option>
-            <option value="300">300 € (100 jours et plus)</option>
-          </select>
+          <div class="ir-tabs" style="flex-wrap:wrap;gap:6px;">
+            <input type="radio" id="fmd-none" name="fmd-radio" value="0"   checked onchange="calculerPaie()" />
+            <label for="fmd-none">Aucun</label>
+            <input type="radio" id="fmd-100"  name="fmd-radio" value="100" onchange="calculerPaie()" />
+            <label for="fmd-100"><strong>100 €</strong><small>30–59 jours</small></label>
+            <input type="radio" id="fmd-200"  name="fmd-radio" value="200" onchange="calculerPaie()" />
+            <label for="fmd-200"><strong>200 €</strong><small>60–99 jours</small></label>
+            <input type="radio" id="fmd-300"  name="fmd-radio" value="300" onchange="calculerPaie()" />
+            <label for="fmd-300"><strong>300 €</strong><small>100 j. et +</small></label>
+          </div>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -727,12 +793,12 @@
 
         <!-- Attractivité & Fidélisation — en développement -->
         <h3 class="panel-subhead">Attractivité &amp; Fidélisation</h3>
-        <div class="panel-wip-notice" style="margin-top:8px;">
-          <span class="panel-wip-icon">🚧</span>
-          <div><strong>En cours de développement</strong><br><span>Ces primes seront disponibles dans une prochaine version.</span></div>
-        </div>
-        <select id="cmp-attractivite" style="display:none" aria-label="Attractivité Géographique — Scénario B"></select>
-        <select id="cmp-fidelisation" style="display:none" aria-label="Prime de Fidélisation — Scénario B"></select>
+        <label class="cmp-label" for="cmp-geo-majo">Majoration Géographique</label>
+        <select id="cmp-geo-majo" class="panel-select" aria-label="Majoration Géographique — Scénario B"></select>
+        <label class="cmp-label" for="cmp-attractivite">Attractivité Géographique</label>
+        <select id="cmp-attractivite" class="panel-select" aria-label="Attractivité Géographique — Scénario B"></select>
+        <label class="cmp-label" for="cmp-fidelisation">Fidélisation</label>
+        <select id="cmp-fidelisation" class="panel-select" aria-label="Prime de Fidélisation — Scénario B"></select>
 
         <!-- PSC -->
         <h3 class="panel-subhead">Participation PSC</h3>

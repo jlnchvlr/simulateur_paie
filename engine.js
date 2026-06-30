@@ -140,8 +140,10 @@ const CHAMPS_PROFIL = [
   { id: "input-isq-complement", type: "value" },
   { id: "input-isq-majoration", type: "value" },
   // Primes mensuelles fixes
-  { id: "input-attractivite", type: "select" },
+  { id: "geo-majo-radio", type: "radio", name: "geo-majo-radio" },
+  { id: "attract-radio",  type: "radio", name: "attract-radio"  },
   { id: "input-fidelisation", type: "select" },
+  { id: "input-rembt-domicile", type: "value" },
   // PSC (cases à cocher cumulables)
   { id: "psc-15", type: "checkbox" },
   { id: "psc-7", type: "checkbox" },
@@ -166,7 +168,7 @@ const CHAMPS_PROFIL = [
   // Éléments variables mensuels
   { id: "input-nuit-n",      type: "value" },
   { id: "input-nuit-s2",     type: "value" },
-  { id: "input-fmd",         type: "value" },
+  { id: "fmd-radio",          type: "radio", name: "fmd-radio" },
   { id: "input-inflation",   type: "value" },
   { id: "input-perf",        type: "value" },
   // Mutuelle ALAN
@@ -278,7 +280,9 @@ window.effacerProfil = function () {
 /** @type {EntreeIndex[]} */
 const INDEX_RECHERCHE = [
   { titre: "🌙 Nuits & Soirées", motsCles: ["nuit", "soirée", "soiree", "majoration", "horaire"], cible: "panel-nuits" },
-  { titre: "📍 Attractivité Géographique", motsCles: ["attractivite", "majo", "geo", "201987", "201986", "nord", "cdg"], cible: "panel-attractivite" },
+  { titre: "📍 Majoration Géographique (RIST)", motsCles: ["majo", "geo", "geographique", "nord", "nord-est", "cdg", "pyrenees", "cayenne", "rist", "201987", "201986", "202550"], cible: "panel-geo-majo" },
+  { titre: "📍 Attractivité Géographique", motsCles: ["attractivite", "attractivite", "geo", "geographique", "202546", "prime"], cible: "panel-attractivite" },
+  { titre: "🚌 Remboursement Domicile-Travail", motsCles: ["rembt", "remboursement", "domicile", "travail", "transport", "pass", "navigo", "200033", "titre"], cible: "panel-rembt" },
   { titre: "⏳ Prime de Fidélisation", motsCles: ["fidelisation", "pft", "palier", "engagement", "duree"], cible: "panel-fidelisation" },
   { titre: "🤒 Jours d'absence (Grève, Maladie)", motsCles: ["grève", "greve", "maladie", "carence", "absence", "arrêt", "arret", "snf", "1/30", "jour"], cible: "panel-absences" },
   { titre: "🚲 Forfait Mobilités Durables", motsCles: ["vélo", "velo", "fmd", "mobilité", "mobilite", "covoiturage", "voiture", "transport"], cible: "panel-fmd" },
@@ -782,6 +786,9 @@ window.effacerValeurs = function (event, inputIds) {
     // L'ancienne détection via option[value="none"] était du dead code (aucune option "none" dans le HTML).
     if (el.tagName === "SELECT") el.value = el.options[0]?.value ?? "0";
     else if (el.type === "checkbox") el.checked = false;
+    else if (el.type === "radio") {
+      document.querySelectorAll(`input[name="${el.name}"]`).forEach((r, i) => { r.checked = i === 0; });
+    }
     else el.value = "0";
   });
   calculerPaie();
@@ -876,13 +883,16 @@ function getProfilDepuisInterface() {
     },
 
     primes: {
-      forfait_mobilites: lireFloat("input-fmd"),
+      forfait_mobilites: parseFloat(document.querySelector('input[name="fmd-radio"]:checked')?.value ?? "0") || 0,
       rist_fonctions: baseDonnees.rist?.fonctions?.montants?.[ristKey] || 0,
       rist_exper_prof: baseDonnees.rist?.experience?.montants?.[expKey] || 0,
       rist_lic_isq: baseDonnees.rist?.isq_licence?.montants?.[licKey] || 0,
       rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.montants?.[cpltKey] || 0,
       rist_maj_isq: baseDonnees.rist?.isq_majoration?.montants?.[majKey] || 0,
-      attractivite: lireFloat("input-attractivite"),
+      geo_majo:      parseFloat(document.querySelector('input[name="geo-majo-radio"]:checked')?.value ?? "0") || 0,
+      geo_majo_code: document.querySelector('input[name="geo-majo-radio"]:checked')?.dataset?.code ?? "",
+      attractivite:  parseFloat(document.querySelector('input[name="attract-radio"]:checked')?.value ?? "0") || 0,
+      rembt_domicile: lireFloat("input-rembt-domicile"),
       fidelisation: lireFloat("input-fidelisation"),
       inflation: lireFloat("input-inflation"),
       ind_compensatrice_csg: lireFloat("input-ind-csg"),
@@ -998,6 +1008,8 @@ function calculerMontants(p) {
   const absRistCplt = abs(p.primes.rist_cplt_lic_isq);
   const absRistMaj = abs(p.primes.rist_maj_isq);
   const absIndCsg = abs(p.primes.ind_compensatrice_csg);
+  const absGeoMajo = abs(p.primes.geo_majo ?? 0);
+  const absAttract = abs(p.primes.attractivite ?? 0);
 
   // ── Bases nettes après absences ──────────────────────────────────────────────
   const baseTraitementReel = traitementBrut - absTraitement;
@@ -1020,10 +1032,11 @@ function calculerMontants(p) {
     p.evenements.ott_pf +
     p.evenements.ott_pv_globale +
     p.evenements.ott_pv_opt32 +
-    p.primes.attractivite +
-    p.primes.fidelisation +
-    p.primes.inflation +
-    p.primes.manuelles_imposables + // primes manuelles imposables seulement (CSG/CRDS/RAFP s'appliquent)
+    ((p.primes.geo_majo ?? 0) - absGeoMajo) +
+    ((p.primes.attractivite ?? 0) - absAttract) +
+    (p.primes.fidelisation ?? 0) +
+    (p.primes.inflation ?? 0) +
+    (p.primes.manuelles_imposables ?? 0) + // primes manuelles imposables seulement (CSG/CRDS/RAFP s'appliquent)
     (p.primes.rappels_imposables || 0); // rappels imposables (algébrique : négatif = trop-perçu)
 
   // ── SFT ──────────────────────────────────────────────────────────────────────
@@ -1046,7 +1059,7 @@ function calculerMontants(p) {
   // ── CSG / CRDS ───────────────────────────────────────────────────────────────
   // Les cotisations PSC/prévoyance ne sont pas des frais pro → pas d'abattement 1,75 %
   // Elles s'ajoutent directement à la base, comme l'avantage ALAN
-  const pscSansAbat = p.primes.psc + p.primes.psc_options + p.primes.prevoyance_mgas + (p.primes.rappels_psc_prevoyance || 0);
+  const pscSansAbat = (p.primes.psc ?? 0) + (p.primes.psc_options ?? 0) + (p.primes.prevoyance_mgas ?? 0) + (p.primes.rappels_psc_prevoyance || 0);
   const totalPrimesSoumisesHorsPSC = totalPrimesSoumises - (p.primes.rappels_psc_prevoyance || 0);
   const baseCsgCrdsRaw = (baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + pscSansAbat + (p.alan?.employeur || 0);
   const baseCsgCrds = Math.max(0, arrondir(baseCsgCrdsRaw));
@@ -1064,15 +1077,16 @@ function calculerMontants(p) {
   console.log("  ott_pv_globale      =", p.evenements.ott_pv_globale.toFixed(2));
   console.log("  ott_pf              =", p.evenements.ott_pf.toFixed(2));
   console.log("  prime_performance   =", p.evenements.prime_performance.toFixed(2));
-  console.log("  attractivite        =", p.primes.attractivite.toFixed(2));
-  console.log("  fidelisation        =", p.primes.fidelisation.toFixed(2));
-  console.log("  inflation           =", p.primes.inflation.toFixed(2));
-  console.log("  manuelles_imp       =", p.primes.manuelles_imposables.toFixed(2));
+  console.log("  geo_majo            =", ((p.primes.geo_majo ?? 0) - absGeoMajo).toFixed(2));
+  console.log("  attractivite        =", ((p.primes.attractivite ?? 0) - absAttract).toFixed(2));
+  console.log("  fidelisation        =", (p.primes.fidelisation ?? 0).toFixed(2));
+  console.log("  inflation           =", (p.primes.inflation ?? 0).toFixed(2));
+  console.log("  manuelles_imp       =", (p.primes.manuelles_imposables ?? 0).toFixed(2));
   console.log("  rappels_imposables  =", (p.primes.rappels_imposables || 0).toFixed(2));
   console.log("  totalPrimesSoumises =", totalPrimesSoumises.toFixed(2));
-  console.log("  psc                 =", p.primes.psc.toFixed(2));
-  console.log("  psc_options         =", p.primes.psc_options.toFixed(2));
-  console.log("  prevoyance_mgas     =", p.primes.prevoyance_mgas.toFixed(2));
+  console.log("  psc                 =", (p.primes.psc ?? 0).toFixed(2));
+  console.log("  psc_options         =", (p.primes.psc_options ?? 0).toFixed(2));
+  console.log("  prevoyance_mgas     =", (p.primes.prevoyance_mgas ?? 0).toFixed(2));
   console.log("  montantSFT          =", montantSFT.toFixed(2));
   console.log("  - transfertPrimes   =", transfertPrimes.toFixed(2));
   console.log("  - retenueIsq        =", retenueIsq.toFixed(2));
@@ -1159,8 +1173,8 @@ function calculerMontants(p) {
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
-  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.psc_options - p.primes.prevoyance_mgas - p.primes.manuelles_non_imposables - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
-  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables - (p.primes.rappels_non_imposables || 0));
+  const netSocial = arrondir(netAPayerAvantImpot - (p.primes.forfait_mobilites ?? 0) - (p.primes.psc ?? 0) - (p.primes.psc_options ?? 0) - (p.primes.prevoyance_mgas ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - (p.primes.forfait_mobilites ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0));
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal + (p.alan?.employeur || 0) - transfertPrimes);
@@ -1187,6 +1201,8 @@ function calculerMontants(p) {
     absRistCplt,
     absRistMaj,
     absIndCsg,
+    absGeoMajo,
+    absAttract,
     baseTraitementReel,
     baseNbiReelle,
     baseSoumisePC,
@@ -1242,8 +1258,12 @@ const ROUTAGE_MODAL = {
   200041: { cible: "panel-fmd", titre: "Forfait Mobilités" },
   202485: { cible: "panel-primes", titre: "Prime Partage Performance" },
   201000: { cible: "panel-inflation", titre: "Indemnité Pouvoir d'Achat" },
-  203001: { cible: "panel-fidelisation", titre: "Prime de Fidélisation" },
-  203002: { cible: "panel-attractivite", titre: "Attractivité Géographique" },
+  200033: { cible: "panel-rembt",         titre: "Remboursement Domicile-Travail" },
+  201986: { cible: "panel-geo-majo",      titre: "Majoration Géographique" },
+  201987: { cible: "panel-geo-majo",      titre: "Majoration Géographique" },
+  202546: { cible: "panel-attractivite",  titre: "Attractivité Géographique" },
+  202550: { cible: "panel-geo-majo",      titre: "Majoration Géographique" },
+  203001: { cible: "panel-fidelisation",  titre: "Prime de Fidélisation" },
   604958: { cible: "panel-absences", titre: "Absences et Carence" },
   604959: { cible: "panel-absences", titre: "Absences et Carence" },
 
@@ -1487,12 +1507,17 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   ajouterLigneRistAvecBadge("102000", "INDEMNITE DE RESIDENCE", "zone_residence", m.indemniteResidence, 0,
     "panel-residence", "Zone de Résidence", mB?.indemniteResidence ?? 0);
 
+  const rembt = paire(p.primes.rembt_domicile, pB?.primes.rembt_domicile);
+  if (rembt.affiche > 0 || rembt.isGhost)
+    ajouterLigne("200033", "REMBT DOMICILE-TRAVAIL", rembt.affiche, null, null, ["input-rembt-domicile"], null, null,
+      { delta: rembt.delta, deltaCol: 2, isGhost: rembt.isGhost });
+
   // ── Éléments variables ────────────────────────────────────────────────────────
   if (m.nuit > 0) ajouterLigne("200176", "IND. TRAVAIL DE NUIT", m.nuit, null, null, ["input-nuit-n", "input-nuit-s2"]);
 
   const fmd = paire(p.primes.forfait_mobilites, pB?.primes.forfait_mobilites);
   if (fmd.affiche > 0 || fmd.isGhost)
-    ajouterLigne("200041", "FORF. MOBILITES DURABLES", fmd.affiche, null, null, ["input-fmd"], null, null,
+    ajouterLigne("200041", "FORF. MOBILITES DURABLES", fmd.affiche, null, null, ["fmd-none"], null, null,
       { delta: fmd.delta, deltaCol: 2, isGhost: fmd.isGhost });
 
   const infl = paire(p.primes.inflation, pB?.primes.inflation);
@@ -1506,6 +1531,12 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   ajouterLigneRistAvecBadge("201960", "RIST PART LIC-ISQ (ICNA)", "rist_isq_licence",     p.primes.rist_lic_isq,          m.absRistIsq,  "panel-rist-isq-licence",    "RIST Part LIC-ISQ",      pB?.primes.rist_lic_isq      ?? 0);
   ajouterLigneRistAvecBadge("201961", "RIST CPLT PART LIC-ISQ",   "rist_isq_complement",  p.primes.rist_cplt_lic_isq,     m.absRistCplt, "panel-rist-isq-complement", "RIST CPLT LIC-ISQ", pB?.primes.rist_cplt_lic_isq ?? 0);
   ajouterLigneRistAvecBadge("201962", "MAJORATION CPLT ISQ",      "rist_isq_majoration",  p.primes.rist_maj_isq,          m.absRistMaj,  "panel-rist-isq-majoration", "Majoration Complément ISQ",   pB?.primes.rist_maj_isq      ?? 0);
+
+  {
+    const codeGeo = p.primes.geo_majo_code || pB?.primes.geo_majo_code || "201987";
+    ajouterLigneRist(codeGeo, "RIST MAJO GEO N.N-E", p.primes.geo_majo, m.absGeoMajo, pB?.primes.geo_majo ?? 0);
+  }
+
   ajouterLigneRistAvecBadge("202206", "IND. COMPENSATRICE CSG",   "ind_compensatrice_csg",p.primes.ind_compensatrice_csg, m.absIndCsg,   "panel-csg",                 "Indemnité Compensatrice CSG", pB?.primes.ind_compensatrice_csg ?? 0);
 
   // ── PSC ───────────────────────────────────────────────────────────────────────
@@ -1543,16 +1574,13 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     ajouterLigne("202560", "RIST ORGA TEMPS TRAVAIL (PV OPT 3-1 / 3-2)", pv32.affiche, null, null, ["pv-opt32"], null, null,
       { delta: pv32.delta, deltaCol: 2, isGhost: pv32.isGhost });
 
-  // ── Fidélisation & Attractivité ───────────────────────────────────────────────
+  ajouterLigneRist("202546", "RIST MAJO ATTRACT. GEO", p.primes.attractivite, m.absAttract, pB?.primes.attractivite ?? 0);
+
+  // ── Fidélisation ──────────────────────────────────────────────────────────────
   const fid = paire(p.primes.fidelisation, pB?.primes.fidelisation);
   if (fid.affiche > 0 || fid.isGhost)
     ajouterLigne("203001", "PRIME DE FIDELISATION TERR.", fid.affiche, null, null, ["input-fidelisation"], null, null,
       { delta: fid.delta, deltaCol: 2, isGhost: fid.isGhost });
-
-  const attr = paire(p.primes.attractivite, pB?.primes.attractivite);
-  if (attr.affiche > 0 || attr.isGhost)
-    ajouterLigne("203002", "ATTRACTIVITE GEOGRAPHIQUE", attr.affiche, null, null, ["input-attractivite"], null, null,
-      { delta: attr.delta, deltaCol: 2, isGhost: attr.isGhost });
 
   // Previews des totaux OTT dans le panneau de configuration
   majPreview("preview-ott-pf", p.evenements.ott_pf);
@@ -1994,6 +2022,30 @@ function attacherNavigationClavier(modal, input) {
 }
 
 /**
+ * Met à jour `input-rembt-domicile` depuis les champs du panel rembt, puis relance le calcul.
+ */
+function majRembt() {
+  const mode = document.querySelector('input[name="rembt-mode"]:checked')?.value;
+  const passFields   = document.getElementById("rembt-pass-fields");
+  const directField  = document.getElementById("rembt-direct-field");
+  let montant = 0;
+  if (mode === "pass") {
+    passFields.style.display  = "";
+    directField.style.display = "none";
+    const base = parseFloat(document.getElementById("input-rembt-base")?.value) || 0;
+    const pct  = parseFloat(document.getElementById("input-rembt-pct")?.value)  || 50;
+    montant = arrondir(base * pct / 100);
+  } else {
+    passFields.style.display  = "none";
+    directField.style.display = "";
+    montant = parseFloat(document.getElementById("input-rembt-direct")?.value) || 0;
+  }
+  const hidden = document.getElementById("input-rembt-domicile");
+  if (hidden) hidden.value = montant;
+  calculerPaie();
+}
+
+/**
  * Point d'entrée unique de l'application, déclenché au chargement de la page.
  *
  * Séquence d'initialisation :
@@ -2021,9 +2073,12 @@ async function initialiserApplication() {
 
     mettreAJourEchelons();
 
-    // Peuplement des selects depuis data.json (attractivité & fidélisation)
-    ["attractivite", "fidelisation"].forEach((cle) => {
-      const select = document.getElementById(`input-${cle}`);
+    // Peuplement des selects depuis data.json (fidélisation uniquement — geo-majo et attractivite sont en ir-tabs hardcodés)
+    const selectsData = [
+      { id: "input-fidelisation", cle: "fidelisation" },
+    ];
+    selectsData.forEach(({ id, cle }) => {
+      const select = document.getElementById(id);
       if (select && baseDonnees[cle]) {
         baseDonnees[cle].forEach((opt) => select.add(new Option(opt.label, opt.valeur)));
       }
@@ -3135,6 +3190,7 @@ const LIGNES_RAPPELLABLES = [
   { code: "101000", libelle: "TRAITEMENT BRUT",                imposable: true  },
   { code: "101070", libelle: "TRAITEMENT BRUT N.B.I.",         imposable: true  },
   { code: "102000", libelle: "INDEMNITE DE RESIDENCE",         imposable: true  },
+  { code: "200033", libelle: "REMBT DOMICILE-TRAVAIL",         imposable: false },
   { code: "200200", libelle: "SUPPL. FAMILIAL DE TRAITEMENT",  imposable: true  },
   // ── RIST / ISQ ──────────────────────────────────────────────────────────────
   { code: "201958", libelle: "RIST PART FONCTIONS",            imposable: true  },
@@ -3142,6 +3198,8 @@ const LIGNES_RAPPELLABLES = [
   { code: "201960", libelle: "RIST ISQ-LICENCE",               imposable: true  },
   { code: "201961", libelle: "RIST ISQ-COMPLEMENT LIC.",       imposable: true  },
   { code: "201962", libelle: "RIST ISQ-MAJORATION",            imposable: true  },
+  { code: "201987", libelle: "RIST MAJ GEO NORD/NE",           imposable: true  },
+  { code: "202546", libelle: "RIST MAJ ATTRACT. GEO",          imposable: true  },
   { code: "202206", libelle: "IND. COMPENSATRICE CSG",         imposable: true  },
   // ── Éléments variables ───────────────────────────────────────────────────────
   { code: "201000", libelle: "INDEM. POUVOIR D'ACHAT",         imposable: true  },
@@ -3857,7 +3915,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
   if (p.primes.forfait_mobilites > 0)
     ligne("Forfait mobilités",      p.primes.forfait_mobilites, null,
       { panel: "panel-fmd", titre: "Forfait Mobilités",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-fmd"]) });
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["fmd-none"]) });
 
   // 3. Inflation
   if (p.primes.inflation > 0)
@@ -3925,11 +3983,15 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       { panel: "panel-fidelisation", titre: "Prime Fidélisation",
         onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-fidelisation"]) });
 
-  // 16. Attractivité
+  // 16. Majoration Géo + Attractivité
+  if (p.primes.geo_majo > 0)
+    ligne("Majo. Géo.",           p.primes.geo_majo, null,
+      { panel: "panel-geo-majo", titre: "Majoration Géographique",
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["geo-majo-none"]) });
   if (p.primes.attractivite > 0)
     ligne("Attractivité géo.",     p.primes.attractivite, null,
       { panel: "panel-attractivite", titre: "Attractivité Géographique",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["input-attractivite"]) });
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["attract-none"]) });
 
   // Primes manuelles
   _getPrimesManuelles().forEach(({ libelle, montant, imposable }, i) => {
@@ -4411,7 +4473,10 @@ function getProfilComparaisonDepuisPanneau() {
       rist_lic_isq:      baseDonnees.rist?.isq_licence?.montants?.[licKey]      || 0,
       rist_cplt_lic_isq: baseDonnees.rist?.isq_complement?.montants?.[cpltKey]  || 0,
       rist_maj_isq:      baseDonnees.rist?.isq_majoration?.montants?.[majKey]   || 0,
+      geo_majo:          parseFloat(document.getElementById("cmp-geo-majo")?.value) || 0,
+      geo_majo_code:     document.getElementById("cmp-geo-majo")?.selectedOptions?.[0]?.dataset?.code ?? "",
       attractivite:      parseFloat(document.getElementById("cmp-attractivite")?.value) || 0,
+      rembt_domicile:    profilA.primes.rembt_domicile,
       fidelisation:      parseFloat(document.getElementById("cmp-fidelisation")?.value) || 0,
       psc:               pscTotal,
     },
@@ -4603,9 +4668,24 @@ function initialiserComparateur() {
     });
   });
 
+  // Geo Majo select B
+  const cmpGeoMajoSel = document.getElementById("cmp-geo-majo");
+  if (cmpGeoMajoSel && baseDonnees.geo_majo) {
+    cmpGeoMajoSel.innerHTML = "";
+    baseDonnees.geo_majo.forEach((opt) => {
+      const option = new Option(opt.label, opt.valeur);
+      option.dataset.code = opt.code;
+      cmpGeoMajoSel.add(option);
+    });
+  }
+
   // Attractivité + Fidélisation selects B
-  ["attractivite", "fidelisation"].forEach((cle) => {
-    const select = document.getElementById(`cmp-${cle}`);
+  const selectsBData = [
+    { id: "cmp-attractivite", cle: "attractivite_nouvelle" },
+    { id: "cmp-fidelisation", cle: "fidelisation" },
+  ];
+  selectsBData.forEach(({ id, cle }) => {
+    const select = document.getElementById(id);
     if (select && baseDonnees[cle]) {
       select.innerHTML = "";
       baseDonnees[cle].forEach((opt) => select.add(new Option(opt.label, opt.valeur)));

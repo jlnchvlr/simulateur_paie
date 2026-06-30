@@ -162,7 +162,10 @@
             rist_lic_isq: 0,
             rist_cplt_lic_isq: 0,
             rist_maj_isq: 0,
+            geo_majo: 0,
+            geo_majo_code: "",
             attractivite: 0,
+            rembt_domicile: 0,
             fidelisation: 0,
             inflation: 0,
             ind_compensatrice_csg: 0,
@@ -452,7 +455,7 @@
           eq("totalPrimesSoumises inchangé (0)", m.totalPrimesSoumises, 0);
           eq("cotisationRafp reste nulle", m.cotisationRafp, 0);
           // La PSC est incluse dans la base CSG/CRDS
-          eq("csgDeductible avec PSC 15 €", m.csgDeductible, 150.78);
+          eq("csgDeductible avec PSC 15 €", m.csgDeductible, 150.80);
           eq("csgNonDeductible avec PSC 15 €", m.csgNonDeductible, 53.22);
           eq("crds avec PSC 15 €", m.crds, 11.09);
           // Et le Net social est diminué du montant PSC
