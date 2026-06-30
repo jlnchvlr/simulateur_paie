@@ -830,6 +830,19 @@ body.navigation-clavier .resultat-item:focus {
   padding: 10px;
   border-left: 3px solid var(--dgfip-dark);
 }
+.panel-notice--muted {
+  border-left-color: var(--color-border-muted);
+  opacity: 0.7;
+}
+.mgas-alan-tabs {
+  margin-bottom: 16px;
+}
+.mgas-alan-section {
+  display: none;
+}
+.mgas-alan-section.active {
+  display: block;
+}
 .panel-footnote {
   margin-top: 5px;
   font-size: 0.625rem;

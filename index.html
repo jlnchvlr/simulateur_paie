@@ -253,44 +253,50 @@
         </div>
 
         <!-- ══════════════════════════════════════
-             PANEL : PSC (Mutuelle)
+             PANEL : MGAS / ALAN (avec onglets)
              ══════════════════════════════════════ -->
-        <div id="panel-psc" class="setting-panel">
+        <div id="panel-mgas-alan" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <p class="panel-notice">Vous pouvez cumuler plusieurs aides (cochez celles qui s'appliquent à votre situation) :</p>
-          <div class="ir-tabs">
-            <input type="checkbox" id="psc-15" class="psc-checkbox" value="15" />
-            <label for="psc-15"
-              ><strong>15 €</strong><br /><small>Jusqu'au<br />30/04/26</small></label
-            >
-            <input type="checkbox" id="psc-7" class="psc-checkbox" value="7" />
-            <label for="psc-7"
-              ><strong>7 €</strong><br /><small>Prév. MGAS<br />(Dès 05/26)</small></label
-            >
-            <input type="checkbox" id="psc-5" class="psc-checkbox" value="5" />
-            <label for="psc-5"
-              ><strong>5 €</strong><br /><small>Santé ALAN<br />(Dès 05/26)</small></label
-            >
-          </div>
-          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
-        </div>
 
-        <!-- ══════════════════════════════════════
-             PANEL : Mutuelle ALAN
-             ══════════════════════════════════════ -->
-        <div id="panel-alan" class="setting-panel">
-          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <p class="panel-notice">Saisissez les montants figurant sur votre bulletin de paie :</p>
-          <label for="alan-forfait">ALAN PART FORFAIT (à déduire)</label>
-          <input type="number" id="alan-forfait" min="0" step="0.01" value="0" />
-          <label for="alan-solidaire">ALAN PART SOLIDAIRE (à déduire)</label>
-          <input type="number" id="alan-solidaire" min="0" step="0.01" value="0" />
-          <label for="alan-action-sociale">ALAN ACTION SOCIALE (à déduire)</label>
-          <input type="number" id="alan-action-sociale" min="0" step="0.01" value="0" />
-          <label for="alan-aide-retraites">ALAN AIDE RETRAITES (à déduire)</label>
-          <input type="number" id="alan-aide-retraites" min="0" step="0.01" value="0" />
-          <label for="alan-employeur">ALAN PART EMPLOYEUR (pour information)</label>
-          <input type="number" id="alan-employeur" min="0" step="0.01" value="34.23" />
+          <div class="ir-tabs mgas-alan-tabs">
+            <input type="radio" name="tab-mgas-alan" id="tab-mgas-alan-prevoyance" value="prevoyance" />
+            <label for="tab-mgas-alan-prevoyance">🩺 Prévoyance</label>
+            <input type="radio" name="tab-mgas-alan" id="tab-mgas-alan-alan" value="alan" />
+            <label for="tab-mgas-alan-alan">🏥 ALAN</label>
+          </div>
+
+          <div id="mgas-alan-tab-prevoyance" class="mgas-alan-section">
+            <p class="panel-notice">Participation employeur à la prévoyance MGAS :</p>
+            <div class="ir-tabs">
+              <input type="checkbox" id="psc-7" value="7" />
+              <label for="psc-7"><strong>7 €</strong><br /><small>Prév. MGAS<br />(dès 05/26)</small></label>
+            </div>
+            <p class="panel-notice panel-notice--muted">Ancienne participation PSC (avant le 01/05/26) :</p>
+            <div class="ir-tabs">
+              <input type="checkbox" id="psc-15" class="psc-checkbox" value="15" />
+              <label for="psc-15"><strong>15 €</strong><br /><small>Jusqu'au<br />30/04/26</small></label>
+            </div>
+          </div>
+
+          <div id="mgas-alan-tab-alan" class="mgas-alan-section">
+            <p class="panel-notice">Saisissez les montants figurant sur votre bulletin de paie :</p>
+            <label for="alan-forfait">ALAN PART FORFAIT (à déduire)</label>
+            <input type="number" id="alan-forfait" min="0" step="0.01" value="0" />
+            <label for="alan-solidaire">ALAN PART SOLIDAIRE (à déduire)</label>
+            <input type="number" id="alan-solidaire" min="0" step="0.01" value="0" />
+            <label for="alan-action-sociale">ALAN ACTION SOCIALE (à déduire)</label>
+            <input type="number" id="alan-action-sociale" min="0" step="0.01" value="0" />
+            <label for="alan-aide-retraites">ALAN AIDE RETRAITES (à déduire)</label>
+            <input type="number" id="alan-aide-retraites" min="0" step="0.01" value="0" />
+            <label for="alan-employeur">ALAN PART EMPLOYEUR (pour information)</label>
+            <input type="number" id="alan-employeur" min="0" step="0.01" value="34.23" />
+            <p class="panel-notice">Option ALAN souscrite au-delà du socle (prélevée sur votre compte, +5 € pris en charge par l'employeur) :</p>
+            <div class="ir-tabs">
+              <input type="checkbox" id="psc-5" />
+              <label for="psc-5"><strong>5 €</strong><br /><small>Option ALAN</small></label>
+            </div>
+          </div>
+
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -310,8 +316,7 @@
             <button type="button" onclick="ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')">⏳ Prime Fidélisation</button>
             <button type="button" onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
             <button type="button" onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
-            <button type="button" onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">🛡️ Participation PSC</button>
-            <button type="button" onclick="ouvrirModal('panel-alan', '🏥 Mutuelle ALAN')">🏥 Mutuelle ALAN</button>
+            <button type="button" onclick="ouvrirModal('panel-mgas-alan', '🏥 MGAS / ALAN')">🏥 MGAS / ALAN</button>
             <button type="button" onclick="ouvrirModal('panel-primes-manuelles', '✏️ Primes manuelles')">✏️ Primes manuelles</button>
           </div>
         </div>

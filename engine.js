@@ -278,8 +278,8 @@ const INDEX_RECHERCHE = [
   { titre: "🤒 Jours d'absence (Grève, Maladie)", motsCles: ["grève", "greve", "maladie", "carence", "absence", "arrêt", "arret", "snf", "1/30", "jour"], cible: "panel-absences" },
   { titre: "🚲 Forfait Mobilités Durables", motsCles: ["vélo", "velo", "fmd", "mobilité", "mobilite", "covoiturage", "voiture", "transport"], cible: "panel-fmd" },
   { titre: "📊 Protocole (OTT)", motsCles: ["ott", "protocole", "part fixe", "part variable", "pf", "pv", "option", "enac", "cdg", "liste"], cible: "panel-ott" },
-  { titre: "🛡️ Participation PSC (Mutuelle)", motsCles: ["psc", "mutuelle", "santé", "sante", "prévoyance", "prevoyance", "mgas", "aide"], cible: "panel-psc" },
-  { titre: "🏥 Mutuelle ALAN", motsCles: ["alan", "mutuelle", "santé", "sante", "complémentaire", "complementaire", "cotisation"], cible: "panel-alan" },
+  { titre: "🩺 Prévoyance MGAS", motsCles: ["prévoyance", "prevoyance", "mgas", "partenaire", "psc", "mutuelle", "202354", "202510"], cible: "panel-mgas-alan" },
+  { titre: "🏥 Mutuelle ALAN", motsCles: ["alan", "mutuelle", "santé", "sante", "complémentaire", "complementaire", "cotisation", "option", "202483", "720376"], cible: "panel-mgas-alan" },
   { titre: "💰 Partage Performance (PPP)", motsCles: ["prime", "ppp", "performance", "partage", "exceptionnelle"], cible: "panel-primes" },
   { titre: "📈 Indemnité Inflation", motsCles: ["inflation", "pouvoir", "achat", "gpa", "indemnité"], cible: "panel-inflation" },
   { titre: "Impôt sur le Revenu (PAS)", motsCles: ["impôt", "impot", "pas", "source", "taux", "prélèvement", "prelevement", "personnalisé"], cible: "panel-impots" },
@@ -707,6 +707,15 @@ function mettreAJourEchelons() {
  * @param {string|string[]} panelIds - ID du panneau cible, ou tableau d'IDs pour affichage multi-panneaux
  * @param {string}          titre    - Titre affiché dans l'en-tête de la modale
  */
+
+function activerOngletMgasAlan(onglet) {
+  document.querySelectorAll(".mgas-alan-section").forEach(s => s.classList.remove("active"));
+  const section = document.getElementById(`mgas-alan-tab-${onglet}`);
+  if (section) section.classList.add("active");
+  const radio = document.querySelector(`input[name="tab-mgas-alan"][value="${onglet}"]`);
+  if (radio) radio.checked = true;
+}
+
 function ouvrirModal(panelIds, titre) {
   // Pause de la visite guidée en cours + masquer l'UI tour pendant la modale
   if (window.isTourActive) {
@@ -856,6 +865,8 @@ function getProfilDepuisInterface() {
       inflation: lireFloat("input-inflation"),
       ind_compensatrice_csg: lireFloat("input-ind-csg"),
       psc: pscTotal,
+      psc_options:      document.getElementById("psc-5")?.checked ? 5 : 0,
+      prevoyance_mgas:  document.getElementById("psc-7")?.checked ? 7 : 0,
       manuelles_imposables,
       manuelles_non_imposables,
     },
@@ -1007,7 +1018,7 @@ function calculerMontants(p) {
   const transfertPrimes = Math.max(0, transfertPrimesBase - abs(transfertPrimesBase));
 
   // ── CSG / CRDS ───────────────────────────────────────────────────────────────
-  const baseCsgCrds = Math.max(0, (baseSoumisePC + totalPrimesSoumises + p.primes.psc + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + (p.alan?.employeur || 0));
+  const baseCsgCrds = Math.max(0, (baseSoumisePC + totalPrimesSoumises + p.primes.psc + p.primes.psc_options + p.primes.prevoyance_mgas + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + (p.alan?.employeur || 0));
   const csgDeductible = arrondir(baseCsgCrds * cst.taux_csg_deductible);
   const csgNonDeductible = arrondir(baseCsgCrds * cst.taux_csg_non_deductible);
   const crds = arrondir(baseCsgCrds * cst.taux_crds);
@@ -1042,6 +1053,8 @@ function calculerMontants(p) {
       (p.primes.rist_maj_isq > 0 ? p.primes.rist_maj_isq - absRistMaj : 0) +
       (p.primes.ind_compensatrice_csg > 0 ? p.primes.ind_compensatrice_csg - absIndCsg : 0) +
       (p.primes.psc > 0 ? p.primes.psc : 0) +
+      (p.primes.psc_options     > 0 ? p.primes.psc_options     : 0) +
+      (p.primes.prevoyance_mgas > 0 ? p.primes.prevoyance_mgas : 0) +
       (p.evenements.prime_performance > 0 ? p.evenements.prime_performance : 0) +
       (p.evenements.ott_pv_globale > 0 ? p.evenements.ott_pv_globale : 0) +
       (p.evenements.ott_pf > 0 ? p.evenements.ott_pf : 0) +
@@ -1072,7 +1085,7 @@ function calculerMontants(p) {
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
-  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.manuelles_non_imposables + retenueIsq);
+  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.psc_options - p.primes.prevoyance_mgas - p.primes.manuelles_non_imposables + retenueIsq);
   const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables);
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
@@ -1116,6 +1129,8 @@ function calculerMontants(p) {
     charges,
     totalPatronal,
     psc: p.primes.psc,
+    pscOptions:     p.primes.psc_options    || 0,
+    prevoyanceMgas: p.primes.prevoyance_mgas || 0,
     alanForfait:       p.alan?.forfait        || 0,
     alanSolidaire:     p.alan?.solidaire      || 0,
     alanActionSociale: p.alan?.action_sociale || 0,
@@ -1159,7 +1174,14 @@ const ROUTAGE_MODAL = {
   604959: { cible: "panel-absences", titre: "Absences et Carence" },
 
   202206: { cible: "panel-csg", titre: "Indemnité Compensatrice CSG" },
-  202354: { cible: "panel-psc", titre: "Participation à la PSC" },
+  202354: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "prevoyance" },
+  202483: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "alan" },
+  202510: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "prevoyance" },
+  720376: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "alan" },
+  720377: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "alan" },
+  720378: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "alan" },
+  720379: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "alan" },
+  720380: { cible: "panel-mgas-alan", titre: "Prévoyance / ALAN", onglet: "alan" },
   202558: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
   202559: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
   202560: { cible: "panel-ott", titre: "Organisation du Travail (Protocole)" },
@@ -1240,9 +1262,9 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       tr.setAttribute("role", "button");
       tr.setAttribute("tabindex", "0");
       tr.setAttribute("aria-label", `Modifier : ${libelle}`);
-      tr.onclick = () => ouvrirModal(route.cible, route.titre);
+      tr.onclick = () => { if (route.onglet) activerOngletMgasAlan(route.onglet); ouvrirModal(route.cible, route.titre); };
       tr.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ouvrirModal(route.cible, route.titre); }
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (route.onglet) activerOngletMgasAlan(route.onglet); ouvrirModal(route.cible, route.titre); }
       });
     } else if (libelle.includes("TAUX PERSONNALISE") && !isGhost) {
       classes.push("clickable-row");
@@ -1415,8 +1437,18 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   // ── PSC ───────────────────────────────────────────────────────────────────────
   const psc = paire(m.psc, mB?.psc);
   if (psc.affiche > 0 || psc.isGhost)
-    ajouterLigne("202354", "PARTICIPATION A LA PSC", psc.affiche, null, null, ["psc-15", "psc-7", "psc-5"], null, null,
+    ajouterLigne("202354", "PARTICIPATION A LA PSC", psc.affiche, null, null, ["psc-15"], null, null,
       { delta: psc.delta, deltaCol: 2, isGhost: psc.isGhost });
+
+  const pscOptions = paire(m.pscOptions, mB?.pscOptions);
+  if (pscOptions.affiche > 0 || pscOptions.isGhost)
+    ajouterLigne("202483", "PARTICIPATION PSC OPTIONS", pscOptions.affiche, null, null, ["psc-5"], null, null,
+      { delta: pscOptions.delta, deltaCol: 2, isGhost: pscOptions.isGhost });
+
+  const prevoyance = paire(m.prevoyanceMgas, mB?.prevoyanceMgas);
+  if (prevoyance.affiche > 0 || prevoyance.isGhost)
+    ajouterLigne("202510", "PARTICIPATION PREVOYANCE", prevoyance.affiche, null, null, ["psc-7"], null, null,
+      { delta: prevoyance.delta, deltaCol: 2, isGhost: prevoyance.isGhost });
 
   if (p.evenements.prime_performance > 0) ajouterLigne("202485", "PR. PARTAGE PERFORMANCE", p.evenements.prime_performance, null, null, ["input-perf"]);
 
@@ -1848,6 +1880,12 @@ async function initialiserApplication() {
     document.querySelectorAll("input[name='ir-zone']").forEach((radio) => {
       radio.addEventListener("change", () => { marquerConfigure("zone_residence"); calculerPaie(); });
     });
+
+    // Onglets MGAS / ALAN — switching et initialisation
+    document.querySelectorAll("input[name='tab-mgas-alan']").forEach(radio => {
+      radio.addEventListener("change", () => activerOngletMgasAlan(radio.value));
+    });
+    activerOngletMgasAlan("prevoyance");
 
     // ── Validation et restrictions de saisie ─────────────────────────────────
 
@@ -3262,7 +3300,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
   if (p.primes.psc > 0)
     ligne("Participation PSC",      p.primes.psc, null,
       { panel: "panel-psc", titre: "Participation PSC",
-        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["psc-15","psc-7","psc-5"]) });
+        onDelete: () => window.effacerValeurs({preventDefault:()=>{},stopPropagation:()=>{}}, ["psc-15"]) });
 
   // 10b. ALAN
   const alanTotalSal = (p.alan?.forfait||0) + (p.alan?.solidaire||0) + (p.alan?.action_sociale||0) + (p.alan?.aide_retraites||0);
