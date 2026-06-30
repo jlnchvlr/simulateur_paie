@@ -1586,6 +1586,100 @@ body.navigation-clavier .resultat-item:focus {
   padding: 8px 0 4px;
 }
 
+/* ── Rappels (panel-rappels) ────────────────────────────────────────────── */
+#rappels-liste:empty::before {
+  content: "Aucun rappel saisi — cliquez « + Ajouter » ci-dessous.";
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-style: italic;
+  padding: 8px 0 4px;
+}
+
+.rappel-row-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--dgfip-light);
+}
+.rappel-row-ui:last-child {
+  border-bottom: none;
+}
+.rp-row1 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.rp-row2 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.rappel-row-ui .rp-code {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-libelle-custom {
+  flex: 1;
+  min-width: 100px;
+  width: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-periode {
+  width: 150px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-type {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-family: var(--font-main);
+}
+.rappel-row-ui .rp-montant {
+  width: 80px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 0.75rem;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+/* Ligne de rappel dans la fiche de paie */
+.rappel-row td.col-code {
+  color: #999;
+}
+.rappel-row td.col-libelle.rappel-libelle span {
+  font-style: italic;
+  color: #555;
+  padding-left: 10px;
+}
+
 /* Tableau résultats */
 .proj-table {
   width: 100%;

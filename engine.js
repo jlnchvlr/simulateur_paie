@@ -82,6 +82,7 @@ const CHAMPS_REQUIS = new Set([
 
 const CLE_CONFIGURES = "icna_configures_v1";
 const CLE_PRIMES_MANUELLES = "icna_primes_manuelles_v1";
+const CLE_RAPPELS = "icna_rappels_v1";
 
 /**
  * Ensemble des champs déjà configurés par l'utilisateur.
@@ -290,7 +291,8 @@ const INDEX_RECHERCHE = [
   { titre: "Licence ISQ", motsCles: ["isq", "licence", "icna"], cible: "panel-rist-isq-licence" },
   { titre: "Complément ISQ", motsCles: ["isq", "complément", "complement", "cplt"], cible: "panel-rist-isq-complement" },
   { titre: "Majoration ISQ", motsCles: ["majoration", "isq"], cible: "panel-rist-isq-majoration" },
-  { titre: "✏️ Primes manuelles (saisie libre)", motsCles: ["manuel", "manuelle", "libre", "prime", "rappel", "exceptionnel", "autre", "divers"], cible: "panel-primes-manuelles" },
+  { titre: "✏️ Primes manuelles (saisie libre)", motsCles: ["manuel", "manuelle", "libre", "prime", "exceptionnel", "autre", "divers"], cible: "panel-primes-manuelles" },
+  { titre: "📋 Rappels (rétroactifs)", motsCles: ["rappel", "rétroactif", "retroactif", "arriéré", "arrie re", "régularisation", "regularisation", "antérieur", "anterieur", "trop-perçu", "correctif"], cible: "panel-rappels" },
 ];
 
 // =============================================================================
@@ -832,6 +834,15 @@ function getProfilDepuisInterface() {
     else           manuelles_non_imposables += montant;
   });
 
+  // Lecture des rappels depuis le panneau (sommes algébriques : positif = payer, négatif = déduire)
+  let rappels_imposables = 0, rappels_non_imposables = 0;
+  document.querySelectorAll("#rappels-liste .rappel-row-ui").forEach(row => {
+    const montant = parseFloat(row.querySelector(".rp-montant")?.value) || 0;
+    const nonImp  = row.querySelector(".rp-non-imp")?.checked === true;
+    if (!nonImp) rappels_imposables     += montant;
+    else         rappels_non_imposables += montant;
+  });
+
   return {
     grade: document.getElementById("input-grade")?.value || "",
     echelon: document.getElementById("input-echelon")?.value || "",
@@ -869,6 +880,8 @@ function getProfilDepuisInterface() {
       prevoyance_mgas:  document.getElementById("psc-7")?.checked ? 7 : 0,
       manuelles_imposables,
       manuelles_non_imposables,
+      rappels_imposables,
+      rappels_non_imposables,
     },
     alan: {
       forfait:        lireFloat("alan-forfait"),
@@ -998,7 +1011,8 @@ function calculerMontants(p) {
     p.primes.attractivite +
     p.primes.fidelisation +
     p.primes.inflation +
-    p.primes.manuelles_imposables; // primes manuelles imposables seulement (CSG/CRDS/RAFP s'appliquent)
+    p.primes.manuelles_imposables + // primes manuelles imposables seulement (CSG/CRDS/RAFP s'appliquent)
+    (p.primes.rappels_imposables || 0); // rappels imposables (algébrique : négatif = trop-perçu)
 
   // ── SFT ──────────────────────────────────────────────────────────────────────
   const sftBrut = calculerSFT(p.enfants, traitementBrut, cst.valeur_point_mensuel);
@@ -1063,7 +1077,10 @@ function calculerMontants(p) {
       (p.primes.attractivite > 0 ? p.primes.attractivite : 0) +
       // Primes manuelles : les deux types apparaissent dans le brut à payer
       (p.primes.manuelles_imposables     > 0 ? p.primes.manuelles_imposables     : 0) +
-      (p.primes.manuelles_non_imposables > 0 ? p.primes.manuelles_non_imposables : 0),
+      (p.primes.manuelles_non_imposables > 0 ? p.primes.manuelles_non_imposables : 0) +
+      // Rappels positifs (payer) — les négatifs vont dans À Déduire
+      (Math.max(0, p.primes.rappels_imposables     || 0)) +
+      (Math.max(0, p.primes.rappels_non_imposables || 0)),
   );
 
   const totalADeduire = arrondir(
@@ -1080,13 +1097,16 @@ function calculerMontants(p) {
       (p.alan?.forfait        || 0) +
       (p.alan?.solidaire      || 0) +
       (p.alan?.action_sociale || 0) +
-      (p.alan?.aide_retraites || 0),
+      (p.alan?.aide_retraites || 0) +
+      // Rappels négatifs (trop-perçu) → colonne À Déduire
+      Math.abs(Math.min(0, p.primes.rappels_imposables     || 0)) +
+      Math.abs(Math.min(0, p.primes.rappels_non_imposables || 0)),
   );
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
-  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.psc_options - p.primes.prevoyance_mgas - p.primes.manuelles_non_imposables + retenueIsq);
-  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables);
+  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.psc_options - p.primes.prevoyance_mgas - p.primes.manuelles_non_imposables - (p.primes.rappels_non_imposables || 0) + retenueIsq);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables - (p.primes.rappels_non_imposables || 0));
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal + (p.alan?.employeur || 0) - transfertPrimes);
@@ -1612,6 +1632,106 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   // PERF — flush unique : toutes les lignes injectées en 1 seul reflow
   tbody.appendChild(tbodyFrag);
 
+  // ── Rappels (injectés après le flush pour accéder au DOM) ────────────────────
+  (function injecterRappelsDansFiche() {
+    const tousRappels = _getRappels();
+    if (!tousRappels.length) return;
+
+    // Regroupe par codeParent pour insérer tous les rappels d'un même code ensemble
+    const parCode = {};
+    tousRappels.forEach(r => {
+      const key = r.codeParent || "__autre__";
+      (parCode[key] = parCode[key] || []).push(r);
+    });
+
+    // Cherche la dernière ligne du tbody ayant un id précis (gère les doublons d'id comme les RIST avec absences)
+    function derniereLigneParId(id) {
+      const rows = Array.from(tbody.children);
+      const matches = rows.filter(tr => tr.id === id);
+      return matches[matches.length - 1] || null;
+    }
+
+    Object.entries(parCode).forEach(([cle, rappels]) => {
+      // Noeud d'ancrage : la dernière ligne du code parent, ou avant .add-row pour "autre"
+      let ancre = null;
+      if (cle !== "__autre__") {
+        ancre = derniereLigneParId(`row-${cle}`);
+      }
+
+      // Crée les TR de rappel et les insère dans le bon ordre
+      rappels.forEach(r => {
+        if (!r.montant) return;
+        const montantAbs = Math.abs(r.montant);
+        const estDeduire = r.montant < 0;
+
+        const typeLabel  = r.type === "courante" ? "AN. COUR." : "AN. ANT.";
+        let libelleFiche;
+        if (r.codeParent === "" && r.libelleParent) {
+          libelleFiche = r.libelleParent.toUpperCase();
+        } else {
+          libelleFiche = r.periode
+            ? `RAPPEL ${typeLabel} - ${r.periode.toUpperCase()}`
+            : `RAPPEL ${typeLabel}`;
+        }
+
+        const tr = document.createElement("tr");
+        tr.id = `row-rappel-${r.id}`;
+        tr.className = "clickable-row rappel-row";
+        tr.title = "Cliquez pour modifier les rappels";
+        tr.setAttribute("role", "button");
+        tr.setAttribute("tabindex", "0");
+        tr.setAttribute("aria-label", `Modifier : ${libelleFiche}`);
+
+        const tooltip = !r.imposable ? "Non imposable (exclu du net imposable et du PAS)" : null;
+
+        const tdCode = document.createElement("td");
+        tdCode.className = "col-code";
+        tdCode.textContent = r.codeParent || "";
+
+        const tdLib = document.createElement("td");
+        tdLib.className = "col-libelle label rappel-libelle";
+        const spanLib = document.createElement("span");
+        spanLib.textContent = libelleFiche;
+        if (tooltip) spanLib.title = tooltip;
+        const croix = document.createElement("span");
+        croix.className = "delete-btn";
+        croix.title = "Retirer ce rappel";
+        croix.textContent = "✖";
+        croix.addEventListener("click", e => { e.stopPropagation(); window.supprimerRappelDeFiche(r.id); });
+        tdLib.append(spanLib, croix);
+
+        const tdPayer   = document.createElement("td");
+        tdPayer.className = "col-amount";
+        if (!estDeduire) tdPayer.textContent = formaterMontant(montantAbs);
+
+        const tdDeduire = document.createElement("td");
+        tdDeduire.className = "col-amount";
+        if (estDeduire) tdDeduire.textContent = formaterMontant(montantAbs);
+
+        const tdInfo = document.createElement("td");
+        tdInfo.className = "col-amount";
+
+        tr.append(tdCode, tdLib, tdPayer, tdDeduire, tdInfo);
+
+        tr.onclick = () => ouvrirModal("panel-rappels", "📋 Rappels");
+        tr.addEventListener("keydown", e => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ouvrirModal("panel-rappels", "📋 Rappels"); }
+        });
+
+        if (ancre) {
+          ancre.insertAdjacentElement("afterend", tr);
+          ancre = tr; // le prochain rappel du même code suit ce tr
+        } else {
+          // Fallback : avant la ligne "+ AJOUTER"
+          const addRow = tbody.querySelector(".add-row");
+          if (addRow) tbody.insertBefore(tr, addRow);
+          else tbody.appendChild(tr);
+          ancre = tr;
+        }
+      });
+    });
+  })();
+
   // ── Totaux dans le pied de page ───────────────────────────────────────────────
   const pending = configurationIncomplete();
   const showEl  = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? "" : "none"; };
@@ -1837,8 +1957,9 @@ async function initialiserApplication() {
     // Restauration du profil sauvegardé (après peuplement des listes)
     // FIX #4 — restaurerProfil() retourne l'objet profil : pas besoin de relire localStorage
     const profilSauve = restaurerProfil();
-    // Restauration des primes manuelles (clé localStorage séparée — liste dynamique)
+    // Restauration des primes manuelles et rappels (clés localStorage séparées — listes dynamiques)
     _restaurerPrimesManuelles();
+    _restaurerRappels();
     if (profilSauve) {
       // Le grade restauré peut avoir changé → reconstruire les échelons
       mettreAJourEchelons();
@@ -2921,7 +3042,204 @@ window.supprimerPrimeManuelle = function (index) {
 };
 
 // =============================================================================
-// 11c. VUE MOBILE — Liste condensée (Option D)
+// 11c. RAPPELS — Saisie structurée par ligne parente
+// =============================================================================
+
+/** Lignes de la fiche qui peuvent faire l'objet d'un rappel rétroactif. */
+const LIGNES_RAPPELLABLES = [
+  { code: "101000", libelle: "TRAITEMENT BRUT",              imposable: true  },
+  { code: "101070", libelle: "TRAITEMENT BRUT N.B.I.",       imposable: true  },
+  { code: "102000", libelle: "INDEMNITE DE RESIDENCE",       imposable: true  },
+  { code: "201958", libelle: "RIST PART FONCTIONS",          imposable: true  },
+  { code: "201959", libelle: "RIST PART EXPERIENCE PROF.",   imposable: true  },
+  { code: "201960", libelle: "RIST ISQ-LICENCE",             imposable: true  },
+  { code: "201961", libelle: "RIST ISQ-COMPLEMENT LIC.",     imposable: true  },
+  { code: "201962", libelle: "RIST ISQ-MAJORATION",          imposable: true  },
+  { code: "200176", libelle: "IND. TRAVAIL DE NUIT",         imposable: true  },
+  { code: "202559", libelle: "OTT PART FIXE",                imposable: true  },
+  { code: "202558", libelle: "OTT PART VARIABLE GLOBAL",     imposable: true  },
+  { code: "202560", libelle: "OTT PART VARIABLE OPT 3",      imposable: true  },
+  { code: "203001", libelle: "PRIME DE FIDELISATION",        imposable: true  },
+  { code: "",       libelle: "AUTRE (saisie libre)",         imposable: true  },
+];
+
+/**
+ * Lit les lignes de rappel depuis le DOM et retourne un tableau d'objets.
+ * @returns {{id:string, codeParent:string, libelleParent:string, periode:string, type:string, montant:number, imposable:boolean}[]}
+ */
+function _getRappels() {
+  const result = [];
+  document.querySelectorAll("#rappels-liste .rappel-row-ui").forEach(row => {
+    const id       = row.dataset.rappelId || "";
+    const code     = row.querySelector(".rp-code")?.value || "";
+    const periode  = row.querySelector(".rp-periode")?.value?.trim() || "";
+    const type     = row.querySelector(".rp-type")?.value || "courante";
+    const montant  = parseFloat(row.querySelector(".rp-montant")?.value) || 0;
+    const nonImp   = row.querySelector(".rp-non-imp")?.checked === true;
+    // Pour "AUTRE", libelle vient du champ rp-libelle-custom ; sinon depuis LIGNES_RAPPELLABLES
+    const libelleCustom = row.querySelector(".rp-libelle-custom")?.value?.trim() || "";
+    const ligneInfo     = LIGNES_RAPPELLABLES.find(l => l.code === code);
+    const libelleParent = code === "" ? libelleCustom : (ligneInfo?.libelle || code);
+    result.push({ id, codeParent: code, libelleParent, periode, type, montant, imposable: !nonImp });
+  });
+  return result;
+}
+
+function _sauvegarderRappels() {
+  try {
+    localStorage.setItem(CLE_RAPPELS, JSON.stringify(_getRappels()));
+  } catch (_) {}
+}
+
+function _restaurerRappels() {
+  try {
+    const raw = localStorage.getItem(CLE_RAPPELS);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    const container = document.getElementById("rappels-liste");
+    if (!container) return;
+    container.innerHTML = "";
+    data.forEach(({ id, codeParent, libelleParent, periode, type, montant, imposable }) => {
+      container.appendChild(_creerLigneRappel(id, codeParent, libelleParent, periode, type, montant, imposable));
+    });
+  } catch (e) {
+    console.warn("Restauration rappels impossible :", e);
+  }
+}
+
+let _rpCounter = 0;
+
+/**
+ * Construit une ligne de rappel via l'API DOM.
+ */
+function _creerLigneRappel(
+  id        = `r_${Date.now()}_${_rpCounter++}`,
+  code      = "",
+  libelle   = "",
+  periode   = "",
+  type      = "courante",
+  montant   = "",
+  imposable = true
+) {
+  const row = document.createElement("div");
+  row.className = "rappel-row-ui";
+  row.dataset.rappelId = id;
+
+  // ── Ligne 1 : sélecteur de ligne + période ─────────────────────────────────
+  const row1 = document.createElement("div");
+  row1.className = "rp-row1";
+
+  const selCode = document.createElement("select");
+  selCode.className = "rp-code";
+  LIGNES_RAPPELLABLES.forEach(l => {
+    const opt = new Option(l.code ? `${l.code} – ${l.libelle}` : l.libelle, l.code);
+    if (l.code === code) opt.selected = true;
+    selCode.appendChild(opt);
+  });
+
+  // Champ libellé custom (visible uniquement si "AUTRE")
+  const inputLibelle = document.createElement("input");
+  inputLibelle.type        = "text";
+  inputLibelle.className   = "rp-libelle-custom";
+  inputLibelle.placeholder = "Libellé (ex: Rappel IFM 2024)";
+  inputLibelle.value       = libelle;
+  inputLibelle.style.display = code === "" ? "" : "none";
+  inputLibelle.addEventListener("input", () => { _sauvegarderRappels(); calculerPaie(); });
+
+  const inputPeriode = document.createElement("input");
+  inputPeriode.type        = "text";
+  inputPeriode.className   = "rp-periode";
+  inputPeriode.placeholder = "Période (ex: JAN. À MAR. 2025)";
+  inputPeriode.value       = periode;
+  inputPeriode.addEventListener("input", () => { _sauvegarderRappels(); calculerPaie(); });
+
+  selCode.addEventListener("change", () => {
+    const estAutre = selCode.value === "";
+    inputLibelle.style.display = estAutre ? "" : "none";
+    // Auto-set imposable selon la ligne
+    const info = LIGNES_RAPPELLABLES.find(l => l.code === selCode.value);
+    if (info) cbNonImp.checked = !info.imposable;
+    _sauvegarderRappels();
+    calculerPaie();
+  });
+
+  row1.append(selCode, inputLibelle, inputPeriode);
+
+  // ── Ligne 2 : type + montant + non-imposable + suppr ─────────────────────
+  const row2 = document.createElement("div");
+  row2.className = "rp-row2";
+
+  const selType = document.createElement("select");
+  selType.className = "rp-type";
+  [["courante", "An. courante"], ["anterieure", "An. antérieure"]].forEach(([val, label]) => {
+    const opt = new Option(label, val);
+    if (val === type) opt.selected = true;
+    selType.appendChild(opt);
+  });
+  selType.addEventListener("change", () => { _sauvegarderRappels(); calculerPaie(); });
+
+  const inputMontant = document.createElement("input");
+  inputMontant.type        = "number";
+  inputMontant.className   = "rp-montant";
+  inputMontant.placeholder = "0.00";
+  inputMontant.step        = "1";
+  if (montant !== "") inputMontant.value = montant;
+  inputMontant.addEventListener("focus", () => inputMontant.select());
+  inputMontant.addEventListener("input", () => { _sauvegarderRappels(); calculerPaie(); });
+
+  const cbId   = `rp-nonim-${id}`;
+  const cbNonImp = document.createElement("input");
+  cbNonImp.type      = "checkbox";
+  cbNonImp.id        = cbId;
+  cbNonImp.className = "rp-non-imp pm-imp-non-cb";
+  cbNonImp.checked   = !imposable;
+  cbNonImp.addEventListener("change", () => { _sauvegarderRappels(); calculerPaie(); });
+
+  const lblCb = document.createElement("label");
+  lblCb.htmlFor     = cbId;
+  lblCb.textContent = "Non imposable";
+  lblCb.className   = "pm-nonimposable-label";
+
+  const toggleDiv = document.createElement("div");
+  toggleDiv.className = "pm-toggle-cb";
+  toggleDiv.append(cbNonImp, lblCb);
+
+  const btnSuppr = document.createElement("button");
+  btnSuppr.type        = "button";
+  btnSuppr.className   = "pm-suppr";
+  btnSuppr.title       = "Supprimer ce rappel";
+  btnSuppr.textContent = "✖";
+  btnSuppr.addEventListener("click", () => { row.remove(); _sauvegarderRappels(); calculerPaie(); });
+
+  row2.append(selType, inputMontant, toggleDiv, btnSuppr);
+
+  row.append(row1, row2);
+  return row;
+}
+
+window.ajouterRappel = function () {
+  const container = document.getElementById("rappels-liste");
+  if (!container) return;
+  const row = _creerLigneRappel();
+  container.appendChild(row);
+  row.querySelector(".rp-montant")?.focus();
+};
+
+/**
+ * Supprime un rappel par son ID depuis la fiche de paie (bouton ✖ de la ligne).
+ * @param {string} id - Identifiant du rappel (data-rappel-id)
+ */
+window.supprimerRappelDeFiche = function (id) {
+  const row = document.querySelector(`#rappels-liste .rappel-row-ui[data-rappel-id="${CSS.escape(id)}"]`);
+  if (row) {
+    row.remove();
+    _sauvegarderRappels();
+    calculerPaie();
+  }
+};
+
+// =============================================================================
+// 11d. VUE MOBILE — Liste condensée (Option D)
 // =============================================================================
 
 /**

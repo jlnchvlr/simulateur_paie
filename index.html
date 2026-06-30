@@ -318,6 +318,7 @@
             <button type="button" onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
             <button type="button" onclick="ouvrirModal('panel-mgas-alan', '🏥 MGAS / ALAN')">🏥 MGAS / ALAN</button>
             <button type="button" onclick="ouvrirModal('panel-primes-manuelles', '✏️ Primes manuelles')">✏️ Primes manuelles</button>
+            <button type="button" onclick="ouvrirModal('panel-rappels', '📋 Rappels')">📋 Rappels</button>
           </div>
         </div>
 
@@ -371,9 +372,20 @@
              ══════════════════════════════════════ -->
         <div id="panel-primes-manuelles" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <p class="panel-hint">Ajoutez vos primes non prévues dans le simulateur (rappels, remboursements, primes exceptionnelles…). Indiquez si chaque prime est imposable : cela affecte le net imposable et le calcul du PAS.</p>
+          <p class="panel-hint">Ajoutez vos primes non prévues dans le simulateur (remboursements, primes exceptionnelles…). Indiquez si chaque prime est imposable : cela affecte le net imposable et le calcul du PAS.</p>
           <div id="primes-manuelles-liste"></div>
           <button type="button" class="proj-add-btn" onclick="window.ajouterPrimeManuelle()">+ Ajouter une prime</button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Rappels rétroactifs
+             ══════════════════════════════════════ -->
+        <div id="panel-rappels" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-hint">Ajoutez les rappels rétroactifs sur n'importe quelle ligne de la fiche. Chaque rappel s'affiche directement sous la ligne concernée. Un montant négatif correspond à un trop-perçu (colonne À Déduire).</p>
+          <div id="rappels-liste"></div>
+          <button type="button" class="proj-add-btn" onclick="window.ajouterRappel()">+ Ajouter un rappel</button>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
