@@ -839,12 +839,19 @@ function getProfilDepuisInterface() {
   });
 
   // Lecture des rappels depuis le panneau (sommes algébriques : positif = payer, négatif = déduire)
-  let rappels_imposables = 0, rappels_non_imposables = 0;
+  // Les rappels PSC/prévoyance sont imposables (CSG) mais doivent aussi être déduits du net social.
+  const PSC_PREVOYANCE_RAPPEL_CODES = new Set(["202354", "202483", "202510"]);
+  let rappels_imposables = 0, rappels_non_imposables = 0, rappels_psc_prevoyance = 0;
   document.querySelectorAll("#rappels-liste .rappel-row-ui").forEach(row => {
     const montant = parseFloat(row.querySelector(".rp-montant")?.value) || 0;
     const nonImp  = row.querySelector(".rp-non-imp")?.checked === true;
-    if (!nonImp) rappels_imposables     += montant;
-    else         rappels_non_imposables += montant;
+    const code    = row.querySelector(".rp-code")?.value || "";
+    if (!nonImp) {
+      rappels_imposables += montant;
+      if (PSC_PREVOYANCE_RAPPEL_CODES.has(code)) rappels_psc_prevoyance += montant;
+    } else {
+      rappels_non_imposables += montant;
+    }
   });
 
   return {
@@ -886,6 +893,7 @@ function getProfilDepuisInterface() {
       manuelles_non_imposables,
       rappels_imposables,
       rappels_non_imposables,
+      rappels_psc_prevoyance,
     },
     alan: {
       forfait:        lireFloat("alan-forfait"),
@@ -1036,7 +1044,49 @@ function calculerMontants(p) {
   const transfertPrimes = Math.max(0, transfertPrimesBase - abs(transfertPrimesBase));
 
   // ── CSG / CRDS ───────────────────────────────────────────────────────────────
-  const baseCsgCrds = Math.max(0, (baseSoumisePC + totalPrimesSoumises + p.primes.psc + p.primes.psc_options + p.primes.prevoyance_mgas + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + (p.alan?.employeur || 0));
+  // Les cotisations PSC/prévoyance ne sont pas des frais pro → pas d'abattement 1,75 %
+  // Elles s'ajoutent directement à la base, comme l'avantage ALAN
+  const pscSansAbat = p.primes.psc + p.primes.psc_options + p.primes.prevoyance_mgas + (p.primes.rappels_psc_prevoyance || 0);
+  const totalPrimesSoumisesHorsPSC = totalPrimesSoumises - (p.primes.rappels_psc_prevoyance || 0);
+  const baseCsgCrdsRaw = (baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + pscSansAbat + (p.alan?.employeur || 0);
+  const baseCsgCrds = Math.max(0, arrondir(baseCsgCrdsRaw));
+  // Diagnostic CSG – F12 → Console pour comparer à la vraie fiche
+  console.group("[CSG debug] Assiette CSG/CRDS");
+  console.log("  baseSoumisePC       =", baseSoumisePC.toFixed(2));
+  console.log("  baseResidenceReelle =", baseResidenceReelle.toFixed(2));
+  console.log("  nuit                =", nuit.toFixed(2));
+  console.log("  rist_fonctions      =", (p.primes.rist_fonctions - absRistFct).toFixed(2));
+  console.log("  rist_exper_prof     =", (p.primes.rist_exper_prof - absRistExp).toFixed(2));
+  console.log("  rist_lic_isq        =", (p.primes.rist_lic_isq - absRistIsq).toFixed(2));
+  console.log("  rist_cplt_lic_isq   =", (p.primes.rist_cplt_lic_isq - absRistCplt).toFixed(2));
+  console.log("  rist_maj_isq        =", (p.primes.rist_maj_isq - absRistMaj).toFixed(2));
+  console.log("  ind_csg             =", (p.primes.ind_compensatrice_csg - absIndCsg).toFixed(2));
+  console.log("  ott_pv_globale      =", p.evenements.ott_pv_globale.toFixed(2));
+  console.log("  ott_pf              =", p.evenements.ott_pf.toFixed(2));
+  console.log("  prime_performance   =", p.evenements.prime_performance.toFixed(2));
+  console.log("  attractivite        =", p.primes.attractivite.toFixed(2));
+  console.log("  fidelisation        =", p.primes.fidelisation.toFixed(2));
+  console.log("  inflation           =", p.primes.inflation.toFixed(2));
+  console.log("  manuelles_imp       =", p.primes.manuelles_imposables.toFixed(2));
+  console.log("  rappels_imposables  =", (p.primes.rappels_imposables || 0).toFixed(2));
+  console.log("  totalPrimesSoumises =", totalPrimesSoumises.toFixed(2));
+  console.log("  psc                 =", p.primes.psc.toFixed(2));
+  console.log("  psc_options         =", p.primes.psc_options.toFixed(2));
+  console.log("  prevoyance_mgas     =", p.primes.prevoyance_mgas.toFixed(2));
+  console.log("  montantSFT          =", montantSFT.toFixed(2));
+  console.log("  - transfertPrimes   =", transfertPrimes.toFixed(2));
+  console.log("  - retenueIsq        =", retenueIsq.toFixed(2));
+  const _sumAvantAbat = baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq;
+  console.log("  SOMME avant abat.   =", _sumAvantAbat.toFixed(5), "(PSC/prév. hors abattement)");
+  console.log("  × 0.9825            =", (_sumAvantAbat * 0.9825).toFixed(5));
+  console.log("  + PSC sans abat.    =", pscSansAbat.toFixed(2));
+  console.log("  + alan employeur    =", (p.alan?.employeur || 0).toFixed(2));
+  console.log("  baseCsgCrdsRaw      =", baseCsgCrdsRaw.toFixed(5));
+  console.log("  baseCsgCrds (arr.)  =", baseCsgCrds.toFixed(2));
+  console.log("  → CSG ND (2.4%)    =", arrondir(baseCsgCrds * 0.024));
+  console.log("  → CSG D  (6.8%)    =", arrondir(baseCsgCrds * 0.068));
+  console.log("  → CRDS   (0.5%)    =", arrondir(baseCsgCrds * 0.005));
+  console.groupEnd();
   const csgDeductible = arrondir(baseCsgCrds * cst.taux_csg_deductible);
   const csgNonDeductible = arrondir(baseCsgCrds * cst.taux_csg_non_deductible);
   const crds = arrondir(baseCsgCrds * cst.taux_crds);
@@ -1109,7 +1159,7 @@ function calculerMontants(p) {
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
-  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.psc_options - p.primes.prevoyance_mgas - p.primes.manuelles_non_imposables - (p.primes.rappels_non_imposables || 0) + retenueIsq);
+  const netSocial = arrondir(netAPayerAvantImpot - p.primes.forfait_mobilites - p.primes.psc - p.primes.psc_options - p.primes.prevoyance_mgas - p.primes.manuelles_non_imposables - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
   const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - p.primes.forfait_mobilites - p.primes.manuelles_non_imposables - (p.primes.rappels_non_imposables || 0));
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
