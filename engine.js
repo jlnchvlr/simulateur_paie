@@ -84,6 +84,10 @@ const CLE_CONFIGURES = "icna_configures_v1";
 const CLE_PRIMES_MANUELLES = "icna_primes_manuelles_v1";
 const CLE_RAPPELS = "icna_rappels_v1";
 
+// Derniers résultats de calcul — utilisés par l'auto-calc des rappels
+let _dernierProfil    = null;
+let _derniersMontants = null;
+
 /**
  * Ensemble des champs déjà configurés par l'utilisateur.
  * Persisté séparément dans localStorage.
@@ -1634,6 +1638,12 @@ function dessinerFiche(p, m, pB = null, mB = null) {
 
   // ── Rappels (injectés après le flush pour accéder au DOM) ────────────────────
   (function injecterRappelsDansFiche() {
+    // Réinitialise les marqueurs orphelins du rendu précédent
+    document.querySelectorAll("#rappels-liste .rappel-row-ui.rp-orphan").forEach(div => {
+      div.classList.remove("rp-orphan");
+      div.querySelector(".rp-orphan-msg")?.remove();
+    });
+
     const tousRappels = _getRappels();
     if (!tousRappels.length) return;
 
@@ -1656,6 +1666,24 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       let ancre = null;
       if (cle !== "__autre__") {
         ancre = derniereLigneParId(`row-${cle}`);
+      }
+
+      // Si la ligne de base est absente, marquer les rappels orphelins dans le panel
+      if (!ancre && cle !== "__autre__") {
+        rappels.forEach(r => {
+          const panelRow = document.querySelector(`#rappels-liste .rappel-row-ui[data-rappel-id="${r.id}"]`);
+          if (!panelRow) return;
+          panelRow.classList.add("rp-orphan");
+          if (!panelRow.querySelector(".rp-orphan-msg")) {
+            const msg = document.createElement("p");
+            msg.className = "rp-orphan-msg";
+            const ligneInfo = LIGNES_RAPPELLABLES.find(l => l.code === r.codeParent);
+            const libelle   = ligneInfo?.libelle || r.libelleParent || r.codeParent;
+            msg.textContent = `⚠️ La ligne "${libelle}" n'est pas dans votre fiche. Activez-la d'abord.`;
+            panelRow.appendChild(msg);
+          }
+        });
+        return; // ne rien insérer dans la fiche pour ce groupe
       }
 
       // Crée les TR de rappel et les insère dans le bon ordre
@@ -1807,6 +1835,10 @@ function dessinerFiche(p, m, pB = null, mB = null) {
 function calculerPaie() {
   const profilA = getProfilDepuisInterface();
   const mA      = calculerMontants(profilA);
+  // Stocker pour l'auto-calc des rappels (sans redéclencher calculerPaie)
+  _dernierProfil    = profilA;
+  _derniersMontants = mA;
+
   majPreview("preview-nuits",              mA.nuit);
   majPreview("preview-rist-fonctions",     profilA.primes.rist_fonctions);
   majPreview("preview-rist-experience",    profilA.primes.rist_exper_prof);
@@ -1819,6 +1851,8 @@ function calculerPaie() {
 
   dessinerFiche(profilA, mA, profilB, mB);
   majDeltaNet(mA, mB);
+  // Rafraîchir les montants auto-calculés des rappels (sans boucle infinie)
+  _rafraichirAutoCalcRappels();
 
   // Vue mobile — liste condensée (Option D)
   // dessinerFicheMobile est appelée dans tous les cas (is-mobile vérifié en CSS)
@@ -3047,25 +3081,73 @@ window.supprimerPrimeManuelle = function (index) {
 
 /** Lignes de la fiche qui peuvent faire l'objet d'un rappel rétroactif. */
 const LIGNES_RAPPELLABLES = [
-  { code: "101000", libelle: "TRAITEMENT BRUT",              imposable: true  },
-  { code: "101070", libelle: "TRAITEMENT BRUT N.B.I.",       imposable: true  },
-  { code: "102000", libelle: "INDEMNITE DE RESIDENCE",       imposable: true  },
-  { code: "201958", libelle: "RIST PART FONCTIONS",          imposable: true  },
-  { code: "201959", libelle: "RIST PART EXPERIENCE PROF.",   imposable: true  },
-  { code: "201960", libelle: "RIST ISQ-LICENCE",             imposable: true  },
-  { code: "201961", libelle: "RIST ISQ-COMPLEMENT LIC.",     imposable: true  },
-  { code: "201962", libelle: "RIST ISQ-MAJORATION",          imposable: true  },
-  { code: "200176", libelle: "IND. TRAVAIL DE NUIT",         imposable: true  },
-  { code: "202559", libelle: "OTT PART FIXE",                imposable: true  },
-  { code: "202558", libelle: "OTT PART VARIABLE GLOBAL",     imposable: true  },
-  { code: "202560", libelle: "OTT PART VARIABLE OPT 3",      imposable: true  },
-  { code: "203001", libelle: "PRIME DE FIDELISATION",        imposable: true  },
-  { code: "",       libelle: "AUTRE (saisie libre)",         imposable: true  },
+  // ── Éléments fixes ─────────────────────────────────────────────────────────
+  { code: "101000", libelle: "TRAITEMENT BRUT",                imposable: true  },
+  { code: "101070", libelle: "TRAITEMENT BRUT N.B.I.",         imposable: true  },
+  { code: "102000", libelle: "INDEMNITE DE RESIDENCE",         imposable: true  },
+  { code: "200200", libelle: "SUPPL. FAMILIAL DE TRAITEMENT",  imposable: true  },
+  // ── RIST / ISQ ──────────────────────────────────────────────────────────────
+  { code: "201958", libelle: "RIST PART FONCTIONS",            imposable: true  },
+  { code: "201959", libelle: "RIST PART EXPERIENCE PROF.",     imposable: true  },
+  { code: "201960", libelle: "RIST ISQ-LICENCE",               imposable: true  },
+  { code: "201961", libelle: "RIST ISQ-COMPLEMENT LIC.",       imposable: true  },
+  { code: "201962", libelle: "RIST ISQ-MAJORATION",            imposable: true  },
+  { code: "202206", libelle: "IND. COMPENSATRICE CSG",         imposable: true  },
+  // ── Éléments variables ───────────────────────────────────────────────────────
+  { code: "201000", libelle: "INDEM. POUVOIR D'ACHAT",         imposable: true  },
+  { code: "202485", libelle: "PRIME PARTAGE PERFORMANCE",      imposable: true  },
+  { code: "202559", libelle: "OTT PART FIXE",                  imposable: true  },
+  { code: "202558", libelle: "OTT PART VARIABLE GLOBAL",       imposable: true  },
+  { code: "202560", libelle: "OTT PART VARIABLE OPT 3",        imposable: true  },
+  { code: "203001", libelle: "PRIME DE FIDELISATION",          imposable: true  },
+  // ── Mutuelle / Prévoyance ──────────────────────────────────────────────────
+  { code: "202354", libelle: "PARTICIPATION PSC",              imposable: false },
+  { code: "202483", libelle: "PSC OPTIONS",                    imposable: false },
+  { code: "202510", libelle: "PRÉVOYANCE MGAS",                imposable: false },
+  // ── ALAN ──────────────────────────────────────────────────────────────────
+  { code: "720376", libelle: "ALAN PART FORFAIT",              imposable: false },
+  { code: "720377", libelle: "ALAN PART SOLIDAIRE",            imposable: false },
+  { code: "720378", libelle: "ALAN ACTION SOCIALE",            imposable: false },
+  { code: "720379", libelle: "ALAN AIDE RETRAITES",            imposable: false },
+  { code: "720380", libelle: "ALAN PART EMPLOYEUR",            imposable: false },
+  // ── Autre ─────────────────────────────────────────────────────────────────
+  { code: "",       libelle: "AUTRE (saisie libre)",           imposable: true  },
 ];
 
 /**
+ * Accesseurs du montant mensuel de référence par code de ligne.
+ * Permet le calcul automatique : (montant_actuel - montant_précédent) × nb_mois.
+ * @type {Object.<string, function(ProfilAgent, MontantsCalcules): number>}
+ */
+const MONTANT_MENSUEL_MAP = {
+  "101000": (p, m) => m.traitementBrut,
+  "101070": (p, m) => m.montantNbi,
+  "102000": (p, m) => m.indemniteResidence,
+  "200200": (p, m) => m.montantSFT,
+  "201000": (p, m) => p.primes.inflation,
+  "201958": (p, m) => p.primes.rist_fonctions,
+  "201959": (p, m) => p.primes.rist_exper_prof,
+  "201960": (p, m) => p.primes.rist_lic_isq,
+  "201961": (p, m) => p.primes.rist_cplt_lic_isq,
+  "201962": (p, m) => p.primes.rist_maj_isq,
+  "202206": (p, m) => p.primes.ind_compensatrice_csg,
+  "202354": (p, m) => m.psc,
+  "202483": (p, m) => m.pscOptions,
+  "202510": (p, m) => m.prevoyanceMgas,
+  "202558": (p, m) => p.evenements.ott_pv_globale,
+  "202559": (p, m) => p.evenements.ott_pf,
+  "202560": (p, m) => p.evenements.ott_pv_opt32,
+  "203001": (p, m) => p.primes.fidelisation,
+  "720376": (p, m) => p.alan?.forfait        || 0,
+  "720377": (p, m) => p.alan?.solidaire      || 0,
+  "720378": (p, m) => p.alan?.action_sociale || 0,
+  "720379": (p, m) => p.alan?.aide_retraites || 0,
+  "720380": (p, m) => p.alan?.employeur      || 0,
+};
+
+/**
  * Lit les lignes de rappel depuis le DOM et retourne un tableau d'objets.
- * @returns {{id:string, codeParent:string, libelleParent:string, periode:string, type:string, montant:number, imposable:boolean}[]}
+ * @returns {{id, codeParent, libelleParent, periode, type, montant, imposable, autoCalc, nbMois, montantMensuelPrecedent}[]}
  */
 function _getRappels() {
   const result = [];
@@ -3076,11 +3158,13 @@ function _getRappels() {
     const type     = row.querySelector(".rp-type")?.value || "courante";
     const montant  = parseFloat(row.querySelector(".rp-montant")?.value) || 0;
     const nonImp   = row.querySelector(".rp-non-imp")?.checked === true;
-    // Pour "AUTRE", libelle vient du champ rp-libelle-custom ; sinon depuis LIGNES_RAPPELLABLES
+    const autoCalc = row.querySelector(".rp-auto-cb")?.checked === true;
+    const nbMois   = parseFloat(row.querySelector(".rp-nb-mois")?.value) || 0;
+    const montantMensuelPrecedent = parseFloat(row.querySelector(".rp-montant-prec")?.value) || 0;
     const libelleCustom = row.querySelector(".rp-libelle-custom")?.value?.trim() || "";
     const ligneInfo     = LIGNES_RAPPELLABLES.find(l => l.code === code);
     const libelleParent = code === "" ? libelleCustom : (ligneInfo?.libelle || code);
-    result.push({ id, codeParent: code, libelleParent, periode, type, montant, imposable: !nonImp });
+    result.push({ id, codeParent: code, libelleParent, periode, type, montant, imposable: !nonImp, autoCalc, nbMois, montantMensuelPrecedent });
   });
   return result;
 }
@@ -3099,8 +3183,12 @@ function _restaurerRappels() {
     const container = document.getElementById("rappels-liste");
     if (!container) return;
     container.innerHTML = "";
-    data.forEach(({ id, codeParent, libelleParent, periode, type, montant, imposable }) => {
-      container.appendChild(_creerLigneRappel(id, codeParent, libelleParent, periode, type, montant, imposable));
+    data.forEach(r => {
+      container.appendChild(_creerLigneRappel(
+        r.id, r.codeParent, r.libelleParent, r.periode, r.type,
+        r.montant, r.imposable,
+        r.autoCalc || false, r.nbMois || 0, r.montantMensuelPrecedent || 0
+      ));
     });
   } catch (e) {
     console.warn("Restauration rappels impossible :", e);
@@ -3110,7 +3198,48 @@ function _restaurerRappels() {
 let _rpCounter = 0;
 
 /**
- * Construit une ligne de rappel via l'API DOM.
+ * Met à jour le montant d'un rappel en mode auto-calc.
+ * Appelée sans déclencher calculerPaie() pour éviter les boucles.
+ */
+function _updateAutoCalcRappel(row) {
+  const cbAuto = row.querySelector(".rp-auto-cb");
+  if (!cbAuto?.checked) return;
+  const code   = row.querySelector(".rp-code")?.value;
+  const nbMois = parseFloat(row.querySelector(".rp-nb-mois")?.value) || 0;
+  const montPrec = parseFloat(row.querySelector(".rp-montant-prec")?.value) || 0;
+  const accessor = MONTANT_MENSUEL_MAP[code];
+  if (!accessor || !_dernierProfil || !_derniersMontants) return;
+  const montantActuel = accessor(_dernierProfil, _derniersMontants);
+  const total = arrondir((montantActuel - montPrec) * nbMois);
+  const inputMontant = row.querySelector(".rp-montant");
+  if (inputMontant) {
+    inputMontant.value    = total !== 0 ? total : "";
+    inputMontant.readOnly = true;
+  }
+  const preview = row.querySelector(".rp-auto-preview");
+  if (preview) {
+    preview.textContent = nbMois > 0
+      ? `${formaterMontant(montantActuel)} €/mois × ${nbMois} = ${formaterMontant(total)} €`
+      : "Entrez le nombre de mois";
+  }
+}
+
+/**
+ * Rafraîchit tous les rappels en mode auto-calc après un recalcul de la fiche.
+ * N'appelle PAS calculerPaie() pour éviter la boucle infinie.
+ */
+function _rafraichirAutoCalcRappels() {
+  let changed = false;
+  document.querySelectorAll("#rappels-liste .rappel-row-ui").forEach(row => {
+    const avant = row.querySelector(".rp-montant")?.value;
+    _updateAutoCalcRappel(row);
+    if (row.querySelector(".rp-montant")?.value !== avant) changed = true;
+  });
+  if (changed) _sauvegarderRappels(); // persiste sans recalculer
+}
+
+/**
+ * Construit une ligne de rappel via l'API DOM (layout vertical 3 rows).
  */
 function _creerLigneRappel(
   id        = `r_${Date.now()}_${_rpCounter++}`,
@@ -3119,13 +3248,16 @@ function _creerLigneRappel(
   periode   = "",
   type      = "courante",
   montant   = "",
-  imposable = true
+  imposable = true,
+  autoCalc  = false,
+  nbMois    = 0,
+  montantMensuelPrecedent = 0
 ) {
   const row = document.createElement("div");
   row.className = "rappel-row-ui";
   row.dataset.rappelId = id;
 
-  // ── Ligne 1 : sélecteur de ligne + période ─────────────────────────────────
+  // ── Row 1 : sélecteur de ligne + bouton suppr ──────────────────────────────
   const row1 = document.createElement("div");
   row1.className = "rp-row1";
 
@@ -3137,15 +3269,34 @@ function _creerLigneRappel(
     selCode.appendChild(opt);
   });
 
+  const selType = document.createElement("select");
+  selType.className = "rp-type";
+  [["courante", "An. cour."], ["anterieure", "An. ant."]].forEach(([val, label]) => {
+    const opt = new Option(label, val);
+    if (val === type) opt.selected = true;
+    selType.appendChild(opt);
+  });
+  selType.addEventListener("change", () => { _sauvegarderRappels(); calculerPaie(); });
+
+  const btnSuppr = document.createElement("button");
+  btnSuppr.type        = "button";
+  btnSuppr.className   = "pm-suppr rp-suppr";
+  btnSuppr.title       = "Supprimer ce rappel";
+  btnSuppr.textContent = "✖";
+  btnSuppr.addEventListener("click", () => { row.remove(); _sauvegarderRappels(); calculerPaie(); });
+
+  row1.append(selCode, selType, btnSuppr);
+
   // Champ libellé custom (visible uniquement si "AUTRE")
   const inputLibelle = document.createElement("input");
   inputLibelle.type        = "text";
   inputLibelle.className   = "rp-libelle-custom";
-  inputLibelle.placeholder = "Libellé (ex: Rappel IFM 2024)";
+  inputLibelle.placeholder = "Libellé libre (ex: Rappel IFM 2024)";
   inputLibelle.value       = libelle;
   inputLibelle.style.display = code === "" ? "" : "none";
   inputLibelle.addEventListener("input", () => { _sauvegarderRappels(); calculerPaie(); });
 
+  // ── Période : ligne full-width autonome ────────────────────────────────────
   const inputPeriode = document.createElement("input");
   inputPeriode.type        = "text";
   inputPeriode.className   = "rp-periode";
@@ -3153,41 +3304,101 @@ function _creerLigneRappel(
   inputPeriode.value       = periode;
   inputPeriode.addEventListener("input", () => { _sauvegarderRappels(); calculerPaie(); });
 
-  selCode.addEventListener("change", () => {
-    const estAutre = selCode.value === "";
-    inputLibelle.style.display = estAutre ? "" : "none";
-    // Auto-set imposable selon la ligne
-    const info = LIGNES_RAPPELLABLES.find(l => l.code === selCode.value);
-    if (info) cbNonImp.checked = !info.imposable;
-    _sauvegarderRappels();
-    calculerPaie();
-  });
-
-  row1.append(selCode, inputLibelle, inputPeriode);
-
-  // ── Ligne 2 : type + montant + non-imposable + suppr ─────────────────────
-  const row2 = document.createElement("div");
-  row2.className = "rp-row2";
-
-  const selType = document.createElement("select");
-  selType.className = "rp-type";
-  [["courante", "An. courante"], ["anterieure", "An. antérieure"]].forEach(([val, label]) => {
-    const opt = new Option(label, val);
-    if (val === type) opt.selected = true;
-    selType.appendChild(opt);
-  });
-  selType.addEventListener("change", () => { _sauvegarderRappels(); calculerPaie(); });
+  // ── Row 3 : montant + auto-calc ───────────────────────────────────────────
+  const row3 = document.createElement("div");
+  row3.className = "rp-row3";
 
   const inputMontant = document.createElement("input");
   inputMontant.type        = "number";
   inputMontant.className   = "rp-montant";
   inputMontant.placeholder = "0.00";
   inputMontant.step        = "1";
+  inputMontant.readOnly    = autoCalc;
   if (montant !== "") inputMontant.value = montant;
-  inputMontant.addEventListener("focus", () => inputMontant.select());
+  inputMontant.addEventListener("focus", () => { if (!inputMontant.readOnly) inputMontant.select(); });
   inputMontant.addEventListener("input", () => { _sauvegarderRappels(); calculerPaie(); });
 
-  const cbId   = `rp-nonim-${id}`;
+  // ── Bloc auto-calc ────────────────────────────────────────────────────────
+  const cbAutoId = `rp-auto-${id}`;
+  const cbAuto   = document.createElement("input");
+  cbAuto.type      = "checkbox";
+  cbAuto.id        = cbAutoId;
+  cbAuto.className = "rp-auto-cb pm-imp-non-cb";
+  cbAuto.checked   = autoCalc;
+  // Désactiver si pas de mapping pour ce code
+  const hasMapping = code !== "" && !!MONTANT_MENSUEL_MAP[code];
+  if (!hasMapping) { cbAuto.disabled = true; cbAuto.title = "Auto-calcul non disponible pour cette ligne"; }
+
+  const lblAuto = document.createElement("label");
+  lblAuto.htmlFor   = cbAutoId;
+  lblAuto.textContent = "Auto";
+  lblAuto.className = "pm-nonimposable-label";
+  lblAuto.title     = "Calcul automatique : montant mensuel × nb de mois";
+
+  const autoToggleDiv = document.createElement("div");
+  autoToggleDiv.className = "pm-toggle-cb rp-auto-toggle";
+  autoToggleDiv.append(cbAuto, lblAuto);
+
+  // Champs visibles uniquement en mode auto
+  const autoFields = document.createElement("div");
+  autoFields.className = "rp-auto-fields" + (autoCalc ? " visible" : "");
+
+  const inputNbMois = document.createElement("input");
+  inputNbMois.type        = "number";
+  inputNbMois.className   = "rp-nb-mois";
+  inputNbMois.placeholder = "Mois";
+  inputNbMois.min         = "1";
+  inputNbMois.step        = "1";
+  if (nbMois > 0) inputNbMois.value = nbMois;
+
+  const spanX = document.createElement("span");
+  spanX.className   = "rp-auto-sep";
+  spanX.textContent = "−";
+  spanX.title       = "Montant mensuel précédent (0 si c'est entièrement nouveau)";
+
+  const inputMontPrec = document.createElement("input");
+  inputMontPrec.type        = "number";
+  inputMontPrec.className   = "rp-montant-prec";
+  inputMontPrec.placeholder = "Mt/mois préc.";
+  inputMontPrec.min         = "0";
+  inputMontPrec.step        = "1";
+  if (montantMensuelPrecedent > 0) inputMontPrec.value = montantMensuelPrecedent;
+
+  const spanPreview = document.createElement("span");
+  spanPreview.className = "rp-auto-preview";
+
+  autoFields.append(inputNbMois, spanX, inputMontPrec, spanPreview);
+
+  // ── Événements auto-calc ──────────────────────────────────────────────────
+  const triggerAutoCalc = () => {
+    _updateAutoCalcRappel(row);
+    _sauvegarderRappels();
+    calculerPaie();
+  };
+  inputNbMois.addEventListener("input",  triggerAutoCalc);
+  inputMontPrec.addEventListener("input", triggerAutoCalc);
+
+  cbAuto.addEventListener("change", () => {
+    const on = cbAuto.checked;
+    autoFields.classList.toggle("visible", on);
+    inputMontant.readOnly = on;
+    if (on) {
+      _updateAutoCalcRappel(row);
+    } else {
+      inputMontant.readOnly = false;
+      inputMontant.value    = "";
+    }
+    _sauvegarderRappels();
+    calculerPaie();
+  });
+
+  row3.append(inputMontant, autoToggleDiv, autoFields);
+
+  // ── Row 4 : non-imposable ─────────────────────────────────────────────────
+  const row4 = document.createElement("div");
+  row4.className = "rp-row4";
+
+  const cbId     = `rp-nonim-${id}`;
   const cbNonImp = document.createElement("input");
   cbNonImp.type      = "checkbox";
   cbNonImp.id        = cbId;
@@ -3204,16 +3415,27 @@ function _creerLigneRappel(
   toggleDiv.className = "pm-toggle-cb";
   toggleDiv.append(cbNonImp, lblCb);
 
-  const btnSuppr = document.createElement("button");
-  btnSuppr.type        = "button";
-  btnSuppr.className   = "pm-suppr";
-  btnSuppr.title       = "Supprimer ce rappel";
-  btnSuppr.textContent = "✖";
-  btnSuppr.addEventListener("click", () => { row.remove(); _sauvegarderRappels(); calculerPaie(); });
+  row4.append(toggleDiv);
 
-  row2.append(selType, inputMontant, toggleDiv, btnSuppr);
+  // ── Changement de code : mise à jour imposable + disponibilité auto-calc ───
+  selCode.addEventListener("change", () => {
+    const newCode  = selCode.value;
+    const estAutre = newCode === "";
+    inputLibelle.style.display = estAutre ? "" : "none";
+    const info = LIGNES_RAPPELLABLES.find(l => l.code === newCode);
+    if (info) cbNonImp.checked = !info.imposable;
+    const canAuto = newCode !== "" && !!MONTANT_MENSUEL_MAP[newCode];
+    cbAuto.disabled = !canAuto;
+    if (!canAuto && cbAuto.checked) {
+      cbAuto.checked = false;
+      autoFields.classList.remove("visible");
+      inputMontant.readOnly = false;
+    }
+    _sauvegarderRappels();
+    calculerPaie();
+  });
 
-  row.append(row1, row2);
+  row.append(row1, inputLibelle, inputPeriode, row3, row4);
   return row;
 }
 

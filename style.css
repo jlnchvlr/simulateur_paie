@@ -1599,21 +1599,29 @@ body.navigation-clavier .resultat-item:focus {
 .rappel-row-ui {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   margin-top: 8px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--dgfip-light);
 }
 .rappel-row-ui:last-child {
   border-bottom: none;
 }
+/* Row 1 : [code select flex] [type select fixe] [btn suppr] */
 .rp-row1 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+/* Row 3 : montant + auto-toggle + champs auto */
+.rp-row3 {
   display: flex;
   gap: 6px;
   align-items: center;
   flex-wrap: wrap;
 }
-.rp-row2 {
+/* Row 4 : non-imposable */
+.rp-row4 {
   display: flex;
   gap: 6px;
   align-items: center;
@@ -1621,32 +1629,10 @@ body.navigation-clavier .resultat-item:focus {
 .rappel-row-ui .rp-code {
   flex: 1;
   min-width: 0;
-  width: auto;
   padding: 4px 6px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.6875rem;
-  font-family: var(--font-main);
-  box-sizing: border-box;
-}
-.rappel-row-ui .rp-libelle-custom {
-  flex: 1;
-  min-width: 100px;
-  width: auto;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-family: var(--font-main);
-  box-sizing: border-box;
-}
-.rappel-row-ui .rp-periode {
-  width: 150px;
-  flex-shrink: 0;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.75rem;
   font-family: var(--font-main);
   box-sizing: border-box;
 }
@@ -1658,8 +1644,29 @@ body.navigation-clavier .resultat-item:focus {
   font-size: 0.6875rem;
   font-family: var(--font-main);
 }
+.rp-suppr {
+  flex-shrink: 0;
+}
+.rappel-row-ui .rp-libelle-custom {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-periode {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-main);
+}
 .rappel-row-ui .rp-montant {
-  width: 80px;
+  width: 88px;
   flex-shrink: 0;
   padding: 4px 6px;
   border: 1px solid var(--color-border);
@@ -1668,6 +1675,63 @@ body.navigation-clavier .resultat-item:focus {
   font-size: 0.75rem;
   text-align: right;
   box-sizing: border-box;
+}
+.rappel-row-ui .rp-montant[readonly] {
+  background: var(--color-surface-alt, #f5f5f5);
+  color: var(--color-text-muted, #888);
+  cursor: not-allowed;
+  border-style: dashed;
+}
+/* Champs visibles uniquement en mode auto */
+.rp-auto-toggle {
+  flex-shrink: 0;
+}
+.rp-auto-fields {
+  display: none;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  width: 100%;
+}
+.rp-auto-fields.visible {
+  display: flex;
+}
+.rappel-row-ui .rp-nb-mois {
+  width: 56px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 0.75rem;
+  text-align: right;
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-montant-prec {
+  width: 84px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 0.75rem;
+  text-align: right;
+  box-sizing: border-box;
+}
+.rp-auto-sep {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #888);
+  flex-shrink: 0;
+  user-select: none;
+}
+.rp-auto-preview {
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.625rem;
+  color: var(--color-text-muted, #888);
+  font-style: italic;
+  line-height: 1.3;
 }
 
 /* Ligne de rappel dans la fiche de paie */
@@ -1678,6 +1742,21 @@ body.navigation-clavier .resultat-item:focus {
   font-style: italic;
   color: #555;
   padding-left: 10px;
+}
+
+/* Rappel orphelin (ligne de base absente de la fiche) */
+.rappel-row-ui.rp-orphan {
+  border-left: 3px solid #e67e22;
+  padding-left: 8px;
+  background: rgba(230, 126, 34, 0.05);
+  border-radius: 3px;
+}
+.rp-orphan-msg {
+  margin: 2px 0 0;
+  font-size: 0.65rem;
+  color: #c0392b;
+  font-style: italic;
+  line-height: 1.3;
 }
 
 /* Tableau résultats */
@@ -1740,6 +1819,10 @@ body.navigation-clavier .resultat-item:focus {
 /* Projection annuelle — modale plus large + padding forcé */
 .magic-modal:has(#panel-projection.active) {
   max-width: 620px;
+}
+/* Rappels — modale élargie pour le layout 3 colonnes */
+.magic-modal:has(#panel-rappels.active) {
+  max-width: 560px;
 }
 #panel-projection {
   padding: 0 20px 20px;
@@ -3534,13 +3617,16 @@ select.champ-non-configure {
 .pm-imp-non-cb {
   width: 18px;
   height: 18px;
+  margin: 0;
   cursor: pointer;
   accent-color: var(--dgfip-dark);
   flex-shrink: 0;
+  vertical-align: middle;
 }
 .pm-nonimposable-label {
   font-family: var(--font-main);
   font-size: 0.75rem;
+  line-height: 1;
   color: var(--color-text-secondary);
   cursor: pointer;
   white-space: nowrap;
