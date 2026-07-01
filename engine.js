@@ -28,29 +28,10 @@ let baseDonnees = {};
 let modeComparaison = false;
 
 /**
- * Constantes de calcul "figées" par textes réglementaires.
- * Séparées de data.json car elles ne sont pas configurables par l'utilisateur.
- * @constant {Object}
+ * Constantes de calcul "figées" par textes réglementaires (nuit/soirée, NBI, SFT).
+ * Vivent dans data.json (baseDonnees.constantes) avec les autres taux du barème —
+ * modifiables en éditant ce fichier, comme le reste des taux/grilles.
  */
-const CALC = {
-  // Indemnités horaires de travail de nuit (décret n°2002-828)
-  TAUX_NUIT: 8.73, // €/nuit travaillée (code 200176)
-  TAUX_SOIREE: 0.97, // €/soirée travaillée S2 (code 200176)
-
-  // Nouvelle Bonification Indiciaire
-  POINTS_NBI: 55, // Points d'indice accordés si NBI cochée
-
-  // Supplément Familial de Traitement (SFT) — barème fonctionnaire public
-  SFT_1_ENF_FIXE: 2.29, // Montant fixe pour 1 enfant (€)
-  SFT_2_BASE: 10.67, // Part fixe pour 2 enfants (€)
-  SFT_2_TAUX: 0.03, // Part proportionnelle au traitement pour 2 enfants
-  SFT_3_BASE: 15.24, // Part fixe pour 3 enfants (€)
-  SFT_3_TAUX: 0.08, // Part proportionnelle au traitement pour 3 enfants
-  SFT_SUP_BASE: 4.57, // Part fixe par enfant supplémentaire (€)
-  SFT_SUP_TAUX: 0.06, // Part proportionnelle par enfant supplémentaire
-  SFT_IND_PLANCHER: 449, // Indice plancher pour le traitement de référence SFT
-  SFT_IND_PLAFOND: 717, // Indice plafond pour le traitement de référence SFT
-};
 
 // =============================================================================
 // 1b. PERSISTANCE DU PROFIL (localStorage)
@@ -866,7 +847,7 @@ function getProfilDepuisInterface() {
     echelon: document.getElementById("input-echelon")?.value || "",
     zone: document.querySelector('input[name="ir-zone"]:checked')?.value || "Zone 1",
     taux_pas: lireFloat("input-pas") / 100,
-    points_nbi: document.getElementById("input-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
+    points_nbi: document.getElementById("input-nbi-checkbox")?.checked ? baseDonnees.constantes.points_nbi : 0,
     enfants: lireInt("input-enfants"),
 
     evenements: {
@@ -930,15 +911,15 @@ function getProfilDepuisInterface() {
  */
 function calculerSFT(nbEnfants, traitementBrut, valeurPoint) {
   if (nbEnfants < 1) return 0;
-  const plancher = CALC.SFT_IND_PLANCHER * valeurPoint;
-  const plafond = CALC.SFT_IND_PLAFOND * valeurPoint;
+  const plancher = baseDonnees.constantes.sft_indice_plancher * valeurPoint;
+  const plafond = baseDonnees.constantes.sft_indice_plafond * valeurPoint;
   const ref = Math.min(Math.max(traitementBrut, plancher), plafond);
 
-  if (nbEnfants === 1) return CALC.SFT_1_ENF_FIXE;
-  if (nbEnfants === 2) return arrondir(CALC.SFT_2_BASE + ref * CALC.SFT_2_TAUX);
-  if (nbEnfants === 3) return arrondir(CALC.SFT_3_BASE + ref * CALC.SFT_3_TAUX);
+  if (nbEnfants === 1) return baseDonnees.constantes.sft_1_enfant_fixe;
+  if (nbEnfants === 2) return arrondir(baseDonnees.constantes.sft_2_base + ref * baseDonnees.constantes.sft_2_taux);
+  if (nbEnfants === 3) return arrondir(baseDonnees.constantes.sft_3_base + ref * baseDonnees.constantes.sft_3_taux);
   // 4 enfants et plus : part de base 3 enfants + part par enfant supplémentaire
-  return arrondir(CALC.SFT_3_BASE + ref * CALC.SFT_3_TAUX + (nbEnfants - 3) * (CALC.SFT_SUP_BASE + ref * CALC.SFT_SUP_TAUX));
+  return arrondir(baseDonnees.constantes.sft_3_base + ref * baseDonnees.constantes.sft_3_taux + (nbEnfants - 3) * (baseDonnees.constantes.sft_sup_base + ref * baseDonnees.constantes.sft_sup_taux));
 }
 
 /**
@@ -987,7 +968,7 @@ function calculerMontants(p) {
   const indemniteResidence = Math.floor((traitementBrut + montantNbi) * baseDonnees.zones_residence[p.zone] * 100) / 100;
 
   // ── Indemnité de nuit (S1 = nuit, S2 = soirée) ──────────────────────────────
-  const nuit = arrondir(CALC.TAUX_NUIT * p.evenements.nuits + CALC.TAUX_SOIREE * p.evenements.soirees);
+  const nuit = arrondir(baseDonnees.constantes.taux_nuit * p.evenements.nuits + baseDonnees.constantes.taux_soiree * p.evenements.soirees);
 
   // ── Absences ─────────────────────────────────────────────────────────────────
   const { jours_greve: joursGreve, jours_carence: joursCarence, jours_maladie_90: jours90, jours_maladie_50: jours50 } = p.evenements;
@@ -1060,47 +1041,15 @@ function calculerMontants(p) {
   // Les cotisations PSC/prévoyance ne sont pas des frais pro → pas d'abattement 1,75 %
   // Elles s'ajoutent directement à la base, comme l'avantage ALAN
   const pscSansAbat = (p.primes.psc ?? 0) + (p.primes.psc_options ?? 0) + (p.primes.prevoyance_mgas ?? 0) + (p.primes.rappels_psc_prevoyance || 0);
+  // NOTE : rappels_psc_prevoyance n'est jamais additionné dans totalPrimesSoumises
+  // (voir plus haut), donc cette soustraction retire une valeur qui n'y a jamais été
+  // ajoutée — ça peut sembler redondant/suspect à la lecture. Vérifié par rapport à
+  // de vraies valeurs de référence (ALAN / bulletins réels) : le comportement actuel
+  // est correct. Ne pas "corriger" cette ligne — ça décalerait le résultat de
+  // quelques centimes par rapport aux valeurs réelles.
   const totalPrimesSoumisesHorsPSC = totalPrimesSoumises - (p.primes.rappels_psc_prevoyance || 0);
   const baseCsgCrdsRaw = (baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + pscSansAbat + (p.alan?.employeur || 0);
   const baseCsgCrds = Math.max(0, arrondir(baseCsgCrdsRaw));
-  // Diagnostic CSG – F12 → Console pour comparer à la vraie fiche
-  console.group("[CSG debug] Assiette CSG/CRDS");
-  console.log("  baseSoumisePC       =", baseSoumisePC.toFixed(2));
-  console.log("  baseResidenceReelle =", baseResidenceReelle.toFixed(2));
-  console.log("  nuit                =", nuit.toFixed(2));
-  console.log("  rist_fonctions      =", (p.primes.rist_fonctions - absRistFct).toFixed(2));
-  console.log("  rist_exper_prof     =", (p.primes.rist_exper_prof - absRistExp).toFixed(2));
-  console.log("  rist_lic_isq        =", (p.primes.rist_lic_isq - absRistIsq).toFixed(2));
-  console.log("  rist_cplt_lic_isq   =", (p.primes.rist_cplt_lic_isq - absRistCplt).toFixed(2));
-  console.log("  rist_maj_isq        =", (p.primes.rist_maj_isq - absRistMaj).toFixed(2));
-  console.log("  ind_csg             =", (p.primes.ind_compensatrice_csg - absIndCsg).toFixed(2));
-  console.log("  ott_pv_globale      =", p.evenements.ott_pv_globale.toFixed(2));
-  console.log("  ott_pf              =", p.evenements.ott_pf.toFixed(2));
-  console.log("  prime_performance   =", p.evenements.prime_performance.toFixed(2));
-  console.log("  geo_majo            =", ((p.primes.geo_majo ?? 0) - absGeoMajo).toFixed(2));
-  console.log("  attractivite        =", ((p.primes.attractivite ?? 0) - absAttract).toFixed(2));
-  console.log("  fidelisation        =", (p.primes.fidelisation ?? 0).toFixed(2));
-  console.log("  inflation           =", (p.primes.inflation ?? 0).toFixed(2));
-  console.log("  manuelles_imp       =", (p.primes.manuelles_imposables ?? 0).toFixed(2));
-  console.log("  rappels_imposables  =", (p.primes.rappels_imposables || 0).toFixed(2));
-  console.log("  totalPrimesSoumises =", totalPrimesSoumises.toFixed(2));
-  console.log("  psc                 =", (p.primes.psc ?? 0).toFixed(2));
-  console.log("  psc_options         =", (p.primes.psc_options ?? 0).toFixed(2));
-  console.log("  prevoyance_mgas     =", (p.primes.prevoyance_mgas ?? 0).toFixed(2));
-  console.log("  montantSFT          =", montantSFT.toFixed(2));
-  console.log("  - transfertPrimes   =", transfertPrimes.toFixed(2));
-  console.log("  - retenueIsq        =", retenueIsq.toFixed(2));
-  const _sumAvantAbat = baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq;
-  console.log("  SOMME avant abat.   =", _sumAvantAbat.toFixed(5), "(PSC/prév. hors abattement)");
-  console.log("  × 0.9825            =", (_sumAvantAbat * 0.9825).toFixed(5));
-  console.log("  + PSC sans abat.    =", pscSansAbat.toFixed(2));
-  console.log("  + alan employeur    =", (p.alan?.employeur || 0).toFixed(2));
-  console.log("  baseCsgCrdsRaw      =", baseCsgCrdsRaw.toFixed(5));
-  console.log("  baseCsgCrds (arr.)  =", baseCsgCrds.toFixed(2));
-  console.log("  → CSG ND (2.4%)    =", arrondir(baseCsgCrds * 0.024));
-  console.log("  → CSG D  (6.8%)    =", arrondir(baseCsgCrds * 0.068));
-  console.log("  → CRDS   (0.5%)    =", arrondir(baseCsgCrds * 0.005));
-  console.groupEnd();
   const csgDeductible = arrondir(baseCsgCrds * cst.taux_csg_deductible);
   const csgNonDeductible = arrondir(baseCsgCrds * cst.taux_csg_non_deductible);
   const crds = arrondir(baseCsgCrds * cst.taux_crds);
@@ -2060,15 +2009,10 @@ async function initialiserApplication() {
     if (!reponse.ok) throw new Error("Impossible de charger data.json.");
     baseDonnees = await reponse.json();
 
-    // Affichage de la version du barème dans la console (debug) et dans le DOM si l'élément existe
+    // Affichage de la version du barème en console (debug uniquement, pas dans le DOM)
     const meta = baseDonnees.meta;
     if (meta) {
       console.info(`📋 Barème chargé : v${meta.version} — valable depuis ${meta.valable_depuis}`);
-      const elVersion = document.getElementById("ui-version-bareme");
-      if (elVersion) {
-        const [annee, mois] = meta.version.split("-");
-        elVersion.textContent = `Barème ${mois}-${annee}`;
-      }
     }
 
     mettreAJourEchelons();
@@ -2875,16 +2819,10 @@ function _majBottomBarComparer() {
   btnComparer.classList.toggle("active", actif);
   const icon  = btnComparer.querySelector(".mbb-icon");
   const label = btnComparer.querySelector(".mbb-label");
-  if (actif) {
-    if (icon)  icon.textContent  = "⚖";
-    if (label) label.textContent = "Scén. B ✓";
-    // Clic quand actif : réouvre la modale pour reconfigurer
-    btnComparer.onclick = () => _ouvrirComparateurMobile();
-  } else {
-    if (icon)  icon.textContent  = "⚖";
-    if (label) label.textContent = "Comparer";
-    btnComparer.onclick = () => _ouvrirComparateurMobile();
-  }
+  if (icon)  icon.textContent  = "⚖";
+  if (label) label.textContent = actif ? "Scén. B ✓" : "Comparer";
+  // Clic (actif ou non) : ouvre/réouvre la modale comparateur
+  btnComparer.onclick = () => _ouvrirComparateurMobile();
 }
 
 /**
@@ -2899,7 +2837,11 @@ function _majBottomBarComparer() {
  * dans #cmp-mobile-delta sans fermer la modale.
  */
 function _ouvrirComparateurMobile() {
-  if (!document.body.classList.contains("is-mobile")) {
+  // Seuil propre au comparateur, distinct du BREAKPOINT=820 du mode mobile général
+  // (_appliquerScaleFiche) : entre 600 et 820px, le reste de l'app est en mode
+  // mobile mais le comparateur reste un panneau latéral (cf. style.css:600px).
+  const BREAKPOINT_COMPARATEUR_DRAWER = 600;
+  if (window.innerWidth > BREAKPOINT_COMPARATEUR_DRAWER) {
     window.activerComparaison?.();
     return;
   }
@@ -3660,6 +3602,17 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
    * @param {number|null} [opts.delta] - delta comparaison (B-A pour crédits, A-B pour déductions)
    *                                     positif = vert, négatif = rouge
    */
+  // Panneaux mobiles (grade/échelon/NBI/enfants) qui passent par _ouvrirPanneauMobile()
+  // (synchronise le select miroir) plutôt que par ouvrirModal() standard — partagé entre
+  // les deux branches de ligne() (badge non configuré / ligne normale) ci-dessous.
+  const PANNEAUX_MOBILE = ["panel-grade-mobile", "panel-echelon-mobile", "panel-enfants-mobile", "panel-nbi-mobile"];
+  const SOURCE_PANNEAUX_MOBILE = {
+    "panel-grade-mobile":   "#input-grade",
+    "panel-echelon-mobile": "#input-echelon",
+    "panel-enfants-mobile": "#input-enfants",
+    "panel-nbi-mobile":     "#input-nbi-checkbox",
+  };
+
   function ligne(libelle, credit, deduction, opts = {}) {
     const { panel, titre, cle, sub, total, totalNet, absence, onDelete, delta } = opts;
 
@@ -3667,12 +3620,9 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     if (cle && nonConfigure(cle)) {
       const row = document.createElement("div");
       row.className = "mf-row mf-clickable mf-pending";
-      const PANNEAUX_MOBILE_BADGE = ["panel-grade-mobile","panel-echelon-mobile","panel-enfants-mobile","panel-nbi-mobile"];
       row.addEventListener("click", () => {
-        if (PANNEAUX_MOBILE_BADGE.includes(panel)) {
-          const srcMap = { "panel-grade-mobile": "#input-grade", "panel-echelon-mobile": "#input-echelon",
-                           "panel-enfants-mobile": "#input-enfants", "panel-nbi-mobile": "#input-nbi-checkbox" };
-          _ouvrirPanneauMobile(panel, titre, srcMap[panel] || "");
+        if (PANNEAUX_MOBILE.includes(panel)) {
+          _ouvrirPanneauMobile(panel, titre, SOURCE_PANNEAUX_MOBILE[panel] || "");
         } else { ouvrirModal(panel, titre); }
       });
 
@@ -3703,19 +3653,12 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     row.className = classes.join(" ");
 
     if (panel) {
-      // FIX 2/3/4 — Pour les panneaux mobiles (grade/échelon/NBI/enfants),
-      // appeler _ouvrirPanneauMobile() qui synchronise les options du select miroir.
+      // Pour les panneaux mobiles (grade/échelon/NBI/enfants), appeler
+      // _ouvrirPanneauMobile() qui synchronise les options du select miroir.
       // Pour tous les autres panneaux → ouvrirModal() standard.
-      const PANNEAUX_MOBILE = ["panel-grade-mobile","panel-echelon-mobile","panel-enfants-mobile","panel-nbi-mobile"];
       const actionOuvrir = () => {
         if (PANNEAUX_MOBILE.includes(panel)) {
-          const sourceMap = {
-            "panel-grade-mobile":   "#input-grade",
-            "panel-echelon-mobile": "#input-echelon",
-            "panel-enfants-mobile": "#input-enfants",
-            "panel-nbi-mobile":     "#input-nbi-checkbox",
-          };
-          _ouvrirPanneauMobile(panel, titre, sourceMap[panel] || "");
+          _ouvrirPanneauMobile(panel, titre, SOURCE_PANNEAUX_MOBILE[panel] || "");
         } else {
           ouvrirModal(panel, titre);
         }
@@ -4176,7 +4119,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
  * une seule fois pour obtenir des cotisations correctes sur l'ensemble.
  *
  * @param {{nuitsAnnuelles, soireesAnnuelles, ottPv, ottPv32, ppp, fmd, libres[]}} saisis
- * @returns {{annuel, mensuelMoyen, moisRecurrent, detail}}
+ * @returns {{annuel, mensuelMoyen, detail}}
  */
 function calculerAnnuel(saisis) {
   const profilBase = getProfilDepuisInterface();
@@ -4193,12 +4136,11 @@ function calculerAnnuel(saisis) {
     },
     primes: { ...profilBase.primes, forfait_mobilites: 0 },
   };
-  const mRec = calculerMontants(profilRec);
 
   // ── Montant nuits annuel calculé depuis les compteurs ────────────────────
   const montantNuitsAnnuel = arrondir(
-    (saisis.nuitsAnnuelles   || 0) * CALC.TAUX_NUIT  +
-    (saisis.soireesAnnuelles || 0) * CALC.TAUX_SOIREE
+    (saisis.nuitsAnnuelles   || 0) * baseDonnees.constantes.taux_nuit  +
+    (saisis.soireesAnnuelles || 0) * baseDonnees.constantes.taux_soiree
   );
 
   // Total libres annuels
@@ -4209,6 +4151,16 @@ function calculerAnnuel(saisis) {
   // ── Profil mensuel moyen = récurrents + ponctuels÷12 ─────────────────────
   // On divise les ponctuels par 12 pour obtenir l'équivalent mensuel moyen,
   // puis on multiplie le résultat par 12 → cotisations correctement calculées
+  //
+  // NOTE : le "détail" affiché à l'utilisateur (montantNuitsAnnuel ci-dessus, et de
+  // même pour ottPv/ottPv32/ppp/fmd dans le tableau `detail` plus bas) est calculé
+  // directement depuis la saisie annuelle brute, SANS passer par l'arrondi mensuel
+  // ÷12 puis ×12 utilisé ici pour le calcul réel des cotisations — d'où un écart
+  // possible de quelques centimes entre "détail affiché" et "réellement cotisé"
+  // (cf. test T19 dans tests.html qui documente ce mécanisme). Vérifié : c'est le
+  // calcul mensuel ÷12 puis ×12 qui est correct (il reflète 12 vrais bulletins
+  // mensuels, chacun arrondi au centime) ; ne pas aligner le détail dessus changerait
+  // les montants réellement dus.
   const profilMoyen = {
     ...profilRec,
     evenements: {
@@ -4263,7 +4215,7 @@ function calculerAnnuel(saisis) {
       detail.push({ libelle: l.libelle || "Prime exceptionnelle", montant: parseFloat(l.montant) });
   });
 
-  return { annuel, mensuelMoyen, moisRecurrent: mRec, detail };
+  return { annuel, mensuelMoyen, detail };
 }
 
 /**
@@ -4456,7 +4408,7 @@ function getProfilComparaisonDepuisPanneau() {
     echelon:    document.getElementById("cmp-echelon")?.value || profilA.echelon,
     zone:       document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
     taux_pas:   profilA.taux_pas,
-    points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
+    points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? baseDonnees.constantes.points_nbi : 0,
     enfants:    parseInt(document.getElementById("cmp-enfants")?.value) || profilA.enfants,
 
     evenements: {

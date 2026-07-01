@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Simulateur de paie pour les ingénieurs du contrôle de la navigation aérienne (ICNA) — calcul du net mensuel, RIST, OTT et projection annuelle." />
     <title>Simulateur Paie ICNA</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="style.css" />
 
     <!-- ── PWA ──────────────────────────────────────────────── -->
@@ -621,7 +622,6 @@
     <div id="fiche-scaler-wrap">
     <div class="page-a4">
       <header class="bareme-header">
-        <span id="ui-version-bareme" class="bareme-version"></span>
         <button type="button" id="btn-reset-profil" onclick="effacerProfil()" class="reset-profil" title="Réinitialiser le profil sauvegardé">↺</button>
       </header>
 
@@ -901,6 +901,23 @@
             (reg) => console.info("SW enregistré :", reg.scope),
             (err) => console.warn("SW échec :", err)
           );
+        });
+
+        // Bannière "nouvelle version" : sw.js appelle déjà skipWaiting()/clients.claim(),
+        // donc le nouveau service worker prend la main tout seul dès qu'il est prêt.
+        // Seul le contenu déjà chargé en mémoire (JS/CSS) reste l'ancien tant qu'on ne
+        // recharge pas — on détecte ce changement de contrôleur et on propose un clic
+        // pour recharger, sans passer par les DevTools.
+        let _swDejaControle = !!navigator.serviceWorker.controller;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (_swDejaControle) {
+            const bar = document.createElement("div");
+            bar.id = "sw-update-banner";
+            bar.innerHTML = `<span>🔄 Nouvelle version disponible</span><button type="button">Actualiser</button>`;
+            bar.querySelector("button").addEventListener("click", () => location.reload());
+            document.body.appendChild(bar);
+          }
+          _swDejaControle = true;
         });
       }
     </script>

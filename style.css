@@ -82,6 +82,17 @@ body {
   overflow-x: auto;
 }
 
+/* #app-content (<main>) regroupe la fiche et le panneau comparateur depuis le
+   refactor sémantique HTML (commit 88f0e47) : sans display:flex ici, ces deux
+   éléments s'empilent en flux normal au lieu de se placer côte à côte (le
+   panneau comparateur atterrit sous la fiche, quelle que soit la largeur
+   d'écran). On reprend la même config que body pour un rendu identique. */
+#app-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+}
+
 /* =========================================
    1. LA FICHE DE PAIE (A4)
    ========================================= */
@@ -1034,6 +1045,8 @@ body.navigation-clavier .resultat-item:focus {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  white-space: nowrap; /* "TOTAUX DU MOIS" sur une seule ligne (hauteur fixe = pas de place pour 2 lignes) */
+  flex-shrink: 0;
 }
 .amount-cell {
   display: flex;
@@ -1089,13 +1102,6 @@ body.navigation-clavier .resultat-item:focus {
   gap: 4px;
   margin-bottom: 4px;
 }
-.bareme-version {
-  font-size: 8px;
-  color: var(--dgfip-medium);
-  font-family: var(--font-numbers);
-  opacity: 0.6;
-  letter-spacing: 0.5px;
-}
 .reset-profil {
   background: none;
   border: none;
@@ -1141,6 +1147,36 @@ body.navigation-clavier .resultat-item:focus {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
+/* Bannière "nouvelle version disponible" (service worker, cf. index.html) */
+#sw-update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--dgfip-dark);
+  color: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  font-size: 0.9375rem;
+}
+#sw-update-banner button {
+  background: white;
+  color: var(--dgfip-dark);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#sw-update-banner button:hover {
+  background: var(--color-print-bg, #eee);
+}
+
 /* Panneau latéral scénario B */
 #panneau-comparaison {
   display: none;
@@ -1156,6 +1192,7 @@ body.navigation-clavier .resultat-item:focus {
   position: sticky;
   top: 20px;
   overflow: hidden;
+  flex-shrink: 0; /* garde ses 280px même si un sibling flex (#fiche-mobile) manque de place */
 }
 #panneau-comparaison.visible {
   display: flex;
@@ -2579,24 +2616,6 @@ select.champ-non-configure {
     box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.1);
   }
 
-  /* ── 6. Panneau comparateur — masqué en phase 1 ─────────────── */
-  /*
-     Le comparateur side-by-side est incompatible avec le layout mobile scalé.
-     Il sera transformé en bottom-drawer en phase 2.
-     On l'affiche quand même si .visible mais centré par-dessus la fiche.
-  */
-  #panneau-comparaison.visible {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(100vw - 32px);
-    max-height: 80vh;
-    overflow-y: auto;
-    z-index: 1100;
-    min-width: unset;
-  }
-
   /* ── 7. Tour guidée — masquée sur mobile ────────────────────── */
   /*
      Les coordonnées du spotlight sont calculées sur le layout desktop (793px).
@@ -2652,14 +2671,17 @@ select.champ-non-configure {
   .select-transparent {
     font-size: 1rem;
   }
+}
 
-  /* ── 10. Comparateur — drawer bottom-sheet ───────────────────── */
-  /*
-     Le panneau latéral sticky (280px fixe) est incompatible mobile.
-     Sur mobile il devient un drawer plein-écran depuis le bas,
-     au-dessus de la fiche, avec scroll interne.
-     La bottom-bar reste visible (z-index bottom-bar > drawer).
-  */
+/* ── Comparateur — drawer bottom-sheet ─────────────────────────────
+   Seuil dédié (600px), distinct du seuil général du mode mobile (820px,
+   cf. _appliquerScaleFiche()/is-mobile) : entre 600 et 820px, le reste de
+   l'app est en mode mobile mais le comparateur reste un panneau latéral
+   (voir le garde BREAKPOINT_COMPARATEUR_DRAWER dans _ouvrirComparateurMobile,
+   engine.js). Sous 600px, le panneau latéral sticky (280px fixe) devient un
+   drawer plein-écran depuis le bas, au-dessus de la fiche, avec scroll interne.
+*/
+@media (max-width: 600px) {
   #panneau-comparaison,
   #panneau-comparaison.visible {
     position: fixed !important;
@@ -2675,11 +2697,22 @@ select.champ-non-configure {
     overflow-y: auto !important;
     z-index: 1040 !important;
     transform: none !important;
+    display: none !important; /* hors .visible : reste caché, contenu déplacé dans #panel-cmp-mobile */
     /* Slide-up depuis le bas */
     animation: mobileSheetUp 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
   #panneau-comparaison:not(.visible) {
     display: none !important;
+  }
+  /* Handle de fermeture (barre en haut du drawer) */
+  #panneau-comparaison::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 10px auto 0;
   }
 }
 
@@ -2783,15 +2816,6 @@ select.champ-non-configure {
   .mobile-bottom-bar-btn.active .mbb-icon {
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   BARRE STICKY "NET À PAYER" — mobile uniquement
-   Épinglée juste au-dessus de la bottom-bar (bottom: 56px).
-   Masquée sur desktop.
-   ═══════════════════════════════════════════════════════════════ */
-
-@media (max-width: 820px) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3067,16 +3091,6 @@ select.champ-non-configure {
   }
 
   /* ── Fix 7 — Comparateur mobile ─────────────────────────────── */
-  /* Handle de fermeture (barre en haut du drawer) */
-  #panneau-comparaison::before {
-    content: "";
-    display: block;
-    width: 40px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-    margin: 10px auto 0;
-  }
   /* Header comparateur plus spacieux, bouton Quitter agrandi */
   #panneau-comparaison .cmp-header {
     padding: 8px 16px 12px;
@@ -3364,13 +3378,6 @@ select.champ-non-configure {
 }
 
 @media (max-width: 820px) {
-  /* Panneau comparateur latéral masqué sur mobile —
-     remplacé par la modale _ouvrirComparateurMobile */
-  #panneau-comparaison,
-  #panneau-comparaison.visible {
-    display: none !important;
-  }
-
   /* Panel comparateur mobile : inputs de taille correcte */
   #panel-cmp-mobile .cmp-body,
   #panel-cmp-mobile-body {
@@ -3472,11 +3479,6 @@ select.champ-non-configure {
 }
 
 @media (max-width: 820px) {
-  /* S'assurer que le panneau comparateur ne s'affiche pas en dehors de la modale */
-  #panneau-comparaison,
-  #panneau-comparaison.visible {
-    display: none !important;
-  }
   /* Le cmp-body quand il est dans la modale mobile */
   #panel-cmp-mobile .cmp-body {
     padding: 0;
