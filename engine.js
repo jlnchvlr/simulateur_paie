@@ -2867,7 +2867,11 @@ function _majBottomBarComparer() {
  * dans #cmp-mobile-delta sans fermer la modale.
  */
 function _ouvrirComparateurMobile() {
-  if (!document.body.classList.contains("is-mobile")) {
+  // Seuil propre au comparateur, distinct du BREAKPOINT=820 du mode mobile général
+  // (_appliquerScaleFiche) : entre 600 et 820px, le reste de l'app est en mode
+  // mobile mais le comparateur reste un panneau latéral (cf. style.css:600px).
+  const BREAKPOINT_COMPARATEUR_DRAWER = 600;
+  if (window.innerWidth > BREAKPOINT_COMPARATEUR_DRAWER) {
     window.activerComparaison?.();
     return;
   }
