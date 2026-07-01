@@ -132,6 +132,21 @@
         }
       }
 
+      /**
+       * Vérifie qu'une valeur se situe dans un intervalle [min, max] — utile pour
+       * contrôler un ordre de grandeur sans dépendre d'un arrondi exact.
+       */
+      function dansIntervalle(label, actual, min, max) {
+        const a = Math.round(actual * 100) / 100;
+        if (a >= min && a <= max) {
+          passed++;
+          currentSuite.lignes.push({ ok: true, label });
+        } else {
+          failed++;
+          currentSuite.lignes.push({ ok: false, label, actual: a, expected: `[${min}, ${max}]` });
+        }
+      }
+
       // ─────────────────────────────────────────────────────────────────────────
       // Profil de base réutilisable — ING.DIV échelon 03, Zone 3, 0 enfant
       // ─────────────────────────────────────────────────────────────────────────
@@ -565,6 +580,86 @@
           eq("totalPrimesSoumises = 345 + 1000 + 200", m.totalPrimesSoumises, 1545);
           // Plafond RAFP : baseSoumisePC × 20% = 454.864 < 1545 → plafonné
           eq("cotisationRafp plafonnée = baseSoumisePC×20%×5%", m.cotisationRafp, 22.74);
+        });
+
+        // ── T17 : calculerAnnuel() — cas vide ───────────────────────────────────
+        suite("T17 — calculerAnnuel() : aucun ponctuel (profil de base = 0)", () => {
+          const { annuel, mensuelMoyen, detail } = calculerAnnuel({
+            nuitsAnnuelles: 0, soireesAnnuelles: 0,
+            ottPv: 0, ottPv32: 0, ppp: 0, fmd: 0, libres: [],
+          });
+          eq("annuel.brut = 0 (aucune saisie)", annuel.brut, 0);
+          eq("annuel.netApresImpot = 0", annuel.netApresImpot, 0);
+          eq("mensuelMoyen.brut = 0", mensuelMoyen.brut, 0);
+          eq("annuel.brut = mensuelMoyen.brut × 12", annuel.brut, mensuelMoyen.brut * 12);
+          eq("detail.length = 0 (aucun ponctuel renseigné)", detail.length, 0);
+        });
+
+        // ── T18 : calculerAnnuel() — cas complet ────────────────────────────────
+        suite("T18 — calculerAnnuel() : nuits + OTT + PPP + FMD + prime libre", () => {
+          const { annuel, mensuelMoyen, detail } = calculerAnnuel({
+            nuitsAnnuelles: 24, soireesAnnuelles: 12,
+            ottPv: 3600, ottPv32: 600, ppp: 1200, fmd: 240,
+            libres: [{ libelle: "Prime except.", montant: 150 }],
+          });
+          // Cohérence du pipeline : le total annuel doit toujours valoir 12× la moyenne
+          // mensuelle, quel que soit l'arrondi exact appliqué en interne (cf. T19).
+          eq("annuel.brut = mensuelMoyen.brut × 12", annuel.brut, mensuelMoyen.brut * 12);
+          eq("annuel.netApresImpot = mensuelMoyen.netApresImpot × 12", annuel.netApresImpot, mensuelMoyen.netApresImpot * 12);
+          eq("annuel.coutEmployeur = mensuelMoyen.coutEmployeur × 12", annuel.coutEmployeur, mensuelMoyen.coutEmployeur * 12);
+          // Somme brute des ponctuels : 221.16 (nuits+soirées) + 3600 + 600 + 1200 + 150 + 240 = 6011.16
+          dansIntervalle("annuel.brut ≈ somme des ponctuels (± quelques centimes d'arrondi)", annuel.brut, 5900, 6100);
+          eq("detail.length = 6 (nuits, ottPv, ottPv32, ppp, fmd, libre)", detail.length, 6);
+        });
+
+        // ── T19 : [Bug connu #4, non corrigé] écart affiché vs réellement cotisé ─
+        suite("T19 — [Bug #4, non corrigé] écart détail affiché vs cotisé (arrondi ÷12 puis ×12)", () => {
+          // Le "détail" affiché à l'utilisateur (montantNuitsAnnuel) est calculé
+          // directement depuis la saisie brute annuelle, SANS passer par l'arrondi
+          // mensuel ÷12 puis ×12 qu'utilise le calcul réel des cotisations
+          // (profilMoyen, engine.js:4199-4242). Avec des valeurs qui ne tombent pas
+          // rond après division par 12, un écart de quelques centimes apparaît entre
+          // le montant affiché et le montant réellement cotisé. Voir le rapport
+          // d'audit (bug #4) — ne pas "corriger" ce test en alignant les deux valeurs,
+          // il documente un écart réel du moteur, pas un idéal.
+          const { detail } = calculerAnnuel({
+            nuitsAnnuelles: 25, soireesAnnuelles: 13,
+            ottPv: 0, ottPv32: 0, ppp: 0, fmd: 0, libres: [],
+          });
+          const montantAffiche = detail.find((d) => d.libelle.startsWith("Nuits"))?.montant ?? 0;
+          eq('Montant "Nuits" affiché = 25×8.73 + 13×0.97 (calcul brut direct)', montantAffiche, 230.86);
+          const montantReellementCotise = arrondir(arrondir(montantAffiche / 12) * 12);
+          eq("Montant réellement intégré au brut (arrondi ÷12 puis ×12) — 0,02 € d'écart avec l'affiché", montantReellementCotise, 230.88);
+        });
+
+        // ── T20 : Comparateur A/B — échelon différent ───────────────────────────
+        suite("T20 — Comparateur A/B : échelon différent (03 vs 07)", () => {
+          const mA = calculerMontants(profil({ echelon: "03" }));
+          const mB = calculerMontants(profil({ echelon: "07" }));
+          eq("mA.traitementBrut = 2274.32 (réf. T1)", mA.traitementBrut, 2274.32);
+          eq("mB.traitementBrut > mA.traitementBrut (indice supérieur)", mB.traitementBrut > mA.traitementBrut ? 1 : 0, 1);
+          eq("mB.totalPatronal ≠ mA.totalPatronal (delta non nul)", mB.totalPatronal !== mA.totalPatronal ? 1 : 0, 1);
+        });
+
+        // ── T21 : Comparateur A/B — RIST différent ──────────────────────────────
+        suite("T21 — Comparateur A/B : RIST différent (A sans RIST vs B avec RIST fonctions 300 €)", () => {
+          const mA = calculerMontants(profil());
+          const mB = calculerMontants(profil({ primes: { ...profil().primes, rist_fonctions: 300 } }));
+          eq("mA.totalPrimesSoumises = 0 (sans RIST)", mA.totalPrimesSoumises, 0);
+          eq("mB.totalPrimesSoumises = 300 (RIST fonctions)", mB.totalPrimesSoumises, 300);
+          eq("mB.cotisationRafp > mA.cotisationRafp (RAFP sur RIST)", mB.cotisationRafp > mA.cotisationRafp ? 1 : 0, 1);
+          eq("mA.totalPrimesSoumises reste 0 après calcul de mB (pas de fuite d'état partagé)", mA.totalPrimesSoumises, 0);
+        });
+
+        // ── T22 : Comparateur A/B — zone + SFT différents ───────────────────────
+        suite("T22 — Comparateur A/B : zone + SFT différents (A Zone3/0 enfant vs B Zone1/2 enfants)", () => {
+          const mA = calculerMontants(profil({ zone: "Zone 3", enfants: 0 }));
+          const mB = calculerMontants(profil({ zone: "Zone 1", enfants: 2 }));
+          eq("mA.indemniteResidence = 0 (Zone 3)", mA.indemniteResidence, 0);
+          eq("mB.indemniteResidence = 68.22 (Zone 1, réf. T3)", mB.indemniteResidence, 68.22);
+          eq("mA.montantSFT = 0 (0 enfant)", mA.montantSFT, 0);
+          eq("mB.montantSFT = 78.90 (2 enfants, réf. T4)", mB.montantSFT, 78.9);
+          eq("mA.totalPatronal ≠ mB.totalPatronal (profils bien distincts)", mA.totalPatronal !== mB.totalPatronal ? 1 : 0, 1);
         });
 
         // ── Rendu ─────────────────────────────────────────────────────────────

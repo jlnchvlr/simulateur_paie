@@ -1060,47 +1060,15 @@ function calculerMontants(p) {
   // Les cotisations PSC/prévoyance ne sont pas des frais pro → pas d'abattement 1,75 %
   // Elles s'ajoutent directement à la base, comme l'avantage ALAN
   const pscSansAbat = (p.primes.psc ?? 0) + (p.primes.psc_options ?? 0) + (p.primes.prevoyance_mgas ?? 0) + (p.primes.rappels_psc_prevoyance || 0);
+  // BUG CONNU #3 (non corrigé, cf. rapport d'audit) : rappels_psc_prevoyance n'est
+  // jamais additionné dans totalPrimesSoumises (voir plus haut) — cette soustraction
+  // retire donc une valeur qui n'a jamais été ajoutée. Effet net : la base CSG/CRDS
+  // est majorée d'environ rappels_psc_prevoyance × (1 - assiette_csg_crds) ≈ ×0,0175.
+  // Impact réel mais faible (centimes), dès que ce champ est non nul.
+  // Ne pas corriger sans validation métier (impact sur des fiches déjà émises).
   const totalPrimesSoumisesHorsPSC = totalPrimesSoumises - (p.primes.rappels_psc_prevoyance || 0);
   const baseCsgCrdsRaw = (baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + pscSansAbat + (p.alan?.employeur || 0);
   const baseCsgCrds = Math.max(0, arrondir(baseCsgCrdsRaw));
-  // Diagnostic CSG – F12 → Console pour comparer à la vraie fiche
-  console.group("[CSG debug] Assiette CSG/CRDS");
-  console.log("  baseSoumisePC       =", baseSoumisePC.toFixed(2));
-  console.log("  baseResidenceReelle =", baseResidenceReelle.toFixed(2));
-  console.log("  nuit                =", nuit.toFixed(2));
-  console.log("  rist_fonctions      =", (p.primes.rist_fonctions - absRistFct).toFixed(2));
-  console.log("  rist_exper_prof     =", (p.primes.rist_exper_prof - absRistExp).toFixed(2));
-  console.log("  rist_lic_isq        =", (p.primes.rist_lic_isq - absRistIsq).toFixed(2));
-  console.log("  rist_cplt_lic_isq   =", (p.primes.rist_cplt_lic_isq - absRistCplt).toFixed(2));
-  console.log("  rist_maj_isq        =", (p.primes.rist_maj_isq - absRistMaj).toFixed(2));
-  console.log("  ind_csg             =", (p.primes.ind_compensatrice_csg - absIndCsg).toFixed(2));
-  console.log("  ott_pv_globale      =", p.evenements.ott_pv_globale.toFixed(2));
-  console.log("  ott_pf              =", p.evenements.ott_pf.toFixed(2));
-  console.log("  prime_performance   =", p.evenements.prime_performance.toFixed(2));
-  console.log("  geo_majo            =", ((p.primes.geo_majo ?? 0) - absGeoMajo).toFixed(2));
-  console.log("  attractivite        =", ((p.primes.attractivite ?? 0) - absAttract).toFixed(2));
-  console.log("  fidelisation        =", (p.primes.fidelisation ?? 0).toFixed(2));
-  console.log("  inflation           =", (p.primes.inflation ?? 0).toFixed(2));
-  console.log("  manuelles_imp       =", (p.primes.manuelles_imposables ?? 0).toFixed(2));
-  console.log("  rappels_imposables  =", (p.primes.rappels_imposables || 0).toFixed(2));
-  console.log("  totalPrimesSoumises =", totalPrimesSoumises.toFixed(2));
-  console.log("  psc                 =", (p.primes.psc ?? 0).toFixed(2));
-  console.log("  psc_options         =", (p.primes.psc_options ?? 0).toFixed(2));
-  console.log("  prevoyance_mgas     =", (p.primes.prevoyance_mgas ?? 0).toFixed(2));
-  console.log("  montantSFT          =", montantSFT.toFixed(2));
-  console.log("  - transfertPrimes   =", transfertPrimes.toFixed(2));
-  console.log("  - retenueIsq        =", retenueIsq.toFixed(2));
-  const _sumAvantAbat = baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq;
-  console.log("  SOMME avant abat.   =", _sumAvantAbat.toFixed(5), "(PSC/prév. hors abattement)");
-  console.log("  × 0.9825            =", (_sumAvantAbat * 0.9825).toFixed(5));
-  console.log("  + PSC sans abat.    =", pscSansAbat.toFixed(2));
-  console.log("  + alan employeur    =", (p.alan?.employeur || 0).toFixed(2));
-  console.log("  baseCsgCrdsRaw      =", baseCsgCrdsRaw.toFixed(5));
-  console.log("  baseCsgCrds (arr.)  =", baseCsgCrds.toFixed(2));
-  console.log("  → CSG ND (2.4%)    =", arrondir(baseCsgCrds * 0.024));
-  console.log("  → CSG D  (6.8%)    =", arrondir(baseCsgCrds * 0.068));
-  console.log("  → CRDS   (0.5%)    =", arrondir(baseCsgCrds * 0.005));
-  console.groupEnd();
   const csgDeductible = arrondir(baseCsgCrds * cst.taux_csg_deductible);
   const csgNonDeductible = arrondir(baseCsgCrds * cst.taux_csg_non_deductible);
   const crds = arrondir(baseCsgCrds * cst.taux_crds);
@@ -4176,7 +4144,7 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
  * une seule fois pour obtenir des cotisations correctes sur l'ensemble.
  *
  * @param {{nuitsAnnuelles, soireesAnnuelles, ottPv, ottPv32, ppp, fmd, libres[]}} saisis
- * @returns {{annuel, mensuelMoyen, moisRecurrent, detail}}
+ * @returns {{annuel, mensuelMoyen, detail}}
  */
 function calculerAnnuel(saisis) {
   const profilBase = getProfilDepuisInterface();
@@ -4193,7 +4161,6 @@ function calculerAnnuel(saisis) {
     },
     primes: { ...profilBase.primes, forfait_mobilites: 0 },
   };
-  const mRec = calculerMontants(profilRec);
 
   // ── Montant nuits annuel calculé depuis les compteurs ────────────────────
   const montantNuitsAnnuel = arrondir(
@@ -4209,6 +4176,15 @@ function calculerAnnuel(saisis) {
   // ── Profil mensuel moyen = récurrents + ponctuels÷12 ─────────────────────
   // On divise les ponctuels par 12 pour obtenir l'équivalent mensuel moyen,
   // puis on multiplie le résultat par 12 → cotisations correctement calculées
+  //
+  // BUG CONNU #4 (non corrigé, cf. rapport d'audit et test T19 dans tests.html) :
+  // le "détail" affiché à l'utilisateur (montantNuitsAnnuel ci-dessus, et de même
+  // pour ottPv/ottPv32/ppp/fmd dans le tableau `detail` plus bas) est calculé
+  // directement depuis la saisie annuelle brute, SANS passer par l'arrondi
+  // mensuel ÷12 puis ×12 utilisé ici pour le calcul réel des cotisations. Quand
+  // la saisie ne tombe pas rond après division par 12, un écart de quelques
+  // centimes apparaît entre le montant affiché et le montant réellement cotisé.
+  // Ne pas corriger sans validation métier (changerait les montants affichés).
   const profilMoyen = {
     ...profilRec,
     evenements: {
@@ -4263,7 +4239,7 @@ function calculerAnnuel(saisis) {
       detail.push({ libelle: l.libelle || "Prime exceptionnelle", montant: parseFloat(l.montant) });
   });
 
-  return { annuel, mensuelMoyen, moisRecurrent: mRec, detail };
+  return { annuel, mensuelMoyen, detail };
 }
 
 /**
