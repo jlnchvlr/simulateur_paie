@@ -28,29 +28,10 @@ let baseDonnees = {};
 let modeComparaison = false;
 
 /**
- * Constantes de calcul "figées" par textes réglementaires.
- * Séparées de data.json car elles ne sont pas configurables par l'utilisateur.
- * @constant {Object}
+ * Constantes de calcul "figées" par textes réglementaires (nuit/soirée, NBI, SFT).
+ * Vivent dans data.json (baseDonnees.constantes) avec les autres taux du barème —
+ * modifiables en éditant ce fichier, comme le reste des taux/grilles.
  */
-const CALC = {
-  // Indemnités horaires de travail de nuit (décret n°2002-828)
-  TAUX_NUIT: 8.73, // €/nuit travaillée (code 200176)
-  TAUX_SOIREE: 0.97, // €/soirée travaillée S2 (code 200176)
-
-  // Nouvelle Bonification Indiciaire
-  POINTS_NBI: 55, // Points d'indice accordés si NBI cochée
-
-  // Supplément Familial de Traitement (SFT) — barème fonctionnaire public
-  SFT_1_ENF_FIXE: 2.29, // Montant fixe pour 1 enfant (€)
-  SFT_2_BASE: 10.67, // Part fixe pour 2 enfants (€)
-  SFT_2_TAUX: 0.03, // Part proportionnelle au traitement pour 2 enfants
-  SFT_3_BASE: 15.24, // Part fixe pour 3 enfants (€)
-  SFT_3_TAUX: 0.08, // Part proportionnelle au traitement pour 3 enfants
-  SFT_SUP_BASE: 4.57, // Part fixe par enfant supplémentaire (€)
-  SFT_SUP_TAUX: 0.06, // Part proportionnelle par enfant supplémentaire
-  SFT_IND_PLANCHER: 449, // Indice plancher pour le traitement de référence SFT
-  SFT_IND_PLAFOND: 717, // Indice plafond pour le traitement de référence SFT
-};
 
 // =============================================================================
 // 1b. PERSISTANCE DU PROFIL (localStorage)
@@ -866,7 +847,7 @@ function getProfilDepuisInterface() {
     echelon: document.getElementById("input-echelon")?.value || "",
     zone: document.querySelector('input[name="ir-zone"]:checked')?.value || "Zone 1",
     taux_pas: lireFloat("input-pas") / 100,
-    points_nbi: document.getElementById("input-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
+    points_nbi: document.getElementById("input-nbi-checkbox")?.checked ? baseDonnees.constantes.points_nbi : 0,
     enfants: lireInt("input-enfants"),
 
     evenements: {
@@ -930,15 +911,15 @@ function getProfilDepuisInterface() {
  */
 function calculerSFT(nbEnfants, traitementBrut, valeurPoint) {
   if (nbEnfants < 1) return 0;
-  const plancher = CALC.SFT_IND_PLANCHER * valeurPoint;
-  const plafond = CALC.SFT_IND_PLAFOND * valeurPoint;
+  const plancher = baseDonnees.constantes.sft_indice_plancher * valeurPoint;
+  const plafond = baseDonnees.constantes.sft_indice_plafond * valeurPoint;
   const ref = Math.min(Math.max(traitementBrut, plancher), plafond);
 
-  if (nbEnfants === 1) return CALC.SFT_1_ENF_FIXE;
-  if (nbEnfants === 2) return arrondir(CALC.SFT_2_BASE + ref * CALC.SFT_2_TAUX);
-  if (nbEnfants === 3) return arrondir(CALC.SFT_3_BASE + ref * CALC.SFT_3_TAUX);
+  if (nbEnfants === 1) return baseDonnees.constantes.sft_1_enfant_fixe;
+  if (nbEnfants === 2) return arrondir(baseDonnees.constantes.sft_2_base + ref * baseDonnees.constantes.sft_2_taux);
+  if (nbEnfants === 3) return arrondir(baseDonnees.constantes.sft_3_base + ref * baseDonnees.constantes.sft_3_taux);
   // 4 enfants et plus : part de base 3 enfants + part par enfant supplémentaire
-  return arrondir(CALC.SFT_3_BASE + ref * CALC.SFT_3_TAUX + (nbEnfants - 3) * (CALC.SFT_SUP_BASE + ref * CALC.SFT_SUP_TAUX));
+  return arrondir(baseDonnees.constantes.sft_3_base + ref * baseDonnees.constantes.sft_3_taux + (nbEnfants - 3) * (baseDonnees.constantes.sft_sup_base + ref * baseDonnees.constantes.sft_sup_taux));
 }
 
 /**
@@ -987,7 +968,7 @@ function calculerMontants(p) {
   const indemniteResidence = Math.floor((traitementBrut + montantNbi) * baseDonnees.zones_residence[p.zone] * 100) / 100;
 
   // ── Indemnité de nuit (S1 = nuit, S2 = soirée) ──────────────────────────────
-  const nuit = arrondir(CALC.TAUX_NUIT * p.evenements.nuits + CALC.TAUX_SOIREE * p.evenements.soirees);
+  const nuit = arrondir(baseDonnees.constantes.taux_nuit * p.evenements.nuits + baseDonnees.constantes.taux_soiree * p.evenements.soirees);
 
   // ── Absences ─────────────────────────────────────────────────────────────────
   const { jours_greve: joursGreve, jours_carence: joursCarence, jours_maladie_90: jours90, jours_maladie_50: jours50 } = p.evenements;
@@ -2028,15 +2009,10 @@ async function initialiserApplication() {
     if (!reponse.ok) throw new Error("Impossible de charger data.json.");
     baseDonnees = await reponse.json();
 
-    // Affichage de la version du barème dans la console (debug) et dans le DOM si l'élément existe
+    // Affichage de la version du barème en console (debug uniquement, pas dans le DOM)
     const meta = baseDonnees.meta;
     if (meta) {
       console.info(`📋 Barème chargé : v${meta.version} — valable depuis ${meta.valable_depuis}`);
-      const elVersion = document.getElementById("ui-version-bareme");
-      if (elVersion) {
-        const [annee, mois] = meta.version.split("-");
-        elVersion.textContent = `Barème ${mois}-${annee}`;
-      }
     }
 
     mettreAJourEchelons();
@@ -4168,8 +4144,8 @@ function calculerAnnuel(saisis) {
 
   // ── Montant nuits annuel calculé depuis les compteurs ────────────────────
   const montantNuitsAnnuel = arrondir(
-    (saisis.nuitsAnnuelles   || 0) * CALC.TAUX_NUIT  +
-    (saisis.soireesAnnuelles || 0) * CALC.TAUX_SOIREE
+    (saisis.nuitsAnnuelles   || 0) * baseDonnees.constantes.taux_nuit  +
+    (saisis.soireesAnnuelles || 0) * baseDonnees.constantes.taux_soiree
   );
 
   // Total libres annuels
@@ -4436,7 +4412,7 @@ function getProfilComparaisonDepuisPanneau() {
     echelon:    document.getElementById("cmp-echelon")?.value || profilA.echelon,
     zone:       document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
     taux_pas:   profilA.taux_pas,
-    points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? CALC.POINTS_NBI : 0,
+    points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? baseDonnees.constantes.points_nbi : 0,
     enfants:    parseInt(document.getElementById("cmp-enfants")?.value) || profilA.enfants,
 
     evenements: {

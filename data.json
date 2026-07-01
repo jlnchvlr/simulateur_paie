@@ -16,7 +16,19 @@
     "plafond_rafp": 0.2,
     "taux_retenue_isq": 0.246,
     "transfert_primes_points": 32.42,
-    "participation_psc": 15.0
+    "participation_psc": 15.0,
+    "taux_nuit": 8.73,
+    "taux_soiree": 0.97,
+    "points_nbi": 55,
+    "sft_1_enfant_fixe": 2.29,
+    "sft_2_base": 10.67,
+    "sft_2_taux": 0.03,
+    "sft_3_base": 15.24,
+    "sft_3_taux": 0.08,
+    "sft_sup_base": 4.57,
+    "sft_sup_taux": 0.06,
+    "sft_indice_plancher": 449,
+    "sft_indice_plafond": 717
   },
   "taux_patronaux": {
     "alloc_familiale": 0.0345,

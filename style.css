@@ -82,6 +82,17 @@ body {
   overflow-x: auto;
 }
 
+/* #app-content (<main>) regroupe la fiche et le panneau comparateur depuis le
+   refactor sémantique HTML (commit 88f0e47) : sans display:flex ici, ces deux
+   éléments s'empilent en flux normal au lieu de se placer côte à côte (le
+   panneau comparateur atterrit sous la fiche, quelle que soit la largeur
+   d'écran). On reprend la même config que body pour un rendu identique. */
+#app-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+}
+
 /* =========================================
    1. LA FICHE DE PAIE (A4)
    ========================================= */
@@ -1034,6 +1045,8 @@ body.navigation-clavier .resultat-item:focus {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  white-space: nowrap; /* "TOTAUX DU MOIS" sur une seule ligne (hauteur fixe = pas de place pour 2 lignes) */
+  flex-shrink: 0;
 }
 .amount-cell {
   display: flex;
@@ -1089,13 +1102,6 @@ body.navigation-clavier .resultat-item:focus {
   gap: 4px;
   margin-bottom: 4px;
 }
-.bareme-version {
-  font-size: 8px;
-  color: var(--dgfip-medium);
-  font-family: var(--font-numbers);
-  opacity: 0.6;
-  letter-spacing: 0.5px;
-}
 .reset-profil {
   background: none;
   border: none;
@@ -1141,6 +1147,36 @@ body.navigation-clavier .resultat-item:focus {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
+/* Bannière "nouvelle version disponible" (service worker, cf. index.html) */
+#sw-update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--dgfip-dark);
+  color: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  font-size: 0.9375rem;
+}
+#sw-update-banner button {
+  background: white;
+  color: var(--dgfip-dark);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#sw-update-banner button:hover {
+  background: var(--color-print-bg, #eee);
+}
+
 /* Panneau latéral scénario B */
 #panneau-comparaison {
   display: none;
@@ -1156,6 +1192,7 @@ body.navigation-clavier .resultat-item:focus {
   position: sticky;
   top: 20px;
   overflow: hidden;
+  flex-shrink: 0; /* garde ses 280px même si un sibling flex (#fiche-mobile) manque de place */
 }
 #panneau-comparaison.visible {
   display: flex;
