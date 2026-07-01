@@ -211,16 +211,15 @@
     "ind_csg_default": 115.18
   },
 
-  "attractivite": [
-    { "valeur": "0", "label": "Aucune Prime d'Attractivité" },
-    {
-      "valeur": "415",
-      "label": "RIST Majoration Géo Nord / Nord-Est (201987)"
-    },
-    { "valeur": "520", "label": "RIST Majoration CDG / CRNA Ouest (201986)" },
-    { "valeur": "600", "label": "RIST Majoration Pyrénées / Cayenne (202550)" },
-    { "valeur": "150", "label": "Nouvelle Attractivité - Niveau 2" },
-    { "valeur": "300", "label": "Nouvelle Attractivité - Niveau 3" }
+  "geo_majo": [
+    { "valeur": "0",      "code": "",       "label": "Aucune" },
+    { "valeur": "163.29", "code": "201987", "label": "RIST Maj Géo Nord / Nord-Est" },
+    { "valeur": "0",      "code": "201986", "label": "RIST Maj Géo CDG / CRNA Ouest" },
+    { "valeur": "0",      "code": "202550", "label": "RIST Maj Géo Pyrénées / Cayenne" }
+  ],
+  "attractivite_nouvelle": [
+    { "valeur": "0",      "label": "Aucune" },
+    { "valeur": "105.05", "label": "Attractivité Géographique" }
   ],
   "fidelisation": [
     { "valeur": "0", "label": "Aucune Prime de Fidélisation" },

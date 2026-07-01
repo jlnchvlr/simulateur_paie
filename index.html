@@ -3,41 +3,127 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Simulateur de paie pour les ingénieurs du contrôle de la navigation aérienne (ICNA) — calcul du net mensuel, RIST, OTT et projection annuelle." />
     <title>Simulateur Paie ICNA</title>
     <link rel="stylesheet" href="style.css" />
 
+    <!-- ── PWA ──────────────────────────────────────────────── -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#3b5472" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- iOS Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Paie ICNA" />
+    <!-- Empêche iOS de transformer les nombres en liens téléphoniques -->
+    <meta name="format-detection" content="telephone=no" />
   </head>
   <body>
-    <div class="visite-btns-wrap">
+    <nav class="visite-btns-wrap" aria-label="Aide et visite guidée">
       <button id="btn-visite-avance-flottant" class="btn-visite-avance-flottant" onclick="lancerVisiteAvancee(0)">🚀 Fonctions avancées</button>
       <button id="btn-visite-flottant" class="btn-visite-flottant" onclick="lancerVisiteGuidee(0)">
         💡 Démarrage
       </button>
-    </div>
+    </nav>
   <button id="btn-comparer-flottant" class="btn-comparer-flottant" onclick="activerComparaison()">⚖ Comparer</button>
   <button id="btn-projection-flottant" class="btn-projection-flottant" onclick="ouvrirProjectionAnnuelle()">📅 Annuel</button>
 
-    <dialog id="magic-modal" class="magic-modal">
-      <div class="modal-header">
+    <dialog id="magic-modal" class="magic-modal" aria-labelledby="modal-title" aria-modal="true">
+      <header class="modal-header">
         <h2 id="modal-title">Modifier l'élément</h2>
-        <button class="close-btn" onclick="document.getElementById('magic-modal').close()">✖</button>
-      </div>
+        <button class="close-btn" aria-label="Fermer" onclick="document.getElementById('magic-modal').close()">✖</button>
+      </header>
 
-      <div class="modal-body">
+      <section class="modal-body" aria-label="Configuration">
+        <!-- ══════════════════════════════════════
+             PANEL : Attractivité Géographique
+             ══════════════════════════════════════ -->
+        <!-- ══════════════════════════════════════
+             PANEL : Majoration Géographique
+             ══════════════════════════════════════ -->
+        <div id="panel-geo-majo" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">
+            Majoration géographique accordée aux agents affectés dans certaines directions.<br>
+            Ce montant est soumis aux cotisations sociales et imposable.
+          </p>
+          <div class="ir-tabs" style="flex-wrap:wrap;gap:6px;">
+            <input type="radio" id="geo-majo-none" name="geo-majo-radio" value="0"      data-code=""      checked onchange="calculerPaie()" />
+            <label for="geo-majo-none">Aucune</label>
+            <input type="radio" id="geo-majo-nord" name="geo-majo-radio" value="163.29" data-code="201987" onchange="calculerPaie()" />
+            <label for="geo-majo-nord"><strong>Nord / NE</strong><small>163,29 €</small></label>
+            <input type="radio" id="geo-majo-cdg"  name="geo-majo-radio" value="0"      data-code="201986" onchange="calculerPaie()" />
+            <label for="geo-majo-cdg"><strong>CDG / Ouest</strong><small>à venir</small></label>
+            <input type="radio" id="geo-majo-pyr"  name="geo-majo-radio" value="0"      data-code="202550" onchange="calculerPaie()" />
+            <label for="geo-majo-pyr"><strong>Pyr. / Cayenne</strong><small>à venir</small></label>
+          </div>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
         <!-- ══════════════════════════════════════
              PANEL : Attractivité Géographique
              ══════════════════════════════════════ -->
         <div id="panel-attractivite" class="setting-panel">
-          <p class="panel-hint">Sélectionnez la prime liée à l'attractivité géographique de votre centre.</p>
-          <select id="input-attractivite" class="panel-select"></select>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">
+            Prime d'attractivité géographique accordée aux agents recrutés dans certaines zones.<br>
+            Ce montant est soumis aux cotisations sociales et imposable.
+          </p>
+          <div class="ir-tabs">
+            <input type="radio" id="attract-none" name="attract-radio" value="0"      checked onchange="calculerPaie()" />
+            <label for="attract-none">Aucune</label>
+            <input type="radio" id="attract-oui"  name="attract-radio" value="105.05" onchange="calculerPaie()" />
+            <label for="attract-oui"><strong>Attractivité</strong><small>105,05 €</small></label>
+          </div>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Remboursement Domicile-Travail
+             ══════════════════════════════════════ -->
+        <div id="panel-rembt" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-notice">
+            Remboursement partiel du titre de transport domicile-travail.<br>
+            Non imposable et non soumis aux cotisations sociales.
+          </p>
+          <div class="ir-tabs" style="margin-bottom:12px;">
+            <input type="radio" id="rembt-mode-pass" name="rembt-mode" value="pass" checked onchange="majRembt()" />
+            <label for="rembt-mode-pass"><strong>🎫 Coût du pass</strong><small>→ % remboursé</small></label>
+            <input type="radio" id="rembt-mode-direct" name="rembt-mode" value="direct" onchange="majRembt()" />
+            <label for="rembt-mode-direct"><strong>💶 Montant direct</strong><small>saisie libre</small></label>
+          </div>
+          <div id="rembt-pass-fields">
+            <label for="input-rembt-base" style="display:block;margin-bottom:4px;">Coût mensuel du pass (€)</label>
+            <input type="number" id="input-rembt-base" class="panel-input-number" min="0" step="0.01" placeholder="ex : 122,10" oninput="majRembt()" />
+            <label for="input-rembt-pct" style="display:block;margin:8px 0 4px;">Taux de remboursement</label>
+            <select id="input-rembt-pct" class="panel-select" onchange="majRembt()">
+              <option value="50">50 % (standard)</option>
+              <option value="75">75 %</option>
+              <option value="100">100 %</option>
+            </select>
+          </div>
+          <div id="rembt-direct-field" style="display:none">
+            <label for="input-rembt-direct" style="display:block;margin-bottom:4px;">Montant remboursé (€)</label>
+            <input type="number" id="input-rembt-direct" class="panel-input-number" min="0" step="0.01" placeholder="ex : 61,05" oninput="majRembt()" />
+          </div>
+          <input type="hidden" id="input-rembt-domicile" value="0" />
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
         <!-- ══════════════════════════════════════
              PANEL : Fidélisation
              ══════════════════════════════════════ -->
         <div id="panel-fidelisation" class="setting-panel">
-          <p class="panel-hint">Sélectionnez votre palier de fidélisation (Prime de Fidélisation Territoriale).</p>
-          <select id="input-fidelisation" class="panel-select"></select>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <div class="panel-wip-notice">
+            <span class="panel-wip-icon">🚧</span>
+            <div>
+              <strong>Fonctionnalité en cours de développement</strong><br>
+              <span>La Prime de Fidélisation Territoriale sera disponible dans une prochaine version du simulateur.</span>
+            </div>
+          </div>
+          <select id="input-fidelisation" class="panel-select" style="display:none" aria-label="Prime de Fidélisation"></select>
         </div>
 
         <!-- ══════════════════════════════════════
@@ -67,7 +153,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-rist-fonctions" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de la Part Fonctions (RIST)</label>
+          <label for="input-fonction">Niveau de la Part Fonctions (RIST)</label>
           <input type="hidden" id="input-fonction" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperRist()"></div>
           <div id="rist-helper-text" class="helper-text">Sélectionnez un niveau pour voir les fonctions...</div>
@@ -82,7 +168,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-rist-experience" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de la Part Expérience Professionnelle</label>
+          <label for="input-experience">Niveau de la Part Expérience Professionnelle</label>
           <input type="hidden" id="input-experience" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperExp()"></div>
           <div id="exp-helper-text" class="helper-text">Sélectionnez un niveau pour voir les grades correspondants...</div>
@@ -96,8 +182,8 @@
              PANEL : ISQ Licence
              ══════════════════════════════════════ -->
         <div id="panel-rist-isq-licence" class="setting-panel">
-          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de la Licence ISQ</label>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-isq', '✈️ ISQ')">⬅ Retour ISQ</button>
+          <label for="input-isq-licence">Niveau de la Licence ISQ</label>
           <input type="hidden" id="input-isq-licence" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqLicence()"></div>
           <div id="isq-licence-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
@@ -111,8 +197,8 @@
              PANEL : ISQ Complément
              ══════════════════════════════════════ -->
         <div id="panel-rist-isq-complement" class="setting-panel">
-          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau du Complément ISQ</label>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-isq', '✈️ ISQ')">⬅ Retour ISQ</button>
+          <label for="input-isq-complement">Niveau du Complément ISQ</label>
           <input type="hidden" id="input-isq-complement" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqComplement()"></div>
           <div id="isq-complement-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
@@ -126,8 +212,8 @@
              PANEL : ISQ Majoration
              ══════════════════════════════════════ -->
         <div id="panel-rist-isq-majoration" class="setting-panel">
-          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Niveau de Majoration du Complément ISQ</label>
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-isq', '✈️ ISQ')">⬅ Retour ISQ</button>
+          <label for="input-isq-majoration">Niveau de Majoration du Complément ISQ</label>
           <input type="hidden" id="input-isq-majoration" value="Aucune" />
           <div class="rist-list-container" onmouseleave="resetHelperIsqMajoration()"></div>
           <div id="isq-majoration-helper-text" class="helper-text">Sélectionnez un niveau pour voir l'affectation correspondante...</div>
@@ -177,7 +263,7 @@
           <div class="ott-manual-row">
             <label class="ott-manual-label">
               <span>Autre Option / Saisie manuelle (€) :</span>
-              <input type="number" id="pf-manuel" class="ott-manual-input" value="0.00" step="10" />
+              <input type="number" id="pf-manuel" class="ott-manual-input" value="0.00" step="10" / aria-label="Montant OTT Part Fixe — Autre (€)">
             </label>
           </div>
           <div class="preview-amount preview-amount--compact">
@@ -186,9 +272,9 @@
 
           <h3 class="panel-subhead">2. Mon Bonus Annuel (Part Variable)</h3>
           <p class="panel-hint-small">Remplissez ces champs uniquement les mois où la DGAC vous verse votre bonus.</p>
-          <label>Montant Part Variable Globale (€)</label>
+          <label for="pv-globale">Montant Part Variable Globale (€)</label>
           <input type="number" id="pv-globale" value="0.00" step="10" />
-          <label>Montant Part Variable Option 3-1 / 3-2 (€)</label>
+          <label for="pv-opt32">Montant Part Variable Option 3-1 / 3-2 (€)</label>
           <input type="number" id="pv-opt32" value="0.00" step="10" />
           <div class="preview-amount preview-amount--compact">
             Total Part Variable (Ce mois-ci) : <strong><span id="preview-ott-pv">0,00</span> €</strong>
@@ -201,9 +287,9 @@
              ══════════════════════════════════════ -->
         <div id="panel-nuits" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Nombre de Nuits complètes (N)</label>
+          <label for="input-nuit-n">Nombre de Nuits complètes (N)</label>
           <input type="number" id="input-nuit-n" value="0" step="1" />
-          <label>Nombre de Soirées (S2)</label>
+          <label for="input-nuit-s2">Nombre de Soirées (S2)</label>
           <input type="number" id="input-nuit-s2" value="0" step="1" />
           <div class="preview-amount">
             Montant estimé : <strong><span id="preview-nuits">0,00</span> €</strong>
@@ -216,37 +302,62 @@
              ══════════════════════════════════════ -->
         <div id="panel-absences" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Service Non Fait / Grève (Retenue 100%)</label>
+          <label for="input-greve">Service Non Fait / Grève (Retenue 100%)</label>
           <input type="number" id="input-greve" value="0" min="0" max="31" title="Retenue d'un 1/30ème par jour" />
-          <label>Jour(s) de Carence Maladie (Retenue 100%)</label>
+          <label for="input-carence">Jour(s) de Carence Maladie (Retenue 100%)</label>
           <input type="number" id="input-carence" value="0" min="0" max="3" />
-          <label>Jours de Maladie rémunérés à 90%</label>
+          <label for="input-maladie-90">Jours de Maladie rémunérés à 90%</label>
           <input type="number" id="input-maladie-90" value="0" min="0" max="31" title="Retenue de 10% d'un 1/30ème par jour" />
-          <label>Jours de Maladie à demi-traitement (50%)</label>
+          <label for="input-maladie-50">Jours de Maladie à demi-traitement (50%)</label>
           <input type="number" id="input-maladie-50" value="0" min="0" max="31" title="Retenue de 50% d'un 1/30ème par jour" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
         <!-- ══════════════════════════════════════
-             PANEL : PSC (Mutuelle)
+             PANEL : MGAS / ALAN (avec onglets)
              ══════════════════════════════════════ -->
-        <div id="panel-psc" class="setting-panel">
+        <div id="panel-mgas-alan" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <p class="panel-notice">Vous pouvez cumuler plusieurs aides (cochez celles qui s'appliquent à votre situation) :</p>
-          <div class="ir-tabs">
-            <input type="checkbox" id="psc-15" class="psc-checkbox" value="15" />
-            <label for="psc-15"
-              ><strong>15 €</strong><br /><small>Jusqu'au<br />30/04/26</small></label
-            >
-            <input type="checkbox" id="psc-7" class="psc-checkbox" value="7" />
-            <label for="psc-7"
-              ><strong>7 €</strong><br /><small>Prév. MGAS<br />(Dès 05/26)</small></label
-            >
-            <input type="checkbox" id="psc-5" class="psc-checkbox" value="5" />
-            <label for="psc-5"
-              ><strong>5 €</strong><br /><small>Santé ALAN<br />(Dès 05/26)</small></label
-            >
+
+          <div class="ir-tabs mgas-alan-tabs">
+            <input type="radio" name="tab-mgas-alan" id="tab-mgas-alan-prevoyance" value="prevoyance" />
+            <label for="tab-mgas-alan-prevoyance">🩺 Prévoyance</label>
+            <input type="radio" name="tab-mgas-alan" id="tab-mgas-alan-alan" value="alan" />
+            <label for="tab-mgas-alan-alan">🏥 ALAN</label>
           </div>
+
+          <div id="mgas-alan-tab-prevoyance" class="mgas-alan-section">
+            <p class="panel-notice">Participation employeur à la prévoyance MGAS :</p>
+            <div class="ir-tabs">
+              <input type="checkbox" id="psc-7" value="7" />
+              <label for="psc-7"><strong>7 €</strong><br /><small>Prév. MGAS<br />(dès 05/26)</small></label>
+            </div>
+            <p class="panel-notice panel-notice--muted">Ancienne participation PSC (avant le 01/05/26) :</p>
+            <div class="ir-tabs">
+              <input type="checkbox" id="psc-15" class="psc-checkbox" value="15" />
+              <label for="psc-15"><strong>15 €</strong><br /><small>Jusqu'au<br />30/04/26</small></label>
+            </div>
+          </div>
+
+          <div id="mgas-alan-tab-alan" class="mgas-alan-section">
+            <p class="panel-notice">Saisissez les montants figurant sur votre bulletin de paie :</p>
+            <label for="alan-forfait">ALAN PART FORFAIT (à déduire)</label>
+            <input type="number" id="alan-forfait" min="0" step="0.01" value="0" />
+            <label for="alan-solidaire">ALAN PART SOLIDAIRE (à déduire)</label>
+            <input type="number" id="alan-solidaire" min="0" step="0.01" value="0" />
+            <label for="alan-action-sociale">ALAN ACTION SOCIALE (à déduire)</label>
+            <input type="number" id="alan-action-sociale" min="0" step="0.01" value="0" />
+            <label for="alan-aide-retraites">ALAN AIDE RETRAITES (à déduire)</label>
+            <input type="number" id="alan-aide-retraites" min="0" step="0.01" value="0" />
+            <label for="alan-employeur">ALAN PART EMPLOYEUR (pour information)</label>
+            <input type="number" id="alan-employeur" min="0" step="0.01" value="34.23" />
+            <p class="panel-notice">Option ALAN souscrite au-delà du socle (prélevée sur votre compte, +5 € pris en charge par l'employeur) :</p>
+            <div class="ir-tabs">
+              <input type="checkbox" id="psc-5" />
+              <label for="psc-5"><strong>5 €</strong><br /><small>Option ALAN</small></label>
+            </div>
+          </div>
+
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -255,18 +366,36 @@
              ══════════════════════════════════════ -->
         <div id="panel-menu-ajout" class="setting-panel">
           <p class="panel-hint">Sélectionnez ou recherchez l'élément à ajouter à votre fiche :</p>
-          <input type="text" id="recherche-ajout" placeholder="Rechercher une prime, absence, indemnité..." autocomplete="off" />
+          <input type="text" id="recherche-ajout" placeholder="Rechercher une prime, absence, indemnité..." autocomplete="off" / aria-label="Rechercher un élément variable">
           <div id="resultats-recherche" style="display: none"></div>
           <div id="boutons-ajout-defaut" class="add-buttons-grid">
             <button type="button" onclick="ouvrirModal('panel-nuits', '🌙 Travail de Nuit &amp; Soirées')">🌙 Nuits &amp; Soirées</button>
             <button type="button" onclick="ouvrirModal('panel-absences', '🤒 Absences &amp; Carence')">🤒 Jours d'absence</button>
             <button type="button" onclick="ouvrirModal('panel-ott', '📊 Protocole (OTT)')">📊 Protocole (OTT)</button>
             <button type="button" onclick="ouvrirModal('panel-primes', '💰 Partage Performance (PPP)')">💰 Partage Performance</button>
+            <button type="button" onclick="ouvrirModal('panel-geo-majo', '📍 Majoration Géographique')">📍 Majo Géographique</button>
             <button type="button" onclick="ouvrirModal('panel-attractivite', '📍 Attractivité Géo')">📍 Attractivité Géo</button>
             <button type="button" onclick="ouvrirModal('panel-fidelisation', '⏳ Prime Fidélisation')">⏳ Prime Fidélisation</button>
+            <button type="button" onclick="ouvrirModal('panel-rembt', '🚌 Rembt Domicile-Travail')">🚌 Rembt Domicile-Travail</button>
             <button type="button" onclick="ouvrirModal('panel-fmd', '🚲 Forfait Mobilités')">🚲 Forfait Mobilités</button>
             <button type="button" onclick="ouvrirModal('panel-inflation', '📈 Indemnité Inflation')">📈 Indemnité Inflation</button>
-            <button type="button" onclick="ouvrirModal('panel-psc', '🛡️ Participation PSC')">🛡️ Participation PSC</button>
+            <button type="button" onclick="ouvrirModal('panel-mgas-alan', '🏥 MGAS / ALAN')">🏥 MGAS / ALAN</button>
+            <button type="button" onclick="ouvrirModal('panel-primes-manuelles', '✏️ Primes manuelles')">✏️ Primes manuelles</button>
+            <button type="button" onclick="ouvrirModal('panel-rappels', '📋 Rappels')">📋 Rappels</button>
+            <button type="button" onclick="ouvrirModal('panel-isq', '✈️ ISQ')">✈️ ISQ</button>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Sous-menu ISQ
+             ══════════════════════════════════════ -->
+        <div id="panel-isq" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-hint">Quel composant ISQ souhaitez-vous configurer ?</p>
+          <div class="add-buttons-grid">
+            <button type="button" onclick="ouvrirModal('panel-rist-isq-licence', 'Licence ISQ')">📋 Licence ISQ</button>
+            <button type="button" onclick="ouvrirModal('panel-rist-isq-complement', 'Complément ISQ')">📋 Complément ISQ</button>
+            <button type="button" onclick="ouvrirModal('panel-rist-isq-majoration', 'Majoration Complément ISQ')">📋 Majoration Cplt ISQ</button>
           </div>
         </div>
 
@@ -275,13 +404,16 @@
              ══════════════════════════════════════ -->
         <div id="panel-fmd" class="setting-panel">
           <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Montant du Forfait Mobilités Durables</label>
-          <select id="input-fmd" class="select-light">
-            <option value="0">-- Aucun --</option>
-            <option value="100">100 € (30 à 59 jours)</option>
-            <option value="200">200 € (60 à 99 jours)</option>
-            <option value="300">300 € (100 jours et plus)</option>
-          </select>
+          <div class="ir-tabs" style="flex-wrap:wrap;gap:6px;">
+            <input type="radio" id="fmd-none" name="fmd-radio" value="0"   checked onchange="calculerPaie()" />
+            <label for="fmd-none">Aucun</label>
+            <input type="radio" id="fmd-100"  name="fmd-radio" value="100" onchange="calculerPaie()" />
+            <label for="fmd-100"><strong>100 €</strong><small>30–59 jours</small></label>
+            <input type="radio" id="fmd-200"  name="fmd-radio" value="200" onchange="calculerPaie()" />
+            <label for="fmd-200"><strong>200 €</strong><small>60–99 jours</small></label>
+            <input type="radio" id="fmd-300"  name="fmd-radio" value="300" onchange="calculerPaie()" />
+            <label for="fmd-300"><strong>300 €</strong><small>100 j. et +</small></label>
+          </div>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -291,7 +423,7 @@
         <div id="panel-inflation" class="setting-panel">
           <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
           <p class="panel-hint">Saisissez manuellement le montant de l'indemnité inflation / pouvoir d'achat.</p>
-          <label>Montant de l'indemnité (€)</label>
+          <label for="input-inflation">Montant de l'indemnité (€)</label>
           <input type="number" id="input-inflation" value="0.00" step="10" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -301,7 +433,7 @@
              ══════════════════════════════════════ -->
         <div id="panel-primes" class="setting-panel">
           <button class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
-          <label>Prime Partage Performance (€)</label>
+          <label for="input-perf">Prime Partage Performance (€)</label>
           <input type="number" id="input-perf" value="0.00" step="10" />
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
@@ -310,8 +442,30 @@
              PANEL : Prélèvement à la Source
              ══════════════════════════════════════ -->
         <div id="panel-impots" class="setting-panel">
-          <label>Taux de Prélèvement à la Source (%)</label>
+          <label for="input-pas">Taux de Prélèvement à la Source (%)</label>
           <input type="text" inputmode="decimal" id="input-pas" value="" placeholder="ex : 7.5" autocomplete="off" />
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Primes Manuelles
+             ══════════════════════════════════════ -->
+        <div id="panel-primes-manuelles" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-hint">Ajoutez vos primes non prévues dans le simulateur (remboursements, primes exceptionnelles…). Indiquez si chaque prime est imposable : cela affecte le net imposable et le calcul du PAS.</p>
+          <div id="primes-manuelles-liste"></div>
+          <button type="button" class="proj-add-btn" onclick="window.ajouterPrimeManuelle()">+ Ajouter une prime</button>
+          <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             PANEL : Rappels rétroactifs
+             ══════════════════════════════════════ -->
+        <div id="panel-rappels" class="setting-panel">
+          <button type="button" class="back-btn" onclick="ouvrirModal('panel-menu-ajout', 'Que voulez-vous ajouter ?')">⬅ Retour au menu</button>
+          <p class="panel-hint">Ajoutez les rappels rétroactifs sur n'importe quelle ligne de la fiche. Chaque rappel s'affiche directement sous la ligne concernée. Un montant négatif correspond à un trop-perçu (colonne À Déduire).</p>
+          <div id="rappels-liste"></div>
+          <button type="button" class="proj-add-btn" onclick="window.ajouterRappel()">+ Ajouter un rappel</button>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
 
@@ -319,12 +473,11 @@
              PANEL : Indemnité Compensatrice CSG
              ══════════════════════════════════════ -->
         <div id="panel-csg" class="setting-panel">
-          <label>Indemnité Compensatrice CSG (€)</label>
+          <label for="input-ind-csg">Indemnité Compensatrice CSG (€)</label>
           <input type="text" inputmode="decimal" id="input-ind-csg" value="" placeholder="ex : 115.18" autocomplete="off" />
           <p class="panel-footnote">Cette indemnité est propre à chaque agent (figée sur la base de la rémunération de 2017).</p>
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Valider &amp; Fermer ↵</button>
         </div>
-      </div>
         <!-- ============================================================
              PANNEAU PROJECTION ANNUELLE
              ============================================================ -->
@@ -343,7 +496,7 @@
                 <span class="proj-hint-moy">~28 / an (hors congés)</span>
               </label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-nuits"   value="28" min="0" step="1" onfocus="this.select()" />
+                <input type="number" id="proj-nuits"   value="28" min="0" step="1" onfocus="this.select()" / aria-label="Nuits projetées">
                 <span class="proj-unit">nuits / an</span>
               </div>
             </div>
@@ -353,33 +506,33 @@
                 <span class="proj-hint-moy">~28 / an (hors congés)</span>
               </label>
               <div class="proj-input-unit">
-                <input type="number" id="proj-soirees" value="28" min="0" step="1" onfocus="this.select()" />
+                <input type="number" id="proj-soirees" value="28" min="0" step="1" onfocus="this.select()" / aria-label="Soirées projetées">
                 <span class="proj-unit">S2 / an</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>OTT Part Variable globale</label>
+              <label for="proj-ottPv">OTT Part Variable globale</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-ottPv"   value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>OTT PV Opt 3-1 / 3-2</label>
+              <label for="proj-ottPv32">OTT PV Opt 3-1 / 3-2</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-ottPv32" value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>Prime Partage Performance</label>
+              <label for="proj-ppp">Prime Partage Performance</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-ppp"     value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
               </div>
             </div>
             <div class="proj-row">
-              <label>Forfait Mobilités Durables</label>
+              <label for="proj-fmd">Forfait Mobilités Durables</label>
               <div class="proj-input-unit">
                 <input type="number" id="proj-fmd"     value="0" step="10" onfocus="this.select()" />
                 <span class="proj-unit">€</span>
@@ -444,19 +597,17 @@
           <button type="button" class="validate-btn" onclick="document.getElementById('magic-modal').close()">Fermer ↵</button>
         </div>
         <!-- /#panel-projection -->
-
-      <!-- /.modal-body -->
+      </section><!-- /.modal-body -->
     </dialog>
 
     <!-- ══════════════════════════════════════
          SPOTLIGHT (Ctrl + K)
          ══════════════════════════════════════ -->
-    <dialog id="spotlight-modal" class="spotlight-modal">
+    <dialog id="spotlight-modal" class="spotlight-modal" aria-label="Recherche rapide" aria-modal="true">
       <div class="spotlight-container">
         <div class="spotlight-header">
           <span class="spotlight-icon">🔍</span>
-          <input type="text" id="spotlight-input" placeholder="Rechercher (Primes, Absences, Impôts...)" autocomplete="off" />
-          <span class="spotlight-shortcut">ESC</span>
+          <input type="text" id="spotlight-input" placeholder="Rechercher (Primes, Absences, Impôts...)" autocomplete="off" / aria-label="Recherche rapide">
         </div>
         <div id="spotlight-results" class="spotlight-results"></div>
       </div>
@@ -464,14 +615,17 @@
 
     <!-- ══════════════════════════════════════
          PAGE A4 — FICHE DE PAIE
+         Wrapper mobile : clip le débordement horizontal de la fiche scalée
          ══════════════════════════════════════ -->
+    <main id="app-content" aria-label="Simulateur de paie">
+    <div id="fiche-scaler-wrap">
     <div class="page-a4">
-      <div class="bareme-header">
+      <header class="bareme-header">
         <span id="ui-version-bareme" class="bareme-version"></span>
         <button type="button" id="btn-reset-profil" onclick="effacerProfil()" class="reset-profil" title="Réinitialiser le profil sauvegardé">↺</button>
-      </div>
+      </header>
 
-      <table class="info-table">
+      <table class="info-table" aria-label="Identité et grade de l'agent">
         <thead>
           <tr>
             <th>GRADE</th>
@@ -585,27 +739,34 @@
         </tfoot>
       </table>
     </div>
-    <!-- /.page-a4 -->
+    </div>
+    <!-- /.page-a4 /.fiche-scaler-wrap -->
+
+    <!-- ══════════════════════════════════════
+         VUE MOBILE — liste condensée
+         Masquée sur desktop (CSS), alimentée par dessinerFicheMobile()
+         ══════════════════════════════════════ -->
+    <section id="fiche-mobile" aria-label="Fiche de paie" aria-live="polite"></section>
 
     <!-- ============================================================
          PANNEAU COMPARATEUR DE SCÉNARIOS (Scénario B)
          ============================================================ -->
-    <div id="panneau-comparaison">
-      <div class="cmp-header">
+    <aside id="panneau-comparaison" aria-label="Scénario B — Comparaison">
+      <header class="cmp-header">
         <span>⚖ Scénario B</span>
         <button type="button" onclick="desactiverComparaison()">✕ Quitter</button>
-      </div>
+      </header>
 
       <div class="cmp-body">
         <p class="panel-hint">Modifiez les paramètres pour simuler un autre scénario. Les différences apparaissent directement sur la fiche.</p>
 
         <!-- Grade & Échelon -->
         <h3 class="panel-subhead">Grade &amp; Échelon</h3>
-        <label>Grade</label>
+        <label for="cmp-grade">Grade</label>
         <select id="cmp-grade"></select>
-        <label>Échelon</label>
+        <label for="cmp-echelon">Échelon</label>
         <select id="cmp-echelon"></select>
-        <label>Enfants à charge</label>
+        <label for="cmp-enfants">Enfants à charge</label>
         <select id="cmp-enfants">
           <option value="0">0 enfant</option>
           <option value="1">1 enfant</option>
@@ -633,23 +794,25 @@
 
         <!-- RIST / ISQ -->
         <h3 class="panel-subhead">RIST / ISQ</h3>
-        <label>Part Fonctions</label>
+        <label for="cmp-input-fonction">Part Fonctions</label>
         <select id="cmp-input-fonction"></select>
-        <label>Part Expérience</label>
+        <label for="cmp-input-experience">Part Expérience</label>
         <select id="cmp-input-experience"></select>
-        <label>ISQ — Licence</label>
+        <label for="cmp-input-isq-licence">ISQ — Licence</label>
         <select id="cmp-input-isq-licence"></select>
-        <label>ISQ — Complément</label>
+        <label for="cmp-input-isq-complement">ISQ — Complément</label>
         <select id="cmp-input-isq-complement"></select>
-        <label>ISQ — Majoration</label>
+        <label for="cmp-input-isq-majoration">ISQ — Majoration</label>
         <select id="cmp-input-isq-majoration"></select>
 
-        <!-- Attractivité & Fidélisation -->
+        <!-- Attractivité & Fidélisation — en développement -->
         <h3 class="panel-subhead">Attractivité &amp; Fidélisation</h3>
-        <label>Attractivité Géographique</label>
-        <select id="cmp-attractivite"></select>
-        <label>Prime de Fidélisation</label>
-        <select id="cmp-fidelisation"></select>
+        <label class="cmp-label" for="cmp-geo-majo">Majoration Géographique</label>
+        <select id="cmp-geo-majo" class="panel-select" aria-label="Majoration Géographique — Scénario B"></select>
+        <label class="cmp-label" for="cmp-attractivite">Attractivité Géographique</label>
+        <select id="cmp-attractivite" class="panel-select" aria-label="Attractivité Géographique — Scénario B"></select>
+        <label class="cmp-label" for="cmp-fidelisation">Fidélisation</label>
+        <select id="cmp-fidelisation" class="panel-select" aria-label="Prime de Fidélisation — Scénario B"></select>
 
         <!-- PSC -->
         <h3 class="panel-subhead">Participation PSC</h3>
@@ -661,6 +824,19 @@
           <input type="checkbox" id="cmp-psc-5" class="cmp-psc-checkbox" value="5" />
           <label for="cmp-psc-5"><strong>5 €</strong><br /><small>ALAN</small></label>
         </div>
+
+        <!-- ALAN -->
+        <h3 class="panel-subhead">Mutuelle ALAN</h3>
+        <label for="cmp-alan-forfait">ALAN PART FORFAIT (€)</label>
+        <input type="number" id="cmp-alan-forfait" min="0" step="0.01" value="0" aria-label="ALAN PART FORFAIT — Scénario B" />
+        <label for="cmp-alan-solidaire">ALAN PART SOLIDAIRE (€)</label>
+        <input type="number" id="cmp-alan-solidaire" min="0" step="0.01" value="0" aria-label="ALAN PART SOLIDAIRE — Scénario B" />
+        <label for="cmp-alan-action-sociale">ALAN ACTION SOCIALE (€)</label>
+        <input type="number" id="cmp-alan-action-sociale" min="0" step="0.01" value="0" aria-label="ALAN ACTION SOCIALE — Scénario B" />
+        <label for="cmp-alan-aide-retraites">ALAN AIDE RETRAITES (€)</label>
+        <input type="number" id="cmp-alan-aide-retraites" min="0" step="0.01" value="0" aria-label="ALAN AIDE RETRAITES — Scénario B" />
+        <label for="cmp-alan-employeur">ALAN PART EMPLOYEUR (€)</label>
+        <input type="number" id="cmp-alan-employeur" min="0" step="0.01" value="0" aria-label="ALAN PART EMPLOYEUR — Scénario B" />
 
         <!-- OTT Part Fixe -->
         <h3 class="panel-subhead">OTT — Part Fixe</h3>
@@ -680,41 +856,54 @@
         </div>
         <div class="cmp-ott-manuel-row">
           <span>Autre / Manuel (€)</span>
-          <input type="number" id="cmp-pf-manuel" value="0" step="10" onfocus="this.select()" />
+          <input type="number" id="cmp-pf-manuel" value="0" step="10" onfocus="this.select()" / aria-label="OTT Part Fixe Autre — Scénario B (€)">
         </div>
 
         <!-- OTT Part Variable -->
         <h3 class="panel-subhead">OTT — Part Variable</h3>
-        <label>Part Variable Globale (€)</label>
+        <label for="cmp-pv-globale">Part Variable Globale (€)</label>
         <input type="number" id="cmp-pv-globale" value="0" step="10" onfocus="this.select()" />
-        <label>Part Variable Opt 3-1 / 3-2 (€)</label>
+        <label for="cmp-pv-opt32">Part Variable Opt 3-1 / 3-2 (€)</label>
         <input type="number" id="cmp-pv-opt32" value="0" step="10" onfocus="this.select()" />
       </div>
-    </div>
+    </aside>
     <!-- /#panneau-comparaison -->
 
 
+
+    </main>
 
     <!-- ════════════════════════════════════════════
          MOTEUR — chargé après tout le DOM
          ════════════════════════════════════════════ -->
     <!-- ═══ TOUR GUIDÉ — DOM fixe, jamais détruit ═══ -->
     <div id="tour-spotlight" aria-hidden="true" style="display:none"></div>
-    <div id="tour-toast" aria-live="polite"></div>
+    <output id="tour-toast" aria-live="polite" aria-atomic="true"></output>
     <div id="tour-popover" role="dialog" aria-modal="true" aria-label="Tutoriel" style="display:none">
       <div class="tour-pop-header">
         <span class="tour-pop-step"></span>
         <span class="tour-pop-title"></span>
       </div>
       <div class="tour-pop-body"></div>
-      <div class="tour-pop-footer">
+      <footer class="tour-pop-footer">
         <button class="tour-pop-prev" onclick="window._tourPrev()">⬅ Précédent</button>
         <button class="tour-pop-skip" onclick="window._tourSkip()">Passer ⏭</button>
         <button class="tour-pop-next" onclick="window._tourNext()">Suivant ➔</button>
-      </div>
+      </footer>
     </div>
     <!-- ═══ FIN TOUR ═══ -->
-    <script src="engine.js"></script>
+    <script src="engine.js" defer></script>
+    <script>
+      /* Enregistrement du Service Worker — PWA offline */
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").then(
+            (reg) => console.info("SW enregistré :", reg.scope),
+            (err) => console.warn("SW échec :", err)
+          );
+        });
+      }
+    </script>
 
   </body>
 </html>

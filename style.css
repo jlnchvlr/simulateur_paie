@@ -1,27 +1,77 @@
 :root {
-  /* Palette DGFiP */
+  /* ── Palette DGFiP ──────────────────────────────────────────────── */
   --dgfip-dark: #3b5472;
   --dgfip-medium: #8397af;
   --dgfip-light: #e0e6ed;
   --dgfip-gray-border: #9ba8b6;
 
-  /* Typographie */
+  /* ── Typographie ────────────────────────────────────────────────── */
   --font-main: "Arial", Helvetica, sans-serif;
   --font-numbers: "Lucida Console", "Courier New", monospace;
 
-  /* Surfaces & couleurs sémantiques
-     Référencées dans le CSS mais absentes = fallback navigateur silencieux.
-     Définies ici une seule fois pour toute l'application. */
+  /* ── Surfaces & neutres ─────────────────────────────────────────── */
   --color-surface: #f8f9fa;
-  --color-blue-tint: #e8f0fe;
+  --color-surface-alt: #f0f4f8;
   --color-border: #ccc;
+  --color-border-alt: #d0daea;
+  --color-blue-tint: #e8f0fe;
+
+  /* ── Texte ──────────────────────────────────────────────────────── */
   --color-text: #333;
-  --color-text-muted: #888;
-  --color-danger: #dc3545;
+  --color-text-secondary: #555;
+  --color-text-muted: #696969; /* WCAG AA : 5.5:1 sur blanc (était 3.5:1) */
+  --color-text-disabled: #767676; /* WCAG AA : 4.5:1 sur blanc (était 1.9:1) */
+
+  /* ── Sémantique : Succès (vert) ─────────────────────────────────── */
+  --color-success: #1a6b2f;
+  --color-success-dark: #155724;
+  --color-success-bg: #d4edda;
+
+  /* ── Sémantique : Danger (rouge) ────────────────────────────────── */
+  --color-danger: #c0392b;
+  --color-danger-bg: #f8d7da;
+
+  /* ── Sémantique : Warning (orange) ─────────────────────────────── */
+  --color-warning: #fd7e14; /* Déco/fond uniquement — texte : --color-warning-dark */
+  --color-warning-dark: #b85c00;
+  --color-warning-text: #5d4037;
+  --color-warning-bg: #fff8f3;
+  --color-warning-bg-light: #fff8e1;
+  --color-warning-border: #ffe082;
+
+  /* ── Variables supplémentaires ─────────────────────────────────── */
+  --color-print-bg: #525659;
+  --color-info-text: #0056b3;
+  --color-info-bg: #e6f2ff;
+  --color-danger-text: #721c24;
+  --color-danger-alt: #d9534f;
+  --color-success-bg-light: #f0fff4;
+  --color-mobile-night: #3a3d40;
+  --color-absence-bg: #fff5f5;
+  --color-neutral-hover: #f1f3f4;
+
+  /* ── Bordures & tons neutres ────────────────────────────────────── */
+  --color-white: #fff;
+  --color-border-light: #ddd;
+  --color-border-muted: #eee;
+  --color-border-neutral: #ccc;
+  --color-toggle-border: #d0d8e4;
+  --color-ott-border: #c2d7fa;
+  --color-note-bg: #fff3cd;
+  --color-note-border: #ffc107;
+  --color-note-text: #856404;
+  --color-mobile-accent: #7eb8f7;
+  --color-mobile-muted: #aab8cc;
+  --color-pending-text: #7a4100;
+  --color-close-hover: #ccc;
+}
+
+html {
+  font-size: 100%; /* base 16px navigateur — rem relatif à cette valeur */
 }
 
 body {
-  background-color: #525659;
+  background-color: var(--color-print-bg);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -50,34 +100,6 @@ body {
 }
 
 /* En-tête et Infos */
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 15px;
-}
-.header-title-box {
-  background-color: var(--dgfip-dark);
-  color: white;
-  text-align: center;
-  padding: 2px 0;
-  width: 250px;
-}
-.header-title-main {
-  font-size: 14px;
-  font-weight: bold;
-  letter-spacing: 4px;
-}
-.header-title-sub {
-  font-size: 10px;
-  background-color: var(--dgfip-medium);
-  margin-top: 2px;
-  padding: 2px;
-}
-.header-right {
-  text-align: right;
-  font-size: 10px;
-}
 .info-table {
   width: 100%;
   border-collapse: collapse;
@@ -146,6 +168,7 @@ body {
   height: 18px !important;
   font-family: var(--font-numbers);
   font-size: 10px;
+  line-height: 16px; /* ← explicite → identique sur tous les OS */
   font-weight: bold;
   border-right: 1px solid var(--dgfip-light);
   color: black !important;
@@ -203,14 +226,14 @@ body {
   transition: background-color 0.15s;
 }
 .clickable-row:hover td {
-  background-color: #e8f0fe !important;
+  background-color: var(--color-blue-tint) !important;
 }
 .clickable-row:hover td:first-child {
   box-shadow: inset 3px 0 0 var(--dgfip-dark);
   border-left: none;
 }
 .clickable-row .col-libelle > span:first-child {
-  border-bottom: 1px dotted #999;
+  border-bottom: 1px dotted var(--color-text-disabled);
   padding-bottom: 1px;
 }
 .clickable-row:hover .col-libelle > span:first-child {
@@ -229,13 +252,13 @@ body {
   line-height: normal !important;
 }
 .add-row:hover td {
-  background-color: #f1f3f4 !important;
+  background-color: var(--color-neutral-hover) !important;
   color: var(--dgfip-dark) !important;
   font-weight: bold;
 }
 
 .delete-btn {
-  color: #d9534f;
+  color: var(--color-danger-alt);
   cursor: pointer;
   margin-left: 8px;
   font-family: var(--font-main);
@@ -252,7 +275,7 @@ body {
   display: inline-block;
 }
 .delete-btn:hover {
-  color: #c9302c !important;
+  color: var(--color-danger-alt) !important;
   opacity: 1 !important;
   transform: scale(1.3);
 }
@@ -303,7 +326,7 @@ body {
 }
 .modal-header h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-family: var(--font-main);
   letter-spacing: 1px;
 }
@@ -311,12 +334,12 @@ body {
   background: transparent;
   color: white;
   border: none;
-  font-size: 20px;
+  font-size: 1.25rem;
   cursor: pointer;
   font-weight: bold;
 }
 .close-btn:hover {
-  color: #ccc;
+  color: var(--color-border-neutral);
 }
 .modal-body {
   padding: 20px;
@@ -335,14 +358,14 @@ body {
   font-weight: bold;
   margin-top: 12px;
   margin-bottom: 4px;
-  color: #444;
-  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
 }
 .modal-body select,
 .modal-body input {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border-neutral);
   border-radius: 4px;
   font-family: var(--font-main);
   box-sizing: border-box;
@@ -355,16 +378,16 @@ body {
 .back-btn {
   background: transparent;
   border: none;
-  color: #0056b3;
+  color: var(--color-info-text);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-bottom: 15px;
   padding: 0;
   text-decoration: underline;
   display: inline-block;
 }
 .back-btn:hover {
-  color: #003d82;
+  color: var(--color-info-text);
 }
 
 .validate-btn {
@@ -376,7 +399,7 @@ body {
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: var(--font-main);
   font-weight: bold;
   cursor: pointer;
@@ -389,14 +412,14 @@ body {
   transform: scale(1.02);
 }
 .validate-btn:disabled {
-  background-color: #bbb;
+  background-color: var(--color-text-disabled);
   cursor: not-allowed;
   transform: none;
 }
 .validate-btn:disabled::after {
   content: " — faites un choix ↑";
   font-weight: normal;
-  font-size: 12px;
+  font-size: 0.75rem;
   opacity: 0.85;
 }
 
@@ -408,18 +431,18 @@ body {
 }
 .add-buttons-grid button {
   padding: 12px;
-  background: #f8f9fa;
-  border: 1px solid #ccc;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-neutral);
   border-radius: 6px;
   cursor: pointer;
   font-family: var(--font-main);
   font-weight: bold;
-  color: #444;
+  color: var(--color-text-secondary);
   transition: all 0.2s;
   text-align: left;
 }
 .add-buttons-grid button:hover {
-  background: #e8f0fe;
+  background: var(--color-blue-tint);
   border-color: var(--dgfip-medium);
   color: var(--dgfip-dark);
   transform: translateY(-2px);
@@ -447,14 +470,14 @@ body {
   border: 1px solid var(--dgfip-light);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   transition: all 0.2s;
   margin: 0;
 }
 .ir-tabs label small {
   display: block;
-  font-size: 10px;
-  color: #666;
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
   margin-top: 4px;
   line-height: 1.2;
 }
@@ -471,24 +494,24 @@ body {
 .rist-list-container {
   max-height: 180px;
   overflow-y: auto;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border-neutral);
   border-radius: 4px;
   margin-bottom: 10px;
-  background: #fff;
+  background: var(--color-white);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 .rist-option {
   padding: 8px 12px;
   cursor: pointer;
-  font-size: 13px;
-  border-bottom: 1px solid #eee;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid var(--color-border-muted);
   transition: background-color 0.1s;
 }
 .rist-option:last-child {
   border-bottom: none;
 }
 .rist-option:hover {
-  background-color: #f1f3f4;
+  background-color: var(--color-neutral-hover);
 }
 .rist-option.selected {
   background-color: var(--dgfip-dark);
@@ -507,11 +530,11 @@ body {
   display: none;
 }
 .ott-card {
-  border: 2px solid #e0e6ed;
+  border: 2px solid var(--dgfip-light);
   border-radius: 6px;
   padding: 12px 6px;
   cursor: pointer;
-  background: #f8f9fa;
+  background: var(--color-surface);
   transition: all 0.2s;
   text-align: center;
   min-height: 25px;
@@ -519,20 +542,20 @@ body {
 .ott-card-title {
   display: block;
   width: 100%;
-  font-size: 11px;
-  color: #444;
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
   line-height: 1.3;
   margin-bottom: 8px;
 }
 .ott-card-amount {
   display: inline-block;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--dgfip-dark);
-  background-color: #e8f0fe;
+  background-color: var(--color-blue-tint);
   padding: 3px 8px;
   border-radius: 12px;
   font-weight: bold;
-  border: 1px solid #c2d7fa;
+  border: 1px solid var(--color-ott-border);
   margin-top: 0;
 }
 .ott-grid input[type="checkbox"]:checked + .ott-card {
@@ -607,7 +630,7 @@ body {
   border: 2px solid var(--dgfip-light);
   border-radius: 6px;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 15px;
   box-sizing: border-box;
   transition: border-color 0.2s;
@@ -619,8 +642,12 @@ body {
   background-size: 18px 18px; /* Taille de l'icône */
 }
 #recherche-ajout:focus {
-  outline: none;
+  outline: none; /* supprimé car border-color remplace visuellement */
   border-color: var(--dgfip-medium);
+}
+#recherche-ajout:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: 2px; /* indicateur clavier explicite (A11y) */
 }
 
 #resultats-recherche {
@@ -638,7 +665,7 @@ body {
   cursor: pointer;
   text-align: left;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--dgfip-dark);
   transition: all 0.2s;
   display: flex;
@@ -650,16 +677,16 @@ body {
 }
 body:not(.navigation-clavier) .resultat-item:hover {
   border-color: var(--dgfip-medium);
-  background-color: #f8f9fa;
+  background-color: var(--color-surface);
   transform: translateX(4px); /* Petit effet de glissement vers la droite */
 }
 
 .resultat-vide {
   text-align: center;
-  color: #888;
+  color: var(--color-text-muted);
   font-style: italic;
   padding: 20px 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 /* =========================================
    SPOTLIGHT (Ctrl + K / Cmd + K)
@@ -702,7 +729,7 @@ body:not(.navigation-clavier) .resultat-item:hover {
 }
 
 .spotlight-icon {
-  font-size: 20px;
+  font-size: 1.25rem;
   color: var(--dgfip-medium);
   margin-right: 15px;
 }
@@ -710,25 +737,30 @@ body:not(.navigation-clavier) .resultat-item:hover {
 #spotlight-input {
   flex: 1;
   border: none;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-family: var(--font-main);
-  outline: none;
+  outline: none; /* design custom — focus via conteneur */
   color: var(--dgfip-dark);
   background: transparent;
 }
+#spotlight-input:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: 2px; /* indicateur clavier (A11y) */
+  border-radius: 2px;
+}
 
 #spotlight-input::placeholder {
-  color: #aaa;
+  color: var(--color-text-disabled);
 }
 
 .spotlight-shortcut {
-  font-size: 10px;
-  background: #f0f0f0;
+  font-size: 0.625rem;
+  background: var(--color-surface-alt);
   padding: 4px 8px;
   border-radius: 4px;
-  color: #666;
+  color: var(--color-text-muted);
   font-weight: bold;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-light);
 }
 
 .spotlight-results {
@@ -759,16 +791,22 @@ body:not(.navigation-clavier) .resultat-item:hover {
   }
 }
 
-/* Focus navigateur supprimé — style propre appliqué uniquement en navigation clavier */
+/* outline:none sur :focus — remplacé par :focus-visible ci-dessous (A11y)
+   body.navigation-clavier assure le fallback pour les navigateurs anciens */
 .resultat-item:focus {
   outline: none;
+}
+.resultat-item:focus-visible {
+  outline: 2px solid var(--dgfip-dark);
+  outline-offset: -2px;
+  background-color: var(--color-surface);
 }
 
 /* Bordure visible uniquement en navigation clavier (accessibilité) */
 body.navigation-clavier .resultat-item:focus {
   outline: 2px solid var(--dgfip-dark);
   outline-offset: -2px;
-  background-color: #f8f9fa;
+  background-color: var(--color-surface);
 }
 
 /* =========================================
@@ -779,36 +817,49 @@ body.navigation-clavier .resultat-item:focus {
 .panel-hint {
   margin-top: 0;
   margin-bottom: 15px;
-  font-size: 13px;
-  color: #555;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
 }
 .panel-notice {
   margin-top: 0;
   margin-bottom: 20px;
-  font-size: 12px;
-  color: #555;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
   line-height: 1.5;
-  background-color: #f9f9f9;
+  background-color: var(--color-surface);
   padding: 10px;
   border-left: 3px solid var(--dgfip-dark);
 }
+.panel-notice--muted {
+  border-left-color: var(--color-border-muted);
+  opacity: 0.7;
+}
+.mgas-alan-tabs {
+  margin-bottom: 16px;
+}
+.mgas-alan-section {
+  display: none;
+}
+.mgas-alan-section.active {
+  display: block;
+}
 .panel-footnote {
   margin-top: 5px;
-  font-size: 10px;
-  color: #666;
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 .panel-hint-small {
   margin-top: 0;
   margin-bottom: 10px;
-  font-size: 11px;
-  color: #666;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
 }
 .panel-subhead {
   margin-top: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--dgfip-dark);
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--color-border-neutral);
   padding-bottom: 5px;
 }
 
@@ -819,19 +870,24 @@ body.navigation-clavier .resultat-item:focus {
   border: 2px solid var(--dgfip-light);
   border-radius: 6px;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   background-color: white;
   color: var(--dgfip-dark);
   cursor: pointer;
-  outline: none;
+  outline: none; /* design custom — :focus-visible ci-dessous */
+}
+.panel-select:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: -2px; /* indicateur clavier (A11y) */
+  border-color: var(--dgfip-medium);
 }
 .select-light {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border-neutral);
   border-radius: 4px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 20px;
   cursor: pointer;
   box-sizing: border-box;
@@ -843,24 +899,28 @@ body.navigation-clavier .resultat-item:focus {
   font-size: inherit;
   font-weight: inherit;
   cursor: pointer;
-  outline: none;
+  outline: none; /* design intégré — :focus-visible ci-dessous */
+}
+.select-transparent:focus-visible {
+  outline: 2px solid var(--dgfip-medium);
+  outline-offset: 2px; /* indicateur clavier (A11y) */
 }
 
 /* RIST / ISQ helpers */
 .helper-text {
-  font-size: 11px;
-  color: #0056b3;
-  background-color: #e6f2ff;
+  font-size: 0.6875rem;
+  color: var(--color-info-text);
+  background-color: var(--color-info-bg);
   padding: 10px;
   border-radius: 4px;
   font-style: italic;
   min-height: 35px;
-  border-left: 3px solid #0056b3;
+  border-left: 3px solid var(--color-info-text);
 }
 
 /* Boîte de preview montant */
 .preview-amount {
-  background-color: #e8f0fe;
+  background-color: var(--color-blue-tint);
   padding: 10px;
   border-radius: 4px;
   margin-top: 15px;
@@ -870,7 +930,7 @@ body.navigation-clavier .resultat-item:focus {
 }
 .preview-amount strong {
   color: var(--dgfip-dark);
-  font-size: 16px;
+  font-size: 1rem;
 }
 .preview-amount--compact {
   padding: 8px;
@@ -878,14 +938,14 @@ body.navigation-clavier .resultat-item:focus {
   margin-bottom: 20px;
 }
 .preview-amount--compact strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* OTT — saisie manuelle */
 .ott-manual-row {
   margin-top: 5px;
   padding-top: 10px;
-  border-top: 1px dashed #ccc;
+  border-top: 1px dashed var(--color-border-neutral);
 }
 .ott-manual-label {
   font-weight: normal;
@@ -946,7 +1006,7 @@ body.navigation-clavier .resultat-item:focus {
   background: white;
   padding: 3px 5px;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
   display: flex;
   justify-content: space-between;
@@ -956,7 +1016,7 @@ body.navigation-clavier .resultat-item:focus {
 .cout-employeur-lbl {
   background-color: var(--dgfip-medium);
   color: white;
-  font-size: 8px;
+  font-size: 0.5rem;
   text-align: center;
   padding: 3px 0;
   border: 1px solid var(--dgfip-dark);
@@ -967,7 +1027,7 @@ body.navigation-clavier .resultat-item:focus {
 .totaux-badge {
   background-color: var(--dgfip-dark);
   color: white;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: bold;
   padding: 2px 15px;
   height: 20px;
@@ -1022,9 +1082,6 @@ body.navigation-clavier .resultat-item:focus {
 .float-right {
   float: right;
 }
-.page-top-spacer {
-  height: 20px;
-}
 .bareme-header {
   display: flex;
   justify-content: flex-end;
@@ -1043,7 +1100,7 @@ body.navigation-clavier .resultat-item:focus {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--dgfip-medium);
   opacity: 0.4;
   padding: 0;
@@ -1070,9 +1127,12 @@ body.navigation-clavier .resultat-item:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s;
   z-index: 1000;
 }
 .btn-comparer-flottant:hover {
@@ -1110,7 +1170,7 @@ body.navigation-clavier .resultat-item:focus {
   align-items: center;
   font-weight: bold;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   flex-shrink: 0;
   letter-spacing: 0.5px;
 }
@@ -1121,7 +1181,7 @@ body.navigation-clavier .resultat-item:focus {
   border-radius: 4px;
   padding: 3px 10px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: var(--font-main);
   transition: background-color 0.15s;
 }
@@ -1136,11 +1196,11 @@ body.navigation-clavier .resultat-item:focus {
   font-family: var(--font-main);
 }
 .cmp-body .panel-hint {
-  font-size: 11px;
+  font-size: 0.6875rem;
   margin-bottom: 12px;
 }
 .cmp-body .panel-subhead {
-  font-size: 11px;
+  font-size: 0.6875rem;
   margin-top: 14px;
   margin-bottom: 6px;
   padding-bottom: 4px;
@@ -1151,7 +1211,7 @@ body.navigation-clavier .resultat-item:focus {
   margin-top: 8px;
   margin-bottom: 3px;
   color: var(--color-text);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 .cmp-body select,
 .cmp-body input[type="number"] {
@@ -1160,7 +1220,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-main);
-  font-size: 11px;
+  font-size: 0.6875rem;
   box-sizing: border-box;
 }
 .cmp-body select:focus,
@@ -1171,7 +1231,7 @@ body.navigation-clavier .resultat-item:focus {
   margin-bottom: 0;
 }
 .cmp-body .ir-tabs label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   padding: 6px 4px;
   margin: 0;
   font-weight: normal;
@@ -1191,7 +1251,7 @@ body.navigation-clavier .resultat-item:focus {
 .cmp-nbi-row label {
   margin: 0;
   font-weight: bold;
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
 }
 .cmp-nbi-row input[type="checkbox"] {
@@ -1217,7 +1277,7 @@ body.navigation-clavier .resultat-item:focus {
   cursor: pointer;
   background: var(--color-surface);
   text-align: center;
-  font-size: 9px;
+  font-size: 0.5625rem;
   line-height: 1.4;
   transition: all 0.15s;
   color: var(--color-text);
@@ -1238,7 +1298,7 @@ body.navigation-clavier .resultat-item:focus {
   align-items: center;
   justify-content: space-between;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: bold;
   color: var(--color-text);
   font-family: var(--font-main);
@@ -1250,12 +1310,12 @@ body.navigation-clavier .resultat-item:focus {
 
 /* Lignes présentes dans le scénario B uniquement (ghost rows) */
 .ligne-fantome-b td {
-  background-color: #f0fff4 !important;
+  background-color: var(--color-success-bg-light) !important;
   font-style: italic;
   opacity: 0.9;
 }
 .ligne-fantome-b .col-amount {
-  color: #155724 !important;
+  color: var(--color-success-dark) !important;
 }
 
 /* Badges delta inline sur la fiche */
@@ -1271,19 +1331,19 @@ body.navigation-clavier .resultat-item:focus {
   white-space: nowrap;
 }
 .delta-badge.delta-pos {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--color-success-bg);
+  color: var(--color-success-dark);
 }
 .delta-badge.delta-neg {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
 }
 
 /* NET À PAYER ligne B en mode comparaison — inline pour ne pas agrandir la boîte */
 .delta-net-b {
   display: block;
   font-family: var(--font-numbers);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: normal;
   margin-top: 2px;
   text-align: right;
@@ -1295,12 +1355,18 @@ body.navigation-clavier .resultat-item:focus {
   margin-left: 3px;
   vertical-align: middle;
 }
-.delta-net-b.delta-pos { color: #155724; }
-.delta-net-b.delta-neg { color: #721c24; }
+.delta-net-b.delta-pos {
+  color: var(--color-success-dark);
+}
+.delta-net-b.delta-neg {
+  color: var(--color-danger-text);
+}
 
 @media print {
   .btn-comparer-flottant,
-  #panneau-comparaison { display: none !important; }
+  #panneau-comparaison {
+    display: none !important;
+  }
 }
 
 /* =========================================
@@ -1320,9 +1386,12 @@ body.navigation-clavier .resultat-item:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s;
   z-index: 1000;
 }
 .btn-projection-flottant:hover {
@@ -1346,7 +1415,7 @@ body.navigation-clavier .resultat-item:focus {
   gap: 12px;
 }
 .proj-row label {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
   color: var(--color-text);
   flex: 1;
@@ -1358,7 +1427,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
   text-align: right;
 }
 
@@ -1374,7 +1443,7 @@ body.navigation-clavier .resultat-item:focus {
   padding: 4px 8px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: var(--font-main);
 }
 .proj-libre-row .proj-libre-val {
@@ -1383,7 +1452,7 @@ body.navigation-clavier .resultat-item:focus {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
   text-align: right;
 }
 .proj-libre-row button {
@@ -1391,7 +1460,7 @@ body.navigation-clavier .resultat-item:focus {
   border: none;
   color: var(--color-danger);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 2px 4px;
 }
 
@@ -1404,7 +1473,7 @@ body.navigation-clavier .resultat-item:focus {
   padding: 5px 12px;
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   width: 100%;
   margin-top: 6px;
   transition: all 0.15s;
@@ -1415,12 +1484,287 @@ body.navigation-clavier .resultat-item:focus {
   color: var(--dgfip-dark);
 }
 
+/* ── Primes manuelles (panel-primes-manuelles) ─────────────────────────── */
+.prime-manuelle-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--dgfip-light);
+}
+.prime-manuelle-row:last-child {
+  border-bottom: none;
+}
+/* Spécificité intentionnellement élevée pour battre .modal-body input { width:100%; padding:8px }
+   qui s'applique à tous les <input> de la modale et écrase nos valeurs flex/width. */
+.prime-manuelle-row .pm-libelle {
+  flex: 1;
+  min-width: 0;
+  width: auto; /* neutralise width:100% de .modal-body input */
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.prime-manuelle-row .pm-montant {
+  width: 80px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 0.75rem;
+  text-align: right;
+  box-sizing: border-box;
+}
+/* Le toggle doit avoir une largeur fixe pour ne pas être écrasé par flex */
+.prime-manuelle-row .pm-toggle {
+  width: 160px;
+  flex-shrink: 0;
+}
+/* Toggle Imposable / Non imposable — deux labels-boutons */
+.pm-toggle {
+  display: flex;
+  border: 1px solid var(--color-toggle-border);
+  border-radius: 20px; /* pilule */
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-surface-alt);
+  padding: 3px; /* marge interne entre bord et labels */
+  gap: 2px;
+}
+.pm-toggle input[type="radio"] {
+  display: none;
+}
+.pm-toggle label {
+  flex: 1;
+  padding: 4px 10px;
+  font-size: 0.625rem;
+  font-family: var(--font-main);
+  cursor: pointer;
+  background: transparent;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  white-space: nowrap;
+  text-align: center;
+  border-radius: 16px; /* label aussi en pilule */
+  transition:
+    background 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
+  user-select: none;
+}
+.pm-toggle input[type="radio"]:checked + label {
+  background: white;
+  color: var(--dgfip-dark);
+  font-weight: bold;
+  box-shadow: 0 1px 4px rgba(59, 84, 114, 0.15);
+}
+.pm-suppr {
+  background: transparent;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.pm-suppr:hover {
+  opacity: 0.7;
+}
+/* Message "vide" quand la liste ne contient aucune ligne */
+#primes-manuelles-liste:empty::before {
+  content: "Aucune prime saisie — cliquez « + Ajouter » ci-dessous.";
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-style: italic;
+  padding: 8px 0 4px;
+}
+
+/* ── Rappels (panel-rappels) ────────────────────────────────────────────── */
+#rappels-liste:empty::before {
+  content: "Aucun rappel saisi — cliquez « + Ajouter » ci-dessous.";
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-style: italic;
+  padding: 8px 0 4px;
+}
+
+.rappel-row-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--dgfip-light);
+}
+.rappel-row-ui:last-child {
+  border-bottom: none;
+}
+/* Row 1 : [code select flex] [type select fixe] [btn suppr] */
+.rp-row1 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+/* Row 3 : montant + auto-toggle + champs auto */
+.rp-row3 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+/* Row 4 : non-imposable */
+.rp-row4 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.rappel-row-ui .rp-code {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-type {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-family: var(--font-main);
+}
+.rp-suppr {
+  flex-shrink: 0;
+}
+.rappel-row-ui .rp-libelle-custom {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-main);
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-periode {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-main);
+}
+.rappel-row-ui .rp-montant {
+  width: 88px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 0.75rem;
+  text-align: right;
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-montant[readonly] {
+  background: var(--color-surface-alt, #f5f5f5);
+  color: var(--color-text-muted, #888);
+  cursor: not-allowed;
+  border-style: dashed;
+}
+/* Champs visibles uniquement en mode auto */
+.rp-auto-toggle {
+  flex-shrink: 0;
+}
+.rp-auto-fields {
+  display: none;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  width: 100%;
+}
+.rp-auto-fields.visible {
+  display: flex;
+}
+.rappel-row-ui .rp-nb-mois {
+  width: 56px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 0.75rem;
+  text-align: right;
+  box-sizing: border-box;
+}
+.rappel-row-ui .rp-montant-prec {
+  width: 84px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-numbers);
+  font-size: 0.75rem;
+  text-align: right;
+  box-sizing: border-box;
+}
+.rp-auto-sep {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #888);
+  flex-shrink: 0;
+  user-select: none;
+}
+.rp-auto-preview {
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.625rem;
+  color: var(--color-text-muted, #888);
+  font-style: italic;
+  line-height: 1.3;
+}
+
+/* Ligne de rappel dans la fiche de paie */
+.rappel-row td.col-code {
+  color: #999;
+}
+.rappel-row td.col-libelle.rappel-libelle span {
+  font-style: italic;
+  color: #555;
+  padding-left: 10px;
+}
+
+/* Rappel orphelin (ligne de base absente de la fiche) */
+.rappel-row-ui.rp-orphan {
+  border-left: 3px solid #e67e22;
+  padding-left: 8px;
+  background: rgba(230, 126, 34, 0.05);
+  border-radius: 3px;
+}
+.rp-orphan-msg {
+  margin: 2px 0 0;
+  font-size: 0.65rem;
+  color: #c0392b;
+  font-style: italic;
+  line-height: 1.3;
+}
+
 /* Tableau résultats */
 .proj-table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-top: 4px;
 }
 .proj-table th {
@@ -1428,7 +1772,7 @@ body.navigation-clavier .resultat-item:focus {
   color: white;
   padding: 6px 8px;
   text-align: right;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: bold;
 }
 .proj-table th:first-child {
@@ -1439,7 +1783,7 @@ body.navigation-clavier .resultat-item:focus {
   border-bottom: 1px solid var(--dgfip-light);
   text-align: right;
   font-family: var(--font-numbers);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .proj-table td:first-child {
   text-align: left;
@@ -1454,36 +1798,31 @@ body.navigation-clavier .resultat-item:focus {
   background: var(--color-blue-tint) !important;
 }
 .proj-row-net td {
-  background: #d4edda !important;
-  color: #155724 !important;
+  background: var(--color-success-bg) !important;
+  color: var(--color-success-dark) !important;
 }
 .proj-total-cell {
   font-weight: bold;
-  font-size: 13px !important;
-}
-.proj-mensuel-note {
-  text-align: right !important;
-  font-size: 11px;
-  color: var(--color-text-muted);
-  padding-top: 8px !important;
-  font-family: var(--font-main) !important;
-}
-.proj-mensuel-note strong {
-  font-family: var(--font-numbers);
-  color: var(--dgfip-dark);
+  font-size: 0.8125rem !important;
 }
 .proj-table-sm td {
-  font-size: 11px;
+  font-size: 0.6875rem;
   padding: 3px 8px;
 }
 
 @media print {
-  .btn-projection-flottant { display: none !important; }
+  .btn-projection-flottant {
+    display: none !important;
+  }
 }
 
 /* Projection annuelle — modale plus large + padding forcé */
 .magic-modal:has(#panel-projection.active) {
   max-width: 620px;
+}
+/* Rappels — modale élargie pour le layout 3 colonnes */
+.magic-modal:has(#panel-rappels.active) {
+  max-width: 560px;
 }
 #panel-projection {
   padding: 0 20px 20px;
@@ -1492,9 +1831,9 @@ body.navigation-clavier .resultat-item:focus {
 /* Hint moyenne sous le label nuits/soirées */
 .proj-hint-moy {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: normal;
-  color: var(--color-text-muted, #888);
+  color: var(--color-text-muted, var(--color-text-muted));
   margin-top: 1px;
   font-style: italic;
 }
@@ -1509,17 +1848,17 @@ body.navigation-clavier .resultat-item:focus {
   width: 80px;
 }
 .proj-unit {
-  font-size: 11px;
-  color: var(--color-text-muted, #888);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted, var(--color-text-muted));
   white-space: nowrap;
 }
 
 /* ── Badge "À configurer" (onboarding profil vierge) ── */
 .badge-configurer {
   display: inline-block;
-  background-color: #fd7e14;
+  background-color: var(--color-warning-dark);
   color: white;
-  font-size: 9px;
+  font-size: 0.5625rem;
   font-weight: bold;
   padding: 2px 7px;
   border-radius: 4px;
@@ -1534,31 +1873,40 @@ body.navigation-clavier .resultat-item:focus {
   vertical-align: middle;
 }
 .badge-configurer:hover {
-  background-color: #d9640d;
+  background-color: var(--color-warning-dark);
 }
 
 /* ── Champs info-table non configurés (onboarding) ── */
 @keyframes badge-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(253, 126, 20, 0.6); }
-  50%       { box-shadow: 0 0 0 5px rgba(253, 126, 20, 0); }
+  /* PERF — opacity+outline-offset : composite-friendly, pas de Paint */
+  0%,
+  100% {
+    outline-color: rgba(253, 126, 20, 0.6);
+    outline-offset: 0px;
+  }
+  50% {
+    outline-color: rgba(253, 126, 20, 0);
+    outline-offset: 5px;
+  }
 }
 .champ-non-configure {
-  outline: 2px solid #fd7e14 !important;
+  outline: 2px solid var(--color-warning) !important;
   border-radius: 4px;
   animation: badge-pulse 1.8s ease-in-out infinite;
+  will-change: outline-color, outline-offset; /* PERF — isole la couche GPU */
 }
 select.champ-non-configure {
-  background-color: #fff5ec !important;
-  color: #b85c00 !important;
+  background-color: var(--color-warning-bg) !important;
+  color: var(--color-warning-dark) !important;
 }
 
 /* ── Bouton NBI "Je ne l'ai pas" ── */
 .nbi-sans-btn {
   display: none;
-  font-size: 9px;
+  font-size: 0.5625rem;
   background: transparent;
-  border: 1px solid #fd7e14;
-  color: #fd7e14;
+  border: 1px solid var(--color-warning);
+  color: var(--color-warning-dark);
   border-radius: 3px;
   padding: 1px 4px;
   cursor: pointer;
@@ -1573,8 +1921,8 @@ select.champ-non-configure {
 /* ── Footer — config en attente ── */
 .footer-pending-cell {
   padding: 8px 12px !important;
-  background: #fff8f3 !important;
-  border-top: 2px solid #fd7e14 !important;
+  background: var(--color-warning-bg) !important;
+  border-top: 2px solid var(--color-warning) !important;
 }
 .footer-pending-msg {
   display: flex;
@@ -1582,13 +1930,13 @@ select.champ-non-configure {
   justify-content: center;
   gap: 8px;
   font-family: var(--font-main);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
-  color: #b85c00;
+  color: var(--color-warning-dark);
   letter-spacing: 0.3px;
 }
 .footer-pending-icon {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* ── Boutons flottants désactivés (config incomplète) ── */
@@ -1603,12 +1951,11 @@ select.champ-non-configure {
 
 /* ── Zone radios — outline orange si non configuré ── */
 #zone-radios-wrap.champ-non-configure {
-  outline: 2px solid #fd7e14;
+  outline: 2px solid var(--color-warning);
   border-radius: 6px;
   padding: 4px;
   animation: badge-pulse 1.8s ease-in-out infinite;
 }
-
 
 /* ═══════════════════════════════════════════════════════════════
    VISITE GUIDÉE CUSTOM — Tour from scratch, zéro driver.js
@@ -1633,21 +1980,31 @@ select.champ-non-configure {
   border: none;
   padding: 11px 20px;
   border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   font-family: var(--font-main);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: bold;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
-.btn-visite-flottant        { background-color: var(--dgfip-dark); }
-.btn-visite-avance-flottant { background-color: #2c6e49; }
+.btn-visite-flottant {
+  background-color: var(--dgfip-dark);
+}
+.btn-visite-avance-flottant {
+  background-color: var(--color-success);
+}
 .btn-visite-flottant:hover,
 .btn-visite-avance-flottant:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.36);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.36);
 }
-@media print { .visite-btns-wrap { display: none !important; } }
+@media print {
+  .visite-btns-wrap {
+    display: none !important;
+  }
+}
 
 /* ── Spotlight ── */
 #tour-spotlight {
@@ -1656,11 +2013,12 @@ select.champ-non-configure {
   border-radius: 5px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
   z-index: 9998;
-  transition: top 0.32s cubic-bezier(0.4,0,0.2,1),
-              left 0.32s cubic-bezier(0.4,0,0.2,1),
-              width 0.32s cubic-bezier(0.4,0,0.2,1),
-              height 0.32s cubic-bezier(0.4,0,0.2,1),
-              opacity 0.15s ease;
+  transition:
+    top 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.15s ease;
 }
 /* Invisible mais présent dans le DOM → les transitions top/left/width/height jouent */
 #tour-spotlight.tour-spotlight-invisible {
@@ -1674,17 +2032,19 @@ select.champ-non-configure {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(12px);
-  background: #333;
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-white);
   padding: 9px 18px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: var(--font-main);
   white-space: nowrap;
   pointer-events: none;
   z-index: 10001;
   opacity: 0;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 #tour-toast.tour-toast-visible {
   opacity: 1;
@@ -1697,7 +2057,9 @@ select.champ-non-configure {
   z-index: 9999;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   width: 320px;
   max-width: calc(100vw - 32px);
   font-family: var(--font-main);
@@ -1709,21 +2071,21 @@ select.champ-non-configure {
 
 .tour-pop-header {
   padding: 14px 16px 10px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-surface-alt);
   display: flex;
   align-items: baseline;
   gap: 8px;
 }
 .tour-pop-step {
-  font-size: 10px;
-  color: #aaa;
+  font-size: 0.625rem;
+  color: var(--color-text-disabled);
   font-weight: bold;
   letter-spacing: 0.5px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 .tour-pop-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
   color: var(--dgfip-dark);
   flex: 1;
@@ -1733,22 +2095,28 @@ select.champ-non-configure {
 /* Coche ✓ qui apparaît dans le titre quand l'étape est validée */
 .tour-pop-header.tour-valide .tour-pop-title::after {
   content: "\00a0 ✓";
-  color: #2c6e49;
-  font-size: 13px;
+  color: var(--color-success);
+  font-size: 0.8125rem;
   display: inline-block;
-  animation: tour-coche-pop 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation: tour-coche-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 @keyframes tour-coche-pop {
-  from { opacity: 0; transform: scale(0.3); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Corps — fade sur changement de contenu uniquement */
 .tour-pop-body {
   padding: 12px 16px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.55;
-  color: #333;
+  color: var(--color-text);
   min-height: 60px;
 }
 
@@ -1757,25 +2125,30 @@ select.champ-non-configure {
   display: flex;
   align-items: center;
   gap: 8px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--color-surface-alt);
 }
 .tour-pop-prev {
-  font-size: 12px;
-  color: #888;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
   background: none;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   padding: 6px 10px;
   cursor: pointer;
   font-family: var(--font-main);
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 }
-.tour-pop-prev:hover { color: #555; border-color: #bbb; }
+.tour-pop-prev:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-disabled);
+}
 
 .tour-pop-skip {
-  font-size: 11px;
-  color: #bbb;
+  font-size: 0.6875rem;
+  color: var(--color-text-disabled);
   background: none;
   border: none;
   cursor: pointer;
@@ -1786,10 +2159,12 @@ select.champ-non-configure {
   text-align: center;
   transition: color 0.15s;
 }
-.tour-pop-skip:hover { color: #888; }
+.tour-pop-skip:hover {
+  color: var(--color-text-muted);
+}
 
 .tour-pop-next {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: bold;
   color: white;
   background: var(--dgfip-dark);
@@ -1798,11 +2173,14 @@ select.champ-non-configure {
   padding: 7px 16px;
   cursor: pointer;
   font-family: var(--font-main);
-  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.15s ease;
   white-space: nowrap;
 }
 .tour-pop-next:not([disabled]):hover {
-  background: #1a3a5c;
+  background: var(--dgfip-dark);
   transform: translateY(-1px);
 }
 .tour-pop-next[disabled] {
@@ -1811,23 +2189,33 @@ select.champ-non-configure {
 }
 /* Quand Suivant se débloque : petit pulse vert pour attirer l'oeil */
 .tour-pop-next.tour-next-ready {
-  background: #2c6e49 !important;
+  background: var(--color-success) !important;
   animation: tour-next-pulse 0.4s ease-out forwards;
 }
 @keyframes tour-next-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(44,110,73,0.7); }
-  60%  { box-shadow: 0 0 0 7px rgba(44,110,73,0); }
-  100% { box-shadow: none; }
+  /* PERF — transform:scale seul = GPU, zéro Paint */
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Confirmation quitter */
 .tour-confirm-quit {
   padding: 8px 10px;
-  background: #fff3cd;
-  border: 1px solid #ffc107;
+  background: var(--color-white) 3cd;
+  border: 1px solid var(--color-note-border);
   border-radius: 6px;
-  font-size: 12px;
-  color: #856404;
+  font-size: 0.75rem;
+  color: var(--color-note-text);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1835,73 +2223,1452 @@ select.champ-non-configure {
   margin-top: 4px;
 }
 .tour-confirm-quit button {
-  font-size: 11px; padding: 2px 8px; border-radius: 4px;
-  border: 1px solid currentColor; cursor: pointer; background: white;
+  font-size: 0.6875rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  cursor: pointer;
+  background: white;
   font-family: var(--font-main);
 }
-.tour-confirm-quit .btn-oui { color: #dc3545; border-color: #dc3545; }
-.tour-confirm-quit .btn-non { color: #2c6e49; border-color: #2c6e49; }
+.tour-confirm-quit .btn-oui {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.tour-confirm-quit .btn-non {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
 
 /* ── Checklist RIST dans le corps ── */
-.tour-rist-checklist { margin-top: 10px; font-size: 12px; }
+.tour-rist-checklist {
+  margin-top: 10px;
+  font-size: 0.75rem;
+}
 .tour-rist-item {
-  display: flex; align-items: center; gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 3px 0;
   transition: color 0.25s;
 }
 .tour-rist-check {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #ccc;
-  flex-shrink: 0; font-size: 9px; font-weight: bold;
-  transition: background 0.25s, border-color 0.25s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-neutral);
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+  font-weight: bold;
+  transition:
+    background 0.25s,
+    border-color 0.25s;
 }
-.tour-rist-item.done .tour-rist-check { background: #28a745; border-color: #28a745; color: white; }
-.tour-rist-item.done > span:last-child { color: #28a745; text-decoration: line-through; }
+.tour-rist-item.done .tour-rist-check {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+.tour-rist-item.done > span:last-child {
+  color: var(--color-success);
+  text-decoration: line-through;
+}
 /* Ligne RIST actuellement spotlightée */
-.tour-rist-item.actif > span:last-child { font-weight: bold; color: var(--dgfip-dark); }
+.tour-rist-item.actif > span:last-child {
+  font-weight: bold;
+  color: var(--dgfip-dark);
+}
 
 /* Hint italique */
 .tour-hint {
-  display: block; margin-top: 8px;
-  font-size: 11px; color: #999; font-style: italic;
+  display: block;
+  margin-top: 8px;
+  font-size: 0.6875rem;
+  color: var(--color-text-disabled);
+  font-style: italic;
 }
 
 /* ── Lignes pulsantes phase 2 ── */
 @keyframes tour-ligne-pulse {
-  0%,100% { background-color: transparent; }
-  50%     { background-color: rgba(40,167,69,0.11); }
+  /* PERF — opacity sur pseudo-element serait idéal mais ici on garde
+     background-color car la ligne doit rester lisible : on réduit la fréquence
+     via will-change pour que le browser isole la couche */
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
-.tour-ligne-pulsante td { animation: tour-ligne-pulse 1.5s ease-in-out infinite !important; }
+.tour-ligne-pulsante td {
+  animation: tour-ligne-pulse 1.5s ease-in-out infinite !important;
+}
 .tour-ligne-pulsante:hover td {
-  background-color: rgba(40,167,69,0.22) !important;
+  background-color: rgba(40, 167, 69, 0.22) !important;
   animation-play-state: paused !important;
 }
 
 /* ── Reset button highlight ── */
 @keyframes tour-pulse-reset {
-  0%,100% { box-shadow: 0 0 0 0 rgba(220,53,69,0.7); }
-  50%     { box-shadow: 0 0 0 8px rgba(220,53,69,0); }
+  /* PERF — transform:scale + opacity = GPU-only */
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.8;
+  }
 }
 #btn-reset-profil.tour-highlight-reset {
-  opacity: 1 !important; color: #dc3545 !important; font-size: 16px !important;
+  opacity: 1 !important;
+  color: var(--color-danger) !important;
+  font-size: 1rem !important;
   animation: tour-pulse-reset 1.2s ease-in-out 3;
 }
 
 /* ── Bouton démo ── */
 .tour-demo-btn {
-  display: inline-block; margin-top: 10px; padding: 6px 14px;
-  background: var(--dgfip-dark); color: white; border: none;
-  border-radius: 6px; cursor: pointer; font-family: var(--font-main);
-  font-size: 12px; font-weight: bold; transition: opacity 0.2s;
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 14px;
+  background: var(--dgfip-dark);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: bold;
+  transition: opacity 0.2s;
 }
-.tour-demo-btn:hover    { opacity: 0.85; }
-.tour-demo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.tour-demo-btn:hover {
+  opacity: 0.85;
+}
+.tour-demo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* ── Pulsation post-tour ── */
 @keyframes badge-post-attention {
-  0%,100% { box-shadow: 0 0 0 0 rgba(253,126,20,0.9); transform: scale(1); }
-  40%     { box-shadow: 0 0 0 8px rgba(253,126,20,0); transform: scale(1.1); }
+  /* PERF — transform+opacity seuls = GPU compositor, zéro Paint */
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
 }
 .badge-configurer.tour-post-attention {
   animation: badge-post-attention 0.7s ease-out 4 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — PHASE 1
+   Breakpoint unique : ≤ 820px (tout écran plus étroit que la fiche A4)
+   Principes :
+   - La fiche est scalée via transform pour rester lisible (consultation)
+   - La barre de navigation fixe est consolidée en bottom-bar tactile
+   - Les modales passent en bottom-sheet slide-up
+   - Les inputs de la modale passent à 16px (évite le zoom auto iOS)
+   - Le tour guidé est masqué (coordonnées DOM incompatibles avec scale)
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 820px) {
+  /* ── 1. html + body ────────────────────────────────────────────── */
+  /*
+     overflow-x:clip retiré : il créait un "overflow clip edge" qui devenait
+     le containing block des éléments position:fixed (Chrome 108+, Safari 16+),
+     décalant la modale vers la gauche. La fiche A4 est display:none → rien
+     à clipper sur mobile.
+  */
+  html {
+    overflow-x: hidden;
+  }
+  body {
+    display: block;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+    overflow-x: hidden;
+    background-color: var(--color-mobile-night);
+  }
+
+  /* ── 2. Wrapper de la fiche ──────────────────────────────────── */
+  /*
+     #fiche-scaler-wrap est ajouté dans le HTML autour de .page-a4.
+     Il a exactement la largeur du viewport et la hauteur visuelle
+     de la fiche après scale — calculée en JS et stockée dans
+     --fiche-wrap-height.
+     Cela supprime l'espace fantôme vertical (plus besoin de
+     margin-bottom négatif fragile).
+  */
+  #fiche-scaler-wrap {
+    width: 100vw;
+    overflow: hidden;
+    /*
+      Hauteur = fiche.offsetHeight × scale + barres_bas (108px).
+      Calculée et appliquée en JS par _majHauteurWrapper() via style inline.
+      La valeur CSS ici n'est qu'un fallback avant le premier calcul JS.
+    */
+    height: var(--fiche-wrap-height, 680px);
+  }
+
+  /* ── 3. Scale de la fiche A4 ────────────────────────────────── */
+  /*
+     transform-origin: top left pour que la fiche parte du bord gauche.
+     Le wrapper gère la hauteur — pas besoin de margin-bottom.
+  */
+  .page-a4 {
+    transform: scale(var(--fiche-scale, 0.47));
+    transform-origin: top left;
+    margin-bottom: 0;
+  }
+
+  /* ── 3. Bottom-bar — regroupe les 4 boutons flottants ──────── */
+  /*
+     Sur desktop : 2 boutons en bas-gauche (Comparer, Annuel)
+                   2 boutons en bas-droite (Démarrage, Avancé)
+     Sur mobile  : tous les 4 dans une barre fixe en bas,
+                   équirépartis, hauteur 56px (guideline 44px + marge).
+     Les positions desktop sont annulées et la barre prend le relai.
+  */
+  .mobile-bottom-bar {
+    display: flex !important;
+  }
+
+  /* FIX 2 — Boutons flottants desktop : masqués sur mobile.
+     Leurs actions sont accessibles via la bottom-bar (#mobile-bottom-bar). */
+  .btn-comparer-flottant,
+  .btn-projection-flottant {
+    display: none !important;
+  }
+  .visite-btns-wrap {
+    display: none !important;
+  }
+  .btn-visite-flottant,
+  .btn-visite-avance-flottant {
+    display: none !important;
+  }
+
+  /* ── 4. Modale → bottom-sheet ───────────────────────────────── */
+  /*
+     Sur desktop : centrée à 50%/50% avec slide-up diagonal.
+     Sur mobile  : collée en bas, pleine largeur, slide-up vertical.
+     border-radius uniquement en haut.
+     IMPORTANT : width: 100dvw (dynamic viewport width) — immunisé
+     contre le layout du document (793px) causé par la fiche non-scalée
+     dans le flux. Sans dvw, width:100% résout à 793px → scroll.
+  */
+  /*
+   * FIX RACINE — Ne jamais écraser display sur une <dialog> native.
+   * Une <dialog> fermée a display:none via le navigateur.
+   * Si on écrit display:flex dans le CSS, elle devient visible même fermée.
+   * → On n'écrit PAS display ici. La dialog gère display elle-même.
+   * → overflow:hidden (pas visible) pour que les boutons soient cliquables.
+   */
+  /*
+   * Positionnement identique au desktop (left:50% + translate) mais avec
+   * width calculée sur le viewport. C'est la seule approche immunisée contre
+   * les bugs de containing-block liés à overflow-x:hidden sur iOS/Android.
+   * left:12px/right:12px dépend du containing block et peut être décalé.
+   */
+  .magic-modal {
+    top: 50%;
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    width: min(calc(100vw - 24px), 560px);
+    max-width: none;
+    max-height: 85dvh;
+    transform: translate(-50%, -50%);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: mobileModalIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    margin-bottom: 0;
+    /* Pas de display:flex ici — la dialog le gère nativement */
+  }
+  /* Quand la dialog est OUVERTE (attribut [open]), on applique flex */
+  .magic-modal[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  @keyframes mobileModalIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, calc(-50% + 20px));
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
+  /* modal-body : scroll interne, flex-grow pour remplir l'espace disponible */
+  .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    max-height: none;
+    border-radius: 0;
+    /* min-height:0 requis pour que flex+overflow-y:auto fonctionne */
+    min-height: 0;
+  }
+  /* La projection : même règle, pas de max-width spéciale sur mobile */
+  .magic-modal:has(#panel-projection.active) {
+    max-width: none;
+  }
+  /* Fix 2 — search-mode : même centrage que les autres panneaux.
+     La règle desktop (top:15%, transform sans Y) n'est pas dans un @media → s'applique ici.
+     On la neutralise pour un centrage cohérent. */
+  .magic-modal.search-mode {
+    top: 50%;
+    transform: translate(-50%, -50%);
+    animation: mobileModalIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  /* modal-header : coins arrondis en haut, flush avec la dialog */
+  .modal-header {
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
+  }
+
+  /* ── 5. Fix iOS — zoom auto sur focus input (font-size < 16px) ─ */
+  /*
+     iOS Safari zoome automatiquement la page quand un <input> ou
+     <select> a font-size < 16px. Le seul fix fiable est de monter
+     à 16px sur mobile. La taille visuelle est compensée par padding réduit.
+  */
+  /* FIX 5 — Inputs 48px : tap target confortable + font-size 16px anti-zoom iOS */
+  .modal-body input,
+  .modal-body select,
+  .modal-body textarea {
+    font-size: 1rem;
+    min-height: 48px;
+    padding: 0 12px;
+    line-height: 48px;
+  }
+  .modal-body input[type="checkbox"],
+  .modal-body input[type="radio"] {
+    min-height: unset;
+    line-height: normal;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+  }
+  .modal-body label {
+    font-size: 0.875rem;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+  /* validate-btn : sticky en bas du scroll, sans marges négatives.
+     Reste dans son panel, colle en bas quand le contenu est long. */
+  .modal-body .validate-btn {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: 16px;
+    font-size: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  /* ── 6. Panneau comparateur — masqué en phase 1 ─────────────── */
+  /*
+     Le comparateur side-by-side est incompatible avec le layout mobile scalé.
+     Il sera transformé en bottom-drawer en phase 2.
+     On l'affiche quand même si .visible mais centré par-dessus la fiche.
+  */
+  #panneau-comparaison.visible {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100vw - 32px);
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1100;
+    min-width: unset;
+  }
+
+  /* ── 7. Tour guidée — masquée sur mobile ────────────────────── */
+  /*
+     Les coordonnées du spotlight sont calculées sur le layout desktop (793px).
+     Après scale, les positions sont incorrectes. La tour est désactivée
+     visuellement ; les boutons restent cliquables pour ne pas casser le JS.
+  */
+  #tour-popover,
+  #tour-spotlight {
+    display: none !important;
+  }
+  .btn-visite-flottant,
+  .btn-visite-avance-flottant {
+    opacity: 0.45;
+    pointer-events: none; /* désactivé sur mobile */
+  }
+
+  /* ── 8. Largeur de la barre de recherche ajout ──────────────── */
+  #recherche-ajout {
+    font-size: 1rem; /* iOS fix aussi sur ce champ */
+  }
+
+  /* ── 9. Tap targets — zones de toucher ≥ 44px (Apple HIG / Material) ─── */
+  /*
+     Les lignes de la fiche ont height: 18px (fiche papier).
+     Sur mobile scalée, elles font ~8px visuels → intouchables.
+     On élargit la zone de tap via min-height en rem (unité absolue,
+     non affectée par le scale CSS qui est un transform visuel).
+     Les lignes restent dans leur taille visuelle mais la zone de clic
+     s'étend via padding compensé.
+  */
+  /* Tap targets — scoped à la liste mobile UNIQUEMENT
+     (ne doit pas affecter .pay-table .clickable-row sur desktop) */
+  #fiche-mobile .clickable-row,
+  #fiche-mobile .mf-row {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+  .add-row td {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+  /* delete-btn : toujours visible sur mobile (pas de :hover) */
+  .delete-btn {
+    opacity: 0.6;
+    visibility: visible;
+  }
+  /* NBI checkbox : zone de tap agrandie */
+  .nbi-checkbox {
+    width: 22px;
+    height: 22px;
+  }
+  /* select-transparent : font-size 16px pour iOS */
+  .select-transparent {
+    font-size: 1rem;
+  }
+
+  /* ── 10. Comparateur — drawer bottom-sheet ───────────────────── */
+  /*
+     Le panneau latéral sticky (280px fixe) est incompatible mobile.
+     Sur mobile il devient un drawer plein-écran depuis le bas,
+     au-dessus de la fiche, avec scroll interne.
+     La bottom-bar reste visible (z-index bottom-bar > drawer).
+  */
+  #panneau-comparaison,
+  #panneau-comparaison.visible {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 56px !important; /* au-dessus de la bottom-bar */
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    min-width: unset !important;
+    max-height: 80vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3) !important;
+    overflow-y: auto !important;
+    z-index: 1040 !important;
+    transform: none !important;
+    /* Slide-up depuis le bas */
+    animation: mobileSheetUp 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  #panneau-comparaison:not(.visible) {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOTTOM-BAR MOBILE — élément ajouté en JS dans le <body>
+   Visible uniquement sur mobile (display:none par défaut).
+   ═══════════════════════════════════════════════════════════════ */
+.mobile-bottom-bar {
+  display: none; /* caché sur desktop, affiché via @media ci-dessus */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--dgfip-dark);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1050;
+  align-items: stretch;
+  /* safe-area-inset pour iPhone avec barre de geste en bas */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mobile-bottom-bar-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-mobile-muted);
+  font-family: var(--font-main);
+  font-size: 0.625rem;
+  font-weight: normal;
+  cursor: pointer;
+  padding: 0 4px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 44px; /* guideline tap target Apple/Google */
+}
+.mobile-bottom-bar-btn:last-child {
+  border-right: none;
+}
+.mobile-bottom-bar-btn:active,
+.mobile-bottom-bar-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+.mobile-bottom-bar-btn .mbb-icon {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+.mobile-bottom-bar-btn .mbb-label {
+  font-size: 0.625rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — PHASE 2
+   Overlays tactiles sur les cellules de l'info-table
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Overlay transparent qui capte les taps sur une cellule TD.
+   Caché sur desktop — activé uniquement via .is-mobile + media query. */
+.mobile-cell-overlay {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  /* Rend l'overlay actif sur mobile */
+  .mobile-cell-overlay {
+    display: block;
+    position: absolute;
+    inset: 0; /* couvre toute la TD parente */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 10; /* par-dessus le select sous-jacent */
+    -webkit-tap-highlight-color: rgba(59, 84, 114, 0.15);
+  }
+  .mobile-cell-overlay:active {
+    background: rgba(59, 84, 114, 0.12);
+  }
+
+  /* Indicateur visuel sur les cellules avec overlay : légère bordure pointillée */
+  .info-table td:has(.mobile-cell-overlay) {
+    outline: 1px dashed rgba(59, 84, 114, 0.4);
+    outline-offset: -2px;
+  }
+
+  /* Bouton actif dans la bottom-bar (ex: Comparer activé) */
+  .mobile-bottom-bar-btn.active {
+    color: white;
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .mobile-bottom-bar-btn.active .mbb-icon {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BARRE STICKY "NET À PAYER" — mobile uniquement
+   Épinglée juste au-dessus de la bottom-bar (bottom: 56px).
+   Masquée sur desktop.
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 820px) {
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VUE MOBILE — Liste condensée (Option D)
+   Sur mobile : la fiche A4 est masquée, #fiche-mobile prend sa place.
+   Sur desktop : #fiche-mobile est masqué.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Desktop : masquer la vue mobile */
+#fiche-mobile {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  /* Masquer la fiche A4 scalée et son wrapper */
+  #fiche-scaler-wrap {
+    display: none !important;
+  }
+
+  /* FIX 3 — Afficher la vue mobile, pleine largeur viewport */
+  /* FIX 1 — padding-bottom réduit : barre NET supprimée, seulement bottom-bar (56px) + marge */
+  #fiche-mobile {
+    display: block;
+    width: 100vw;
+    max-width: 100vw;
+    padding: 0 0 80px 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* ── En-tête grade/échelon ────────────────────────────── */
+  .mf-header {
+    background: var(--dgfip-dark);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    border-radius: 0;
+  }
+  .mf-header-grade {
+    font-family: var(--font-main);
+    font-size: 0.8125rem;
+    font-weight: bold;
+    line-height: 1.3;
+  }
+  .mf-header-sub {
+    font-size: 0.6875rem;
+    opacity: 0.75;
+    margin-top: 2px;
+  }
+  .mf-header-indice {
+    font-family: var(--font-numbers);
+    font-size: 1.125rem;
+    font-weight: bold;
+    text-align: right;
+  }
+  .mf-header-indice-lbl {
+    font-size: 0.5625rem;
+    opacity: 0.65;
+    text-align: right;
+    margin-top: 1px;
+  }
+
+  /* ── Séparateur de section ────────────────────────────── */
+  .mf-section-title {
+    font-family: var(--font-main);
+    font-size: 0.625rem;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--dgfip-medium);
+    padding: 10px 16px 4px;
+    background: transparent;
+  }
+
+  /* ── Ligne standard ───────────────────────────────────── */
+  .mf-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 16px;
+    min-height: 44px; /* guideline tap target */
+    background: white;
+    border-bottom: 1px solid var(--dgfip-light);
+    box-sizing: border-box;
+    cursor: default;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mf-row:last-child {
+    border-bottom: none;
+  }
+  /* Lignes alternées (légères) */
+  .mf-row:nth-child(even) {
+    background: var(--color-surface);
+  }
+
+  /* Ligne cliquable — ouvre un panel */
+  .mf-row.mf-clickable {
+    cursor: pointer;
+  }
+  .mf-row.mf-clickable:active {
+    background: var(--color-blue-tint);
+  }
+
+  /* Indicateur "à configurer" */
+  .mf-row.mf-pending {
+    background: var(--color-warning-bg);
+    border-left: 3px solid var(--color-warning);
+  }
+
+  .mf-label {
+    font-family: var(--font-main);
+    font-size: 0.75rem;
+    color: var(--color-text);
+    flex: 1;
+    min-width: 0; /* FIX 4a — permet l'ellipsis sur flex child */
+    padding-right: 8px;
+    line-height: 1.3;
+  }
+  .mf-label-sub {
+    display: block;
+    font-size: 0.625rem;
+    color: var(--color-text-muted);
+    margin-top: 1px;
+  }
+  /* Petite flèche sur le TITRE uniquement — pas sur le sous-texte */
+  .mf-clickable .mf-label-title::after {
+    content: " ›";
+    color: var(--dgfip-medium);
+    font-size: 0.875rem;
+  }
+  /* Variante sans flèche pour les lignes non-cliquables */
+  .mf-label-title--plain::after {
+    content: none;
+  }
+
+  .mf-amount {
+    font-family: var(--font-numbers);
+    font-size: 0.8125rem;
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: right;
+    flex-shrink: 0; /* FIX 4b — jamais compressé, montant toujours visible */
+    min-width: 78px;
+    max-width: 45%; /* FIX 4c — cap pour les très longs montants */
+  }
+  /* Crédit : vert */
+  .mf-credit {
+    color: var(--color-success);
+  }
+  /* Déduction : rouge */
+  .mf-deduction {
+    color: var(--color-danger);
+  }
+  /* Pour information : gris */
+  .mf-info {
+    color: var(--color-text-secondary);
+  }
+  /* Badge "À configurer" mobile */
+  .mf-badge {
+    background: var(--color-warning);
+    color: white;
+    font-family: var(--font-main);
+    font-size: 0.625rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* ── Ligne de totaux (NET, imposable) ────────────────── */
+  .mf-row.mf-total {
+    background: var(--dgfip-dark);
+    border-bottom: none;
+    border-radius: 0;
+    min-height: 52px;
+    margin-top: 4px;
+  }
+  .mf-row.mf-total .mf-label {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: bold;
+    font-size: 0.75rem;
+  }
+  .mf-row.mf-total .mf-amount {
+    color: white;
+    font-size: 1rem;
+  }
+  .mf-row.mf-total-net {
+    background: var(--color-success);
+  }
+  .mf-row.mf-total-net .mf-amount {
+    font-size: 1.1875rem;
+  }
+
+  /* ── Ligne absence (retrait en rouge léger) ───────────── */
+  .mf-row.mf-absence {
+    background: var(--color-absence-bg);
+    border-left: 3px solid var(--color-danger);
+  }
+
+  /* ── Bouton ajouter élément variable ─────────────────── */
+
+  /* ── Bloc config incomplet ────────────────────────────── */
+  .mf-config-pending {
+    background: var(--color-warning-bg);
+    border: 1.5px solid var(--color-warning);
+    border-radius: 8px;
+    margin: 12px 16px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-main);
+    font-size: 0.75rem;
+    color: var(--color-pending-text);
+  }
+  .mf-config-pending-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIXES MOBILE — Sections pliables (Fix 8) + Comparateur (Fix 7)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Desktop : pas de changement */
+.mf-section-arrow {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  /* ── Fix 8 — Sections pliables ──────────────────────────────── */
+  .mf-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 10px 16px 6px;
+    font-family: var(--font-main);
+    font-size: 0.625rem;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--dgfip-medium);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mf-section-title:active {
+    opacity: 0.7;
+  }
+  .mf-section-arrow {
+    display: inline-block;
+    font-size: 0.5625rem;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+    color: var(--dgfip-medium);
+  }
+  /* Ligne de séparation sous le titre */
+  .mf-section-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--dgfip-light);
+    margin-left: 8px;
+  }
+
+  /* ── Fix 7 — Comparateur mobile ─────────────────────────────── */
+  /* Handle de fermeture (barre en haut du drawer) */
+  #panneau-comparaison::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 10px auto 0;
+  }
+  /* Header comparateur plus spacieux, bouton Quitter agrandi */
+  #panneau-comparaison .cmp-header {
+    padding: 8px 16px 12px;
+    font-size: 0.9375rem;
+  }
+  #panneau-comparaison .cmp-header button {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    border-radius: 8px;
+  }
+  /* Corps avec inputs agrandis */
+  #panneau-comparaison .cmp-body {
+    padding: 12px 16px 80px; /* 80px pour le bouton sticky */
+    font-size: 0.875rem;
+  }
+  #panneau-comparaison .cmp-body label {
+    font-size: 0.875rem;
+    margin-top: 14px;
+  }
+  #panneau-comparaison .cmp-body select,
+  #panneau-comparaison .cmp-body input[type="text"],
+  #panneau-comparaison .cmp-body input[type="number"] {
+    font-size: 1rem;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+  #panneau-comparaison .cmp-body input[type="checkbox"],
+  #panneau-comparaison .cmp-body input[type="radio"] {
+    width: 20px;
+    height: 20px;
+  }
+  /* Titres de sections dans le comparateur */
+  #panneau-comparaison .panel-subhead {
+    font-size: 0.75rem;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--dgfip-light);
+  }
+  /* ── Fix 1 — masquer la barre NET sticky (ancienne barre supprimée) ── */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OPTIMISATIONS GLOBALES MOBILE
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 820px) {
+  /* ── Menu d'ajout : 1 colonne sur mobile, boutons pleine largeur ── */
+  .add-buttons-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .add-buttons-grid button {
+    padding: 14px 16px;
+    font-size: 0.9375rem;
+    border-radius: 10px;
+    min-height: 52px;
+  }
+
+  /* ── Champ de recherche dans le menu d'ajout ────────────────── */
+  #recherche-ajout {
+    font-size: 1rem;
+    min-height: 48px;
+    /* padding-left:40px préserve l'espace pour l'icône loupe (background-position:10px) */
+    padding: 0 14px 0 40px;
+    line-height: 48px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* Fix 5 — inputs projection : taille compacte (ils sont dans des lignes proj-row) */
+  .proj-row input[type="number"] {
+    min-height: 36px;
+    height: 36px;
+    padding: 0 8px;
+    line-height: 36px;
+    font-size: 0.9375rem;
+  }
+  /* ── Back-btn : zone de tap 44px ────────────────────────────── */
+  .back-btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+    padding: 4px 0;
+  }
+
+  /* ── panel-hint + panel-notice : taille lisible ─────────────── */
+  .panel-hint,
+  .panel-notice {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  /* ── modal-body : padding réduit sur mobile ─────────────────── */
+  .modal-body {
+    padding: 16px;
+  }
+  /* ── ir-tabs (zone de résidence) : wrap sur petit écran ─────── */
+  .ir-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ir-tabs label {
+    min-width: 80px;
+    flex: 1;
+    text-align: center;
+    border-radius: 8px !important;
+    padding: 10px 8px;
+    font-size: 0.8125rem;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── RIST list : options plus grandes ──────────────────────────── */
+  .rist-option {
+    padding: 12px 14px !important;
+    font-size: 0.875rem !important;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ── modal-header : titre plus petit sur mobile ──────────────── */
+  .modal-header h2 {
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+  }
+  .close-btn {
+    font-size: 1.375rem;
+    padding: 4px 8px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── OTT checkboxes : plus espacées ──────────────────────────── */
+  .pf-checkbox + label,
+  .psc-checkbox + label {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ── panel-subhead : titre de section dans les panels ─────────── */
+  .panel-subhead {
+    font-size: 0.8125rem;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--dgfip-light);
+  }
+
+  /* ── Footnote ────────────────────────────────────────────────── */
+  .panel-footnote {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    margin-top: 12px;
+  }
+}
+
+@media (max-width: 820px) {
+  /* ── Fix 3 : OTT Protocole — 1 colonne, layout horizontal par carte ─────
+     Sur desktop : 2 colonnes, titre + montant empilés verticalement.
+     Sur mobile  : 1 colonne, titre à gauche + montant badge à droite.
+     Beaucoup plus lisible, les noms longs ne débordent plus. */
+  .ott-grid {
+    grid-template-columns: 1fr;
+  }
+  .ott-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    padding: 12px 14px;
+    gap: 8px;
+    min-height: 48px; /* tap target */
+  }
+  .ott-card-title {
+    flex: 1;
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+    line-height: 1.3;
+  }
+  .ott-card-amount {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    margin-top: 0;
+  }
+
+  /* ── Fix 4 : Primes manuelles — layout 2 lignes sur mobile ──────────────
+     Desktop : tout sur 1 ligne (libellé + montant + toggle + ✖)
+     Mobile  : libellé sur ligne 1 (pleine largeur)
+               montant + toggle + ✖ sur ligne 2
+     Résout le problème de libellé ultra-étroit (66px). */
+  /* Primes manuelles — layout mobile */
+  .prime-manuelle-row {
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 0;
+  }
+  .prime-manuelle-row .pm-libelle {
+    width: 100%;
+    font-size: 0.9375rem;
+    padding: 10px 12px;
+    min-height: unset;
+    line-height: 1.4;
+    box-sizing: border-box;
+  }
+  /* Ligne 2 : montant + checkbox + suppr */
+  .pm-row2 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+  }
+  .pm-row2 .pm-montant {
+    flex: 0 0 90px;
+    min-height: unset;
+    padding: 8px 10px;
+    font-size: 1rem;
+    line-height: 1.2;
+    box-sizing: border-box;
+  }
+  /* Checkbox "Non imposable" */
+  .pm-toggle-cb {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .pm-toggle-cb .pm-imp-non-cb {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--dgfip-dark);
+  }
+  .pm-toggle-cb .pm-nonimposable-label {
+    font-size: 0.8125rem;
+    font-family: var(--font-main);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .pm-row2 .pm-suppr {
+    flex: 0 0 auto;
+    padding: 6px;
+    font-size: 1.125rem;
+    min-height: unset;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DELTA BADGE — Vue mobile comparaison
+   ═══════════════════════════════════════════════════════════════ */
+.mf-delta-badge {
+  font-family: var(--font-numbers);
+  font-size: 0.6875rem; /* 11px */
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.mf-delta-pos {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.mf-delta-neg {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+@media (max-width: 820px) {
+  /* Panneau comparateur latéral masqué sur mobile —
+     remplacé par la modale _ouvrirComparateurMobile */
+  #panneau-comparaison,
+  #panneau-comparaison.visible {
+    display: none !important;
+  }
+
+  /* Panel comparateur mobile : inputs de taille correcte */
+  #panel-cmp-mobile .cmp-body,
+  #panel-cmp-mobile-body {
+    padding: 0;
+  }
+  #panel-cmp-mobile select,
+  #panel-cmp-mobile input[type="text"],
+  #panel-cmp-mobile input[type="number"] {
+    font-size: 1rem;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+  #panel-cmp-mobile input[type="checkbox"],
+  #panel-cmp-mobile input[type="radio"] {
+    width: 20px;
+    height: 20px;
+  }
+  #panel-cmp-mobile .panel-subhead {
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--dgfip-light);
+  }
+  #panel-cmp-mobile label {
+    font-size: 0.875rem;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+  #panel-cmp-mobile .panel-hint {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+  }
+  /* Bouton Quitter rouge */
+  #panel-cmp-mobile .validate-btn[style*="background:var(--color-danger)"] {
+    background: var(--color-danger) !important;
+    margin-top: 8px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPARATEUR MOBILE — Plan B
+   Barre delta live + bouton Quitter discret
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Barre delta en haut du panneau comparateur mobile */
+.cmp-mobile-delta-bar {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-alt);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-family: var(--font-main);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  text-align: center;
+}
+.cmp-mobile-delta-bar.cmp-delta-neutral {
+  color: var(--color-text-muted);
+}
+.cmp-delta-pill {
+  display: inline-block;
+  font-family: var(--font-numbers);
+  font-size: 0.9375rem;
+  font-weight: bold;
+  padding: 3px 12px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+.cmp-delta-pos {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.cmp-delta-neg {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+/* Bouton Quitter — petit, discret, centré en bas */
+.cmp-mobile-btn-quitter {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  color: var(--color-danger);
+  font-family: var(--font-main);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: underline;
+  opacity: 0.75;
+}
+.cmp-mobile-btn-quitter:active {
+  opacity: 1;
+}
+
+@media (max-width: 820px) {
+  /* S'assurer que le panneau comparateur ne s'affiche pas en dehors de la modale */
+  #panneau-comparaison,
+  #panneau-comparaison.visible {
+    display: none !important;
+  }
+  /* Le cmp-body quand il est dans la modale mobile */
+  #panel-cmp-mobile .cmp-body {
+    padding: 0;
+    overflow-y: visible;
+    flex: none;
+  }
+  #panel-cmp-mobile .cmp-body select,
+  #panel-cmp-mobile .cmp-body input[type="number"] {
+    font-size: 1rem;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+  #panel-cmp-mobile .cmp-body .panel-subhead {
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--dgfip-light);
+    text-transform: uppercase;
+  }
+  #panel-cmp-mobile .cmp-body label {
+    font-size: 0.875rem;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  #panel-cmp-mobile .cmp-body .ir-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 820px) {
+  /* Zone résidence : masquer le cadre orange partout sur mobile
+     (redondant avec le badge ⚙ Configurer dans la liste) */
+  #panel-residence .champ-non-configure,
+  #zone-radios-wrap.champ-non-configure,
+  .setting-panel .champ-non-configure,
+  .setting-panel #zone-radios-wrap {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    animation: none !important;
+  }
+  /* Icônes bottom-bar : taille uniforme, couleur unique */
+  .mbb-icon {
+    font-family: var(--font-main);
+    font-size: 1.125rem;
+    font-style: normal;
+    color: var(--color-mobile-muted);
+    line-height: 1;
+  }
+  .mobile-bottom-bar-btn.active .mbb-icon {
+    color: var(--color-mobile-accent);
+  }
+  /* Checkbox Non imposable */
+  /* pm-toggle avec checkbox unique — plus de styles pilule complexes */
+  .pm-row2 .pm-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    height: auto !important;
+    min-height: unset !important;
+  }
+}
+/* ─── Panel WIP (fonctionnalité en développement) ─────────────── */
+.panel-wip-notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--color-warning-bg-light);
+  border: 1px solid var(--color-warning-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 8px 0 16px;
+  font-family: var(--font-main);
+  font-size: 0.8125rem;
+  color: var(--color-warning-text);
+  line-height: 1.5;
+}
+.panel-wip-icon {
+  font-size: 1.375rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Détail des totaux — bouton toggle + conteneur ──────────────── */
+.mf-detail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--color-surface-alt);
+  border: none;
+  border-top: 1px solid var(--dgfip-light);
+  padding: 10px 16px;
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--dgfip-medium);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.mf-detail-toggle:active {
+  opacity: 0.7;
+}
+.mf-detail-arrow {
+  font-size: 0.5625rem;
+  flex-shrink: 0;
+}
+.mf-detail-wrap .mf-row.mf-total {
+  background: var(--color-surface);
+  margin-top: 1px;
+}
+.mf-detail-wrap .mf-row.mf-total .mf-label {
+  color: var(--color-text-secondary);
+  font-weight: normal;
+  font-size: 0.75rem;
+}
+.mf-detail-wrap .mf-row.mf-total .mf-amount {
+  color: var(--color-text);
+  font-size: 0.8125rem;
+}
+
+/* ── Checkbox "Non imposable" (remplace le toggle radio) ─────────── */
+.pm-toggle-cb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.pm-imp-non-cb {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--dgfip-dark);
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.pm-nonimposable-label {
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.pm-row2 .pm-toggle-cb {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 4px;
+}
+@media (max-width: 820px) {
+  .pm-toggle-cb {
+    flex: 1 1 auto;
+  }
+  .pm-imp-non-cb {
+    width: 22px;
+    height: 22px;
+    min-height: unset;
+  }
+  .pm-nonimposable-label {
+    font-size: 0.8125rem;
+  }
+  /* Zone résidence : le cadre orange est déjà neutralisé
+     par la règle #zone-radios-wrap.champ-non-configure mobile ci-dessus */
+  .mbb-icon svg {
+    display: block;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACCESSIBILITÉ — prefers-reduced-motion
+   Respecte le réglage "Réduire les animations" de l'OS.
+   Désactive toutes les transitions et animations pour les
+   utilisateurs sensibles aux mouvements (épilepsie, vertiges).
+   ═══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
