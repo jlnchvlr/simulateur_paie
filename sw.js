@@ -8,7 +8,7 @@
  * un asset statique. L'activation nettoie automatiquement les vieux caches.
  */
 
-const CACHE_VERSION  = "icna-paie-v6";
+const CACHE_VERSION  = "icna-paie-v7";
 const DATA_CACHE     = "icna-data-v1";
 
 /** Assets mis en cache au premier chargement (install). */
@@ -18,6 +18,8 @@ const STATIC_ASSETS = [
   "./engine.js",
   "./manifest.json",
   "./favicon.svg",
+  "./icon-192.png",
+  "./icon-512.png",
 ];
 
 /** data.json est servi séparément — Network-First avec fallback cache. */

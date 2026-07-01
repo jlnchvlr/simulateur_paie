@@ -2819,15 +2819,6 @@ select.champ-non-configure {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BARRE STICKY "NET À PAYER" — mobile uniquement
-   Épinglée juste au-dessus de la bottom-bar (bottom: 56px).
-   Masquée sur desktop.
-   ═══════════════════════════════════════════════════════════════ */
-
-@media (max-width: 820px) {
-}
-
-/* ═══════════════════════════════════════════════════════════════
    VUE MOBILE — Liste condensée (Option D)
    Sur mobile : la fiche A4 est masquée, #fiche-mobile prend sa place.
    Sur desktop : #fiche-mobile est masqué.

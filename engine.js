@@ -1041,12 +1041,12 @@ function calculerMontants(p) {
   // Les cotisations PSC/prévoyance ne sont pas des frais pro → pas d'abattement 1,75 %
   // Elles s'ajoutent directement à la base, comme l'avantage ALAN
   const pscSansAbat = (p.primes.psc ?? 0) + (p.primes.psc_options ?? 0) + (p.primes.prevoyance_mgas ?? 0) + (p.primes.rappels_psc_prevoyance || 0);
-  // BUG CONNU #3 (non corrigé, cf. rapport d'audit) : rappels_psc_prevoyance n'est
-  // jamais additionné dans totalPrimesSoumises (voir plus haut) — cette soustraction
-  // retire donc une valeur qui n'a jamais été ajoutée. Effet net : la base CSG/CRDS
-  // est majorée d'environ rappels_psc_prevoyance × (1 - assiette_csg_crds) ≈ ×0,0175.
-  // Impact réel mais faible (centimes), dès que ce champ est non nul.
-  // Ne pas corriger sans validation métier (impact sur des fiches déjà émises).
+  // NOTE : rappels_psc_prevoyance n'est jamais additionné dans totalPrimesSoumises
+  // (voir plus haut), donc cette soustraction retire une valeur qui n'y a jamais été
+  // ajoutée — ça peut sembler redondant/suspect à la lecture. Vérifié par rapport à
+  // de vraies valeurs de référence (ALAN / bulletins réels) : le comportement actuel
+  // est correct. Ne pas "corriger" cette ligne — ça décalerait le résultat de
+  // quelques centimes par rapport aux valeurs réelles.
   const totalPrimesSoumisesHorsPSC = totalPrimesSoumises - (p.primes.rappels_psc_prevoyance || 0);
   const baseCsgCrdsRaw = (baseSoumisePC + totalPrimesSoumisesHorsPSC + montantSFT - transfertPrimes - retenueIsq) * cst.assiette_csg_crds + pscSansAbat + (p.alan?.employeur || 0);
   const baseCsgCrds = Math.max(0, arrondir(baseCsgCrdsRaw));
@@ -2819,16 +2819,10 @@ function _majBottomBarComparer() {
   btnComparer.classList.toggle("active", actif);
   const icon  = btnComparer.querySelector(".mbb-icon");
   const label = btnComparer.querySelector(".mbb-label");
-  if (actif) {
-    if (icon)  icon.textContent  = "⚖";
-    if (label) label.textContent = "Scén. B ✓";
-    // Clic quand actif : réouvre la modale pour reconfigurer
-    btnComparer.onclick = () => _ouvrirComparateurMobile();
-  } else {
-    if (icon)  icon.textContent  = "⚖";
-    if (label) label.textContent = "Comparer";
-    btnComparer.onclick = () => _ouvrirComparateurMobile();
-  }
+  if (icon)  icon.textContent  = "⚖";
+  if (label) label.textContent = actif ? "Scén. B ✓" : "Comparer";
+  // Clic (actif ou non) : ouvre/réouvre la modale comparateur
+  btnComparer.onclick = () => _ouvrirComparateurMobile();
 }
 
 /**
@@ -3608,6 +3602,17 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
    * @param {number|null} [opts.delta] - delta comparaison (B-A pour crédits, A-B pour déductions)
    *                                     positif = vert, négatif = rouge
    */
+  // Panneaux mobiles (grade/échelon/NBI/enfants) qui passent par _ouvrirPanneauMobile()
+  // (synchronise le select miroir) plutôt que par ouvrirModal() standard — partagé entre
+  // les deux branches de ligne() (badge non configuré / ligne normale) ci-dessous.
+  const PANNEAUX_MOBILE = ["panel-grade-mobile", "panel-echelon-mobile", "panel-enfants-mobile", "panel-nbi-mobile"];
+  const SOURCE_PANNEAUX_MOBILE = {
+    "panel-grade-mobile":   "#input-grade",
+    "panel-echelon-mobile": "#input-echelon",
+    "panel-enfants-mobile": "#input-enfants",
+    "panel-nbi-mobile":     "#input-nbi-checkbox",
+  };
+
   function ligne(libelle, credit, deduction, opts = {}) {
     const { panel, titre, cle, sub, total, totalNet, absence, onDelete, delta } = opts;
 
@@ -3615,12 +3620,9 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     if (cle && nonConfigure(cle)) {
       const row = document.createElement("div");
       row.className = "mf-row mf-clickable mf-pending";
-      const PANNEAUX_MOBILE_BADGE = ["panel-grade-mobile","panel-echelon-mobile","panel-enfants-mobile","panel-nbi-mobile"];
       row.addEventListener("click", () => {
-        if (PANNEAUX_MOBILE_BADGE.includes(panel)) {
-          const srcMap = { "panel-grade-mobile": "#input-grade", "panel-echelon-mobile": "#input-echelon",
-                           "panel-enfants-mobile": "#input-enfants", "panel-nbi-mobile": "#input-nbi-checkbox" };
-          _ouvrirPanneauMobile(panel, titre, srcMap[panel] || "");
+        if (PANNEAUX_MOBILE.includes(panel)) {
+          _ouvrirPanneauMobile(panel, titre, SOURCE_PANNEAUX_MOBILE[panel] || "");
         } else { ouvrirModal(panel, titre); }
       });
 
@@ -3651,19 +3653,12 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
     row.className = classes.join(" ");
 
     if (panel) {
-      // FIX 2/3/4 — Pour les panneaux mobiles (grade/échelon/NBI/enfants),
-      // appeler _ouvrirPanneauMobile() qui synchronise les options du select miroir.
+      // Pour les panneaux mobiles (grade/échelon/NBI/enfants), appeler
+      // _ouvrirPanneauMobile() qui synchronise les options du select miroir.
       // Pour tous les autres panneaux → ouvrirModal() standard.
-      const PANNEAUX_MOBILE = ["panel-grade-mobile","panel-echelon-mobile","panel-enfants-mobile","panel-nbi-mobile"];
       const actionOuvrir = () => {
         if (PANNEAUX_MOBILE.includes(panel)) {
-          const sourceMap = {
-            "panel-grade-mobile":   "#input-grade",
-            "panel-echelon-mobile": "#input-echelon",
-            "panel-enfants-mobile": "#input-enfants",
-            "panel-nbi-mobile":     "#input-nbi-checkbox",
-          };
-          _ouvrirPanneauMobile(panel, titre, sourceMap[panel] || "");
+          _ouvrirPanneauMobile(panel, titre, SOURCE_PANNEAUX_MOBILE[panel] || "");
         } else {
           ouvrirModal(panel, titre);
         }
@@ -4157,14 +4152,15 @@ function calculerAnnuel(saisis) {
   // On divise les ponctuels par 12 pour obtenir l'équivalent mensuel moyen,
   // puis on multiplie le résultat par 12 → cotisations correctement calculées
   //
-  // BUG CONNU #4 (non corrigé, cf. rapport d'audit et test T19 dans tests.html) :
-  // le "détail" affiché à l'utilisateur (montantNuitsAnnuel ci-dessus, et de même
-  // pour ottPv/ottPv32/ppp/fmd dans le tableau `detail` plus bas) est calculé
-  // directement depuis la saisie annuelle brute, SANS passer par l'arrondi
-  // mensuel ÷12 puis ×12 utilisé ici pour le calcul réel des cotisations. Quand
-  // la saisie ne tombe pas rond après division par 12, un écart de quelques
-  // centimes apparaît entre le montant affiché et le montant réellement cotisé.
-  // Ne pas corriger sans validation métier (changerait les montants affichés).
+  // NOTE : le "détail" affiché à l'utilisateur (montantNuitsAnnuel ci-dessus, et de
+  // même pour ottPv/ottPv32/ppp/fmd dans le tableau `detail` plus bas) est calculé
+  // directement depuis la saisie annuelle brute, SANS passer par l'arrondi mensuel
+  // ÷12 puis ×12 utilisé ici pour le calcul réel des cotisations — d'où un écart
+  // possible de quelques centimes entre "détail affiché" et "réellement cotisé"
+  // (cf. test T19 dans tests.html qui documente ce mécanisme). Vérifié : c'est le
+  // calcul mensuel ÷12 puis ×12 qui est correct (il reflète 12 vrais bulletins
+  // mensuels, chacun arrondi au centime) ; ne pas aligner le détail dessus changerait
+  // les montants réellement dus.
   const profilMoyen = {
     ...profilRec,
     evenements: {

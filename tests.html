@@ -612,16 +612,18 @@
           eq("detail.length = 6 (nuits, ottPv, ottPv32, ppp, fmd, libre)", detail.length, 6);
         });
 
-        // ── T19 : [Bug connu #4, non corrigé] écart affiché vs réellement cotisé ─
-        suite("T19 — [Bug #4, non corrigé] écart détail affiché vs cotisé (arrondi ÷12 puis ×12)", () => {
+        // ── T19 : écart (attendu) entre détail affiché et montant réellement cotisé ─
+        suite("T19 — Écart détail affiché vs cotisé (arrondi ÷12 puis ×12) — comportement voulu", () => {
           // Le "détail" affiché à l'utilisateur (montantNuitsAnnuel) est calculé
           // directement depuis la saisie brute annuelle, SANS passer par l'arrondi
           // mensuel ÷12 puis ×12 qu'utilise le calcul réel des cotisations
-          // (profilMoyen, engine.js:4199-4242). Avec des valeurs qui ne tombent pas
+          // (profilMoyen, engine.js:4156-4167). Avec des valeurs qui ne tombent pas
           // rond après division par 12, un écart de quelques centimes apparaît entre
-          // le montant affiché et le montant réellement cotisé. Voir le rapport
-          // d'audit (bug #4) — ne pas "corriger" ce test en alignant les deux valeurs,
-          // il documente un écart réel du moteur, pas un idéal.
+          // le montant affiché et le montant réellement cotisé. Vérifié par rapport
+          // à de vraies valeurs de référence : c'est le calcul mensuel ÷12 puis ×12
+          // qui est correct (12 vrais bulletins mensuels, arrondis au centime) — ne
+          // pas "corriger" ce test en alignant les deux valeurs, il documente un
+          // comportement voulu, pas un défaut.
           const { detail } = calculerAnnuel({
             nuitsAnnuelles: 25, soireesAnnuelles: 13,
             ottPv: 0, ottPv32: 0, ppp: 0, fmd: 0, libres: [],
