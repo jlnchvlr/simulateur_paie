@@ -1719,15 +1719,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
         const montantAbs = Math.abs(r.montant);
         const estDeduire = r.montant < 0;
 
-        const typeLabel  = r.type === "courante" ? "AN. COUR." : "AN. ANT.";
-        let libelleFiche;
-        if (r.codeParent === "" && r.libelleParent) {
-          libelleFiche = r.libelleParent.toUpperCase();
-        } else {
-          libelleFiche = r.periode
-            ? `RAPPEL ${typeLabel} - ${r.periode.toUpperCase()}`
-            : `RAPPEL ${typeLabel}`;
-        }
+        const libelleFiche = _libelleRappel(r);
 
         const tr = document.createElement("tr");
         tr.id = `row-rappel-${r.id}`;
@@ -3196,6 +3188,18 @@ const MONTANT_MENSUEL_MAP = {
 };
 
 /**
+ * Libellé d'une ligne de rappel sur la fiche — partagé desktop/mobile
+ * pour éviter toute divergence de formatage entre les deux rendus.
+ * @param {{codeParent: string, libelleParent: string, periode: string, type: string}} r
+ * @returns {string}
+ */
+function _libelleRappel(r) {
+  if (r.codeParent === "" && r.libelleParent) return r.libelleParent.toUpperCase();
+  const typeLabel = r.type === "courante" ? "AN. COUR." : "AN. ANT.";
+  return r.periode ? `RAPPEL ${typeLabel} - ${r.periode.toUpperCase()}` : `RAPPEL ${typeLabel}`;
+}
+
+/**
  * Lit les lignes de rappel depuis le DOM et retourne un tableau d'objets.
  * @returns {{id, codeParent, libelleParent, periode, type, montant, imposable, autoCalc, nbMois, montantMensuelPrecedent}[]}
  */
@@ -3944,6 +3948,21 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       titre: "Primes manuelles",
       sub: imposable ? null : "Non imposable",
       onDelete: () => window.supprimerPrimeManuelle(i),
+    });
+  });
+
+  // Rappels — inclus dans les totaux par calculerMontants(), ils doivent donc
+  // apparaître dans le détail. Divergence volontaire avec le desktop : là-bas
+  // chaque rappel est ancré sous sa ligne parente ; ici ils sont groupés en fin
+  // de bloc gains (pas d'ancrage — complexité > bénéfice sur une liste à plat).
+  _getRappels().forEach((r) => {
+    if (!r.montant) return;
+    const montantAbs = Math.abs(r.montant);
+    ligne(_libelleRappel(r), r.montant > 0 ? montantAbs : null, r.montant < 0 ? montantAbs : null, {
+      panel: "panel-rappels",
+      titre: "📋 Rappels",
+      sub: r.imposable ? null : "Non imposable",
+      onDelete: () => window.supprimerRappelDeFiche(r.id),
     });
   });
 

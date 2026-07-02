@@ -731,6 +731,45 @@
           }
         });
 
+        // ── T24 : Rappels — impact calcul (4 flux) ──────────────────────────────
+        suite("T24 — Rappels : imposable ±, non imposable, PSC/prévoyance (assiette CSG sans abattement)", () => {
+          const cst = baseDonnees.constantes;
+          const m0 = calculerMontants(profil());
+          const avecRappels = (over) => calculerMontants(profil({ primes: { ...profil().primes, ...over } }));
+
+          // Rappel imposable positif → colonne À Payer + assiettes RAFP/CSG
+          const mPlus = avecRappels({ rappels_imposables: 100 });
+          eq("imposable +100 : totalAPayer = base + 100", mPlus.totalAPayer, m0.totalAPayer + 100);
+          eq("imposable +100 : soumis à RAFP (5.00)", mPlus.cotisationRafp, 5);
+          eq("imposable +100 : CSG déductible augmente", mPlus.csgDeductible > m0.csgDeductible ? 1 : 0, 1);
+
+          // Rappel imposable négatif (trop-perçu) → colonne À Déduire, pas À Payer
+          const mMoins = avecRappels({ rappels_imposables: -50 });
+          eq("imposable −50 : totalAPayer inchangé", mMoins.totalAPayer, m0.totalAPayer);
+          eq("imposable −50 : totalPrimesSoumises = −50 (algébrique)", mMoins.totalPrimesSoumises, -50);
+          eq("imposable −50 : net avant impôt diminue", mMoins.netAPayerAvantImpot < m0.netAPayerAvantImpot ? 1 : 0, 1);
+
+          // Rappel non imposable → payé mais exclu du net imposable et du net social
+          const mNonImp = avecRappels({ rappels_non_imposables: 100 });
+          eq("non imposable +100 : totalAPayer = base + 100", mNonImp.totalAPayer, m0.totalAPayer + 100);
+          eq("non imposable +100 : RAFP inchangée (hors assiette)", mNonImp.cotisationRafp, m0.cotisationRafp);
+          eq("non imposable +100 : netImposableFinal inchangé", mNonImp.netImposableFinal, m0.netImposableFinal);
+          eq("non imposable +100 : netSocial inchangé", mNonImp.netSocial, m0.netSocial);
+          eq("non imposable +100 : netFinal = base + 100", mNonImp.netFinal, m0.netFinal + 100);
+
+          // Rappel PSC/prévoyance : imposable, mais ajouté à l'assiette CSG SANS
+          // l'abattement 0.9825 (règle métier validée vs bulletins réels — ne pas "corriger",
+          // cf. engine.js, calcul de pscSansAbat / totalPrimesSoumisesHorsPSC)
+          const mPsc = avecRappels({ rappels_imposables: 20, rappels_psc_prevoyance: 20 });
+          const basePscAttendue = Math.max(0, arrondir(
+            (mPsc.baseSoumisePC + (mPsc.totalPrimesSoumises - 20) + mPsc.montantSFT - mPsc.transfertPrimes - mPsc.retenueIsq)
+              * cst.assiette_csg_crds + 20,
+          ));
+          eq("PSC +20 : CSG déductible = base(+20 hors abattement) × 6,8 %", mPsc.csgDeductible, arrondir(basePscAttendue * cst.taux_csg_deductible));
+          eq("PSC +20 : CRDS = base(+20 hors abattement) × 0,5 %", mPsc.crds, arrondir(basePscAttendue * cst.taux_crds));
+          eq("PSC +20 : netSocial réduit du rappel PSC", mPsc.netSocial, arrondir(mPsc.netAPayerAvantImpot - 20 + mPsc.retenueIsq));
+        });
+
         // ── Rendu ─────────────────────────────────────────────────────────────
         afficherResultats();
       }
