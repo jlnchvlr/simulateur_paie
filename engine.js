@@ -1987,6 +1987,32 @@ function majRembt() {
 }
 
 /**
+ * Affiche un bandeau d'erreur bloquante quand l'initialisation échoue.
+ * Sans lui, l'app restait figée sans aucun message : tout le corps
+ * d'initialiserApplication() est dans le try, donc aucun listener n'est
+ * attaché en cas d'échec (data.json inaccessible, erreur JS).
+ * @param {Error} erreur
+ */
+function _afficherErreurInit(erreur) {
+  if (document.querySelector(".erreur-init")) return;
+  const estBareme = /data\.json|barème/i.test(erreur?.message || "");
+  const bandeau = document.createElement("div");
+  bandeau.className = "erreur-init";
+  bandeau.setAttribute("role", "alert");
+  const texte = document.createElement("span");
+  texte.textContent = estBareme
+    ? "Impossible de charger le barème (data.json). Vérifiez votre connexion puis réessayez."
+    : "Erreur au démarrage de l'application. Rechargez la page ; si le problème persiste, videz le cache du navigateur.";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "erreur-init-btn";
+  btn.textContent = "Recharger";
+  btn.addEventListener("click", () => location.reload());
+  bandeau.append(texte, btn);
+  document.body.prepend(bandeau);
+}
+
+/**
  * Point d'entrée unique de l'application, déclenché au chargement de la page.
  *
  * Séquence d'initialisation :
@@ -2289,6 +2315,7 @@ async function initialiserApplication() {
     _creerOverlaysMobile();
   } catch (erreur) {
     console.error("Erreur d'initialisation :", erreur);
+    _afficherErreurInit(erreur);
   }
 }
 
