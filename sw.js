@@ -8,7 +8,7 @@
  * un asset statique. L'activation nettoie automatiquement les vieux caches.
  */
 
-const CACHE_VERSION  = "icna-paie-v13";
+const CACHE_VERSION  = "icna-paie-v14";
 const DATA_CACHE     = "icna-data-v1";
 
 /** Assets mis en cache au premier chargement (install). */

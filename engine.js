@@ -2180,6 +2180,10 @@ async function initialiserApplication() {
       const rappelCalcul = champ.id.startsWith("proj-")
         ? () => window.calculerEtAfficherProjection?.()
         : calculerPaie;
+      // PERF — la validation/clamp reste immédiate, seul le recalcul est debouncé :
+      // chaque frappe reconstruisait la fiche complète (~35 lignes + vue mobile).
+      // Les selects/radios/checkboxes restent non debouncés (1 événement par interaction).
+      const rappelCalculDebounce = debounce(rappelCalcul, 200);
       champ.addEventListener("input", function () {
         if (this.value === "") return;
         let val = parseFloat(this.value);
@@ -2188,7 +2192,7 @@ async function initialiserApplication() {
         if (val < borne.min) val = borne.min;
         if (borne.max !== null && val > borne.max) val = borne.max;
         this.value = val;
-        rappelCalcul();
+        rappelCalculDebounce();
       });
       champ.addEventListener("blur", function () {
         if (this.value === "") {
