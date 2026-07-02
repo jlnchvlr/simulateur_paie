@@ -2183,7 +2183,7 @@ async function initialiserApplication() {
       // PERF — la validation/clamp reste immédiate, seul le recalcul est debouncé :
       // chaque frappe reconstruisait la fiche complète (~35 lignes + vue mobile).
       // Les selects/radios/checkboxes restent non debouncés (1 événement par interaction).
-      const rappelCalculDebounce = debounce(rappelCalcul, 200);
+      const rappelCalculDebounce = debounce(rappelCalcul, 100);
       champ.addEventListener("input", function () {
         if (this.value === "") return;
         let val = parseFloat(this.value);
