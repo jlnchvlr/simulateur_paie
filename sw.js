@@ -8,11 +8,12 @@
  * un asset statique. L'activation nettoie automatiquement les vieux caches.
  */
 
-const CACHE_VERSION  = "icna-paie-v10";
+const CACHE_VERSION  = "icna-paie-v11";
 const DATA_CACHE     = "icna-data-v1";
 
 /** Assets mis en cache au premier chargement (install). */
 const STATIC_ASSETS = [
+  "./", // navigation racine — sans elle, "/" ne matche pas "./index.html" dans caches.match()
   "./index.html",
   "./style.css",
   "./engine.js",
@@ -85,7 +86,15 @@ async function cacheFirstStatic(request) {
     }
     return response;
   } catch {
-    // Offline + pas de cache — retourne une réponse d'erreur sobre
+    // Offline : pour une navigation (URL racine ou profonde), servir la coquille
+    // de l'app depuis le précache plutôt qu'une erreur — la requête "/" ne matche
+    // pas l'entrée "./index.html" et l'entrée runtime "/" disparaît à chaque
+    // changement de CACHE_VERSION (les vieux caches sont purgés à l'activation).
+    if (request.mode === "navigate") {
+      const shell = await caches.match("./index.html");
+      if (shell) return shell;
+    }
+    // Pas de cache — retourne une réponse d'erreur sobre
     return new Response("Ressource non disponible hors ligne.", {
       status: 503,
       headers: { "Content-Type": "text/plain; charset=utf-8" },
