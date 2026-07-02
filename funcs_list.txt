@@ -1,0 +1,102 @@
+76:let _configures = (() => {
+88:function marquerConfigure(cle) {
+95:const nonConfigure = (cle) => CHAMPS_REQUIS.has(cle) && !_configures.has(cle);
+99:const configurationIncomplete = () => [...CHAMPS_REQUIS].some(c => !_configures.has(c));
+167:function sauvegarderProfil() {
+197:function restaurerProfil() {
+242:window.effacerProfil = function () {
+296:function normaliserTexte(texte) {
+309:function formaterMontant(montant) {
+319:function arrondir(valeur) {
+330:function lireFloat(id) {
+343:function lireInt(id) {
+353:function majPreview(id, montant) {
+367:function debounce(fn, delai = 150) {
+387:window.rechercherElement = function (requete) {
+402:function afficherResultatsRecherche(conteneur, resultats, requete, onSelect) {
+470:function creerMenuInteractif(nom, inputId, helperId, panelId, details) {
+578:function genererListeRist(cfg) {
+644:function trierEchelons(echelonsObj) {
+659:function mettreAJourEchelons() {
+702:function activerOngletMgasAlan(onglet) {
+710:function ouvrirModal(panelIds, titre) {
+761:window.effacerValeurs = function (event, inputIds) {
+800:function getProfilDepuisInterface() {
+912:function calculerSFT(nbEnfants, traitementBrut, valeurPoint) {
+936:function genererTooltipAbsence(montantDeBase, joursGreve, joursCarence, jours90, jours50) {
+960:function calculerMontants(p) {
+1251:function dessinerFiche(p, m, pB = null, mB = null) {
+1862:function calculerPaie() {
+1952:function attacherNavigationClavier(modal, input) {
+1976:function majRembt() {
+2319:function _appliquerScaleFiche() {
+2348:function _majHauteurWrapper(scale, barresBas) {
+2373:function _creerBottomBarMobile() {
+2422:function _mbbAction(action) {
+2457:function _mobileInfoTour() {
+2485:function _mobileConfirmReset() {
+2544:function _creerOverlaysMobile() {
+2743:function _ouvrirPanneauMobile(panelId, titre, sourceId) {
+2813:function _majBottomBarComparer() {
+2839:function _ouvrirComparateurMobile() {
+2935:function _majDeltaMobile() {
+2993:function _creerLignePrimeManuelle(libelle = "", montant = "", imposable = true) {
+3058:function _getPrimesManuelles() {
+3073:function _sauvegarderPrimesManuelles() {
+3083:function _restaurerPrimesManuelles() {
+3103:window.ajouterPrimeManuelle = function () {
+3116:window.supprimerPrimeManuelle = function (index) {
+3202:function _getRappels() {
+3222:function _sauvegarderRappels() {
+3228:function _restaurerRappels() {
+3254:function _updateAutoCalcRappel(row) {
+3281:function _rafraichirAutoCalcRappels() {
+3294:function _creerLigneRappel(
+3492:window.ajouterRappel = function () {
+3504:window.supprimerRappelDeFiche = function (id) {
+3526:function dessinerFicheMobile(p, m, pB = null, mB = null) {
+4124:function calculerAnnuel(saisis) {
+4224:window.calculerEtAfficherProjection = function () {
+4296:window.ouvrirProjectionAnnuelle = function () {
+4333:function _creerLigneLibre(libelle = "", montant = "") {
+4369:window.ajouterLigneLibre = function () {
+4385:function getProfilComparaisonDepuisPanneau() {
+4452:function majDeltaNet(mA, mB) {
+4476:function mettreAJourEchelonsB() {
+4491:function calculerPaieComparaison() {
+4502:window.activerComparaison = function () {
+4570:window.desactiverComparaison = function () {
+4597:function initialiserComparateur() {
+4699:const _elPopover   = () => document.getElementById("tour-popover");
+4700:const _elSpotlight = () => document.getElementById("tour-spotlight");
+4701:const _elHeader    = () => document.querySelector(".tour-pop-header");
+4702:const _elBody      = () => document.querySelector(".tour-pop-body");
+4703:const _elStep      = () => document.querySelector(".tour-pop-step");
+4704:const _elTitle     = () => document.querySelector(".tour-pop-title");
+4705:const _elNext      = () => document.querySelector(".tour-pop-next");
+4706:const _elPrev      = () => document.querySelector(".tour-pop-prev");
+4718:function _tourSpotlightSur(el, padding = 6) {
+4738:function _tourPositionnerPopover(el) {
+4779:function _tourMajContenu(step, index, total, opts = {}) {
+4848:function _tourActiverWatcher(step) {
+4873:function _tourSignalerValidation() {
+4890:function _tourAfficherToast(msg, duree = 1800) {
+4903:function _tourDoitBloquer(e) {
+4924:function _tourGuardeClic(e) {
+4935:function _tourGardeMousedown(e) {
+4952:function _tourAfficherEtape(index) {
+4994:function _tourDemarrer(steps, startIndex = 0, phase = "phase1") {
+5025:function _tourFermer(pulserBadges = true) {
+5068:window._tourNext = function () {
+5084:window._tourPrev = function () {
+5091:window._tourSkip = function () {
+5113:function _tourInstallerRepriseApresModal(index, steps) {
+5159:function _ristProchaineLigne() {
+5169:function _ristMajChecklist(indexActif) {
+5191:function _ristSuivreProgression() {
+5209:function _ristDemarrer() {
+5214:function _tourRistApresModal() {
+5219:function _ristSpotlightGroupe() {
+5249:window.lancerVisiteGuidee = function (startIndex = 0) {
+5414:window.lancerVisiteAvancee = function (startIndex = 0) {
+5492:window._tourLancerDemoSpotlight = function () {
