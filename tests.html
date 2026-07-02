@@ -842,6 +842,19 @@
           eq("éch.02 Zone 1 : 64.53 (tronqué, et non 64.54 arrondi)", m.indemniteResidence, 64.53);
         });
 
+        // ── T30 : donneesCompatibles() — garde-fou de schéma data.json ──────────
+        suite("T30 — donneesCompatibles() : garde-fou de schéma data.json", () => {
+          eq("baseDonnees réel chargé → compatible", donneesCompatibles(baseDonnees) ? 1 : 0, 1);
+          eq("objet vide → incompatible", donneesCompatibles({}) ? 1 : 0, 0);
+          eq("null → incompatible", donneesCompatibles(null) ? 1 : 0, 0);
+          const { grilles_icna, ...sansGrilles } = baseDonnees;
+          eq("sans grilles_icna → incompatible", donneesCompatibles(sansGrilles) ? 1 : 0, 0);
+          const { constantes, ...sansConstantes } = baseDonnees;
+          eq("sans constantes → incompatible", donneesCompatibles(sansConstantes) ? 1 : 0, 0);
+          const { rist, ...sansRist } = baseDonnees;
+          eq("sans rist → incompatible", donneesCompatibles(sansRist) ? 1 : 0, 0);
+        });
+
         // ── Rendu ─────────────────────────────────────────────────────────────
         afficherResultats();
       }

@@ -65,6 +65,13 @@ const CLE_CONFIGURES = "icna_configures_v1";
 const CLE_PRIMES_MANUELLES = "icna_primes_manuelles_v1";
 const CLE_RAPPELS = "icna_rappels_v1";
 
+// Version du schéma des données localStorage (profil, configurés, primes, rappels).
+// À incrémenter si la FORME d'une des clés change : les versions futures pourront
+// détecter un stockage ancien et migrer, au lieu d'une restauration silencieusement
+// partielle. Informatif uniquement — aucune purge n'est faite.
+const SCHEMA_LS_VERSION = 1;
+const CLE_SCHEMA_LS = "icna_schema_v";
+
 // Derniers résultats de calcul — utilisés par l'auto-calc des rappels
 let _dernierProfil    = null;
 let _derniersMontants = null;
@@ -1991,6 +1998,19 @@ function majRembt() {
 }
 
 /**
+ * Contrôle minimal de compatibilité du barème chargé : uniquement les racines
+ * que le code lit SANS garde (constantes, taux_patronaux, grilles_icna,
+ * zones_residence, rist). Évite un crash silencieux si un data.json d'un
+ * autre schéma est servi (cache offline périmé, déploiement partiel).
+ * Volontairement non exhaustif : une liste trop stricte casserait le nominal.
+ * @param {object} base - contenu de data.json
+ * @returns {boolean}
+ */
+function donneesCompatibles(base) {
+  return !!(base && base.meta && base.constantes && base.taux_patronaux && base.grilles_icna && base.zones_residence && base.rist);
+}
+
+/**
  * Affiche un bandeau d'erreur bloquante quand l'initialisation échoue.
  * Sans lui, l'app restait figée sans aucun message : tout le corps
  * d'initialiserApplication() est dans le try, donc aucun listener n'est
@@ -1999,14 +2019,17 @@ function majRembt() {
  */
 function _afficherErreurInit(erreur) {
   if (document.querySelector(".erreur-init")) return;
-  const estBareme = /data\.json|barème/i.test(erreur?.message || "");
+  const message = erreur?.message || "";
+  const estBareme = /data\.json|barème/i.test(message);
   const bandeau = document.createElement("div");
   bandeau.className = "erreur-init";
   bandeau.setAttribute("role", "alert");
   const texte = document.createElement("span");
-  texte.textContent = estBareme
-    ? "Impossible de charger le barème (data.json). Vérifiez votre connexion puis réessayez."
-    : "Erreur au démarrage de l'application. Rechargez la page ; si le problème persiste, videz le cache du navigateur.";
+  texte.textContent = /incompatible/i.test(message)
+    ? message // message spécifique du contrôle de compatibilité du barème
+    : estBareme
+      ? "Impossible de charger le barème (data.json). Vérifiez votre connexion puis réessayez."
+      : "Erreur au démarrage de l'application. Rechargez la page ; si le problème persiste, videz le cache du navigateur.";
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "erreur-init-btn";
@@ -2030,6 +2053,9 @@ async function initialiserApplication() {
     const reponse = await fetch("data.json");
     if (!reponse.ok) throw new Error("Impossible de charger data.json.");
     baseDonnees = await reponse.json();
+    if (!donneesCompatibles(baseDonnees)) {
+      throw new Error("Barème (data.json) incompatible avec cette version de l'application. Rechargez la page en ligne pour mettre à jour.");
+    }
 
     // Affichage de la version du barème en console (debug uniquement, pas dans le DOM)
     const meta = baseDonnees.meta;
@@ -2058,6 +2084,16 @@ async function initialiserApplication() {
 
     // Initialisation du panneau comparateur de scénarios
     initialiserComparateur();
+
+    // Versionnage du schéma localStorage — détecte un stockage écrit par une
+    // autre version de l'app (restauration tolérante conservée, pas de purge)
+    try {
+      const vStockee = parseInt(localStorage.getItem(CLE_SCHEMA_LS), 10);
+      if (!Number.isNaN(vStockee) && vStockee !== SCHEMA_LS_VERSION) {
+        console.warn(`Schéma localStorage v${vStockee} ≠ v${SCHEMA_LS_VERSION} attendu — restauration tolérante, pas de migration définie.`);
+      }
+      localStorage.setItem(CLE_SCHEMA_LS, String(SCHEMA_LS_VERSION));
+    } catch (_) {}
 
     // Restauration du profil sauvegardé (après peuplement des listes)
     // FIX #4 — restaurerProfil() retourne l'objet profil : pas besoin de relire localStorage
