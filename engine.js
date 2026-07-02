@@ -4397,6 +4397,11 @@ function getProfilComparaisonDepuisPanneau() {
     if (cb.checked) pscTotal += parseFloat(cb.value);
   });
 
+  // "0 enfant" est une valeur valide en B : n'hériter de A que si le champ est absent ou vide
+  // (parseInt(...) || profilA.enfants retombait sur A pour la valeur 0, qui est falsy)
+  const enfantsRaw = document.getElementById("cmp-enfants")?.value;
+  const enfantsB = enfantsRaw === "" || enfantsRaw == null ? profilA.enfants : parseInt(enfantsRaw, 10) || 0;
+
   const ristKey = document.getElementById("cmp-input-fonction")?.value;
   const expKey  = document.getElementById("cmp-input-experience")?.value;
   const licKey  = document.getElementById("cmp-input-isq-licence")?.value;
@@ -4409,7 +4414,7 @@ function getProfilComparaisonDepuisPanneau() {
     zone:       document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
     taux_pas:   profilA.taux_pas,
     points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? baseDonnees.constantes.points_nbi : 0,
-    enfants:    parseInt(document.getElementById("cmp-enfants")?.value) || profilA.enfants,
+    enfants:    enfantsB,
 
     evenements: {
       ...profilA.evenements,
@@ -4562,6 +4567,23 @@ window.activerComparaison = function () {
     const dst = document.getElementById("cmp-" + src.id);
     if (dst) dst.checked = src.checked;
   });
+
+  // ALAN — miroir des champs principaux (sans quoi B partirait à 0 et fausserait le delta)
+  ["alan-forfait", "alan-solidaire", "alan-action-sociale", "alan-aide-retraites", "alan-employeur"].forEach((id) => {
+    const src = document.getElementById(id);
+    const dst = document.getElementById("cmp-" + id);
+    if (src && dst) dst.value = src.value || "0";
+  });
+
+  // Majoration géographique — miroir par code d'abord (plusieurs options partagent
+  // le montant 0), puis par montant, sinon première option ("Aucune")
+  const cmpGeo = document.getElementById("cmp-geo-majo");
+  if (cmpGeo && cmpGeo.options.length) {
+    const options = Array.from(cmpGeo.options);
+    const parCode = options.find((o) => (o.dataset.code ?? "") === profilA.primes.geo_majo_code);
+    const parMontant = options.find((o) => (parseFloat(o.value) || 0) === profilA.primes.geo_majo);
+    cmpGeo.selectedIndex = (parCode ?? parMontant ?? options[0]).index;
+  }
 
   calculerPaie(); // redessine la fiche + déclenche les deltas
 };

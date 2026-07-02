@@ -664,6 +664,73 @@
           eq("mA.totalPatronal ≠ mB.totalPatronal (profils bien distincts)", mA.totalPatronal !== mB.totalPatronal ? 1 : 0, 1);
         });
 
+        // ── T23 : Comparateur — héritage du panneau B à l'activation ───────────
+        suite("T23 — Comparateur : héritage ALAN/geo-majo à l'activation + enfants=0 en B", () => {
+          // Fixture DOM minimale : les éléments écrits SANS garde par activerComparaison()
+          // (cmp-input-*, cmp-attractivite, cmp-fidelisation, cmp-pv-*) + ceux nécessaires
+          // aux assertions. Pas de cmp-grade (évite mettreAJourEchelonsB) ni de
+          // panneau-comparaison / mobile-bottom-bar (accès gardés dans engine.js).
+          const fx = document.createElement("div");
+          fx.hidden = true;
+          fx.innerHTML = `
+            <input id="input-grade"   value="ING.DIV. CONT.NAV.AE" />
+            <input id="input-echelon" value="03" />
+            <input id="input-enfants" value="2" />
+            <input type="radio" name="geo-majo-radio" value="163.29" data-code="201987" checked />
+            <input id="alan-forfait" value="30.5" /><input id="alan-solidaire" value="2" />
+            <input id="alan-action-sociale" value="" /><input id="alan-aide-retraites" value="" />
+            <input id="alan-employeur" value="" />
+            <select id="cmp-input-fonction"></select><select id="cmp-input-experience"></select>
+            <select id="cmp-input-isq-licence"></select><select id="cmp-input-isq-complement"></select>
+            <select id="cmp-input-isq-majoration"></select>
+            <input id="cmp-attractivite" value="" /><input id="cmp-fidelisation" value="" />
+            <input id="cmp-pv-globale" value="" /><input id="cmp-pv-opt32" value="" />
+            <input id="cmp-enfants" value="" />
+            <input id="cmp-alan-forfait" value="0" /><input id="cmp-alan-solidaire" value="0" />
+            <input id="cmp-alan-action-sociale" value="0" /><input id="cmp-alan-aide-retraites" value="0" />
+            <input id="cmp-alan-employeur" value="0" />
+            <select id="cmp-geo-majo">
+              <option value="0" data-code="">Aucune</option>
+              <option value="163.29" data-code="201987">Nord / Nord-Est</option>
+              <option value="0" data-code="201986">CDG / CRNA Ouest</option>
+            </select>
+          `;
+          document.body.appendChild(fx);
+          const calculerPaieOrig = window.calculerPaie;
+          window.calculerPaie = () => {}; // neutralise le rendu (pas de fiche dans tests.html)
+          try {
+            window.activerComparaison();
+            const pA = getProfilDepuisInterface();
+            const pB = getProfilComparaisonDepuisPanneau();
+
+            eq("cmp-alan-forfait pré-rempli depuis A (30.50)", parseFloat(document.getElementById("cmp-alan-forfait").value), 30.5);
+            eq("profil B hérite alan.forfait (30.50)", pB.alan.forfait, 30.5);
+            eq("profil B hérite alan.solidaire (2.00)", pB.alan.solidaire, 2);
+            eq("cmp-geo-majo sélectionné par code (201987) et non par montant", document.getElementById("cmp-geo-majo").selectedOptions[0].dataset.code === "201987" ? 1 : 0, 1);
+            eq("profil B hérite geo_majo (163.29)", pB.primes.geo_majo, 163.29);
+            eq("cmp-enfants pré-rempli depuis A (2)", parseInt(document.getElementById("cmp-enfants").value, 10), 2);
+
+            // Invariant : à l'activation, B est strictement identique à A → aucun delta
+            const mA = calculerMontants(pA);
+            const mB = calculerMontants(pB);
+            eq("netFinal A > 0 (invariant non trivial)", mA.netFinal > 0 ? 1 : 0, 1);
+            eq("netFinal B = netFinal A (delta 0 à l'activation)", mB.netFinal, mA.netFinal);
+            eq("totalPatronal B = totalPatronal A", mB.totalPatronal, mA.totalPatronal);
+
+            // "0 enfant" en B ne doit plus retomber sur la valeur de A (0 est falsy)
+            document.getElementById("cmp-enfants").value = "0";
+            eq("cmp-enfants = 0 → profil B a 0 enfant (plus d'héritage forcé)", getProfilComparaisonDepuisPanneau().enfants, 0);
+            document.getElementById("cmp-enfants").value = "";
+            eq("cmp-enfants vide → hérite de A (2 enfants)", getProfilComparaisonDepuisPanneau().enfants, 2);
+          } finally {
+            // desactiverComparaison AVANT de restaurer calculerPaie : le vrai rendu
+            // planterait sans le DOM d'index.html
+            window.desactiverComparaison();
+            window.calculerPaie = calculerPaieOrig;
+            fx.remove();
+          }
+        });
+
         // ── Rendu ─────────────────────────────────────────────────────────────
         afficherResultats();
       }
