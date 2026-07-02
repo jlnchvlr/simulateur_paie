@@ -770,6 +770,78 @@
           eq("PSC +20 : netSocial réduit du rappel PSC", mPsc.netSocial, arrondir(mPsc.netAPayerAvantImpot - 20 + mPsc.retenueIsq));
         });
 
+        // ── T25 : Primes manuelles ──────────────────────────────────────────────
+        suite("T25 — Primes manuelles : imposable, non imposable, mix", () => {
+          const m0 = calculerMontants(profil());
+          const avecPrimes = (over) => calculerMontants(profil({ primes: { ...profil().primes, ...over } }));
+
+          const mImp = avecPrimes({ manuelles_imposables: 100 });
+          eq("imposable 100 : totalAPayer = base + 100", mImp.totalAPayer, m0.totalAPayer + 100);
+          eq("imposable 100 : soumise à RAFP (5.00)", mImp.cotisationRafp, 5);
+          eq("imposable 100 : net imposable augmente", mImp.netImposableFinal > m0.netImposableFinal ? 1 : 0, 1);
+
+          const mNon = avecPrimes({ manuelles_non_imposables: 100 });
+          eq("non imposable 100 : totalAPayer = base + 100", mNon.totalAPayer, m0.totalAPayer + 100);
+          eq("non imposable 100 : RAFP inchangée (hors assiette)", mNon.cotisationRafp, m0.cotisationRafp);
+          eq("non imposable 100 : netImposableFinal inchangé", mNon.netImposableFinal, m0.netImposableFinal);
+          eq("non imposable 100 : netSocial inchangé (même traitement que FMD)", mNon.netSocial, m0.netSocial);
+          eq("non imposable 100 : netFinal = base + 100", mNon.netFinal, m0.netFinal + 100);
+
+          const mMix = avecPrimes({ manuelles_imposables: 100, manuelles_non_imposables: 50 });
+          eq("mix 100 + 50 : totalAPayer = base + 150", mMix.totalAPayer, m0.totalAPayer + 150);
+          eq("mix : seule la part imposable passe en RAFP (5.00)", mMix.cotisationRafp, 5);
+        });
+
+        // ── T26 : SFT aux bornes d'indice (plancher 449 / plafond 717) ──────────
+        suite("T26 — SFT : bornes plancher/plafond du traitement de référence", () => {
+          const vp = baseDonnees.constantes.valeur_point_mensuel;
+
+          // Traitement très bas → référence bloquée au plancher (449 × vp = 2210.33)
+          eq("2 enfants, traitement 100 € → SFT sur plancher (76.98)", calculerSFT(2, 100, vp), 76.98);
+          // Traitement très haut → référence bloquée au plafond (717 × vp = 3529.63)
+          eq("2 enfants, traitement 999999 € → SFT sur plafond (116.56)", calculerSFT(2, 999999, vp), 116.56);
+
+          // Intégration grades réels : ING.DIV éch.01 (2047.88 < plancher)
+          const mBas = calculerMontants(profil({ echelon: "01", enfants: 2 }));
+          eq("ING.DIV éch.01, 2 enfants : SFT plancher (76.98)", mBas.montantSFT, 76.98);
+
+          // ING. EN CHEF HEA2/HEA3 (4578.19 / 4809.56 > plafond) → même SFT
+          const mHea2 = calculerMontants(profil({ grade: "ING. EN CHEF CONT.NAV.AE", echelon: "HEA2", enfants: 2 }));
+          const mHea3 = calculerMontants(profil({ grade: "ING. EN CHEF CONT.NAV.AE", echelon: "HEA3", enfants: 2 }));
+          eq("ING. EN CHEF HEA3, 2 enfants : SFT plafond (116.56)", mHea3.montantSFT, 116.56);
+          eq("HEA2 = HEA3 (tous deux au-dessus du plafond)", mHea2.montantSFT, mHea3.montantSFT);
+
+          // Barème 3 et 4+ enfants (référence entre les bornes : éch.03 = 2274.32)
+          eq("3 enfants : 15.24 + réf × 8 % (197.19)", calculerMontants(profil({ enfants: 3 })).montantSFT, 197.19);
+          eq("4 enfants : + (4.57 + réf × 6 %) par enfant sup. (338.21)", calculerMontants(profil({ enfants: 4 })).montantSFT, 338.21);
+        });
+
+        // ── T27 : SFT — 0 vs 1 enfant ───────────────────────────────────────────
+        suite("T27 — SFT : 0 enfant (aucun) vs 1 enfant (part fixe)", () => {
+          eq("0 enfant : SFT = 0", calculerMontants(profil()).montantSFT, 0);
+          eq("1 enfant : SFT = 2.29 (fixe, indépendant du traitement)", calculerMontants(profil({ enfants: 1 })).montantSFT, 2.29);
+          const vp = baseDonnees.constantes.valeur_point_mensuel;
+          eq("1 enfant : identique quel que soit le traitement", calculerSFT(1, 999999, vp), 2.29);
+        });
+
+        // ── T28 : RAFP sous le plafond (complète T9/T14 qui testent le plafonnement) ─
+        suite("T28 — RAFP : primes sous 20 % du traitement → assiette = primes", () => {
+          const m = calculerMontants(profil({ primes: { ...profil().primes, rist_fonctions: 100 } }));
+          // 100 € < 20 % × 2274.32 = 454.86 → assiette non plafonnée
+          eq("RAFP = 100 × 5 % = 5.00 (non plafonnée)", m.cotisationRafp, 5);
+          eq("RAFP patronale = RAFP salariale", m.charges.patRafp, m.cotisationRafp);
+        });
+
+        // ── T29 : Indemnité de résidence — troncature volontaire ────────────────
+        suite("T29 — Indemnité de résidence : troncature au centime (Math.floor), pas arrondi", () => {
+          // ING.DIV éch.02 Zone 1 : 2151.25 × 3 % = 64.5375 → tronqué à 64.53
+          // (arrondir() donnerait 64.54). Comportement constaté sur bulletins réels —
+          // ne pas "corriger" ce test en harmonisant avec arrondir(), il verrouille
+          // une troncature voulue (cf. commentaire engine.js, calcul indemniteResidence).
+          const m = calculerMontants(profil({ echelon: "02", zone: "Zone 1" }));
+          eq("éch.02 Zone 1 : 64.53 (tronqué, et non 64.54 arrondi)", m.indemniteResidence, 64.53);
+        });
+
         // ── Rendu ─────────────────────────────────────────────────────────────
         afficherResultats();
       }

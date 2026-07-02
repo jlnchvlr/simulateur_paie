@@ -965,6 +965,10 @@ function calculerMontants(p) {
   const indice = baseDonnees.grilles_icna[p.grade]?.[p.echelon]?.indice || 0;
   const traitementBrut = arrondir(indice * cst.valeur_point_mensuel);
   const montantNbi = arrondir(p.points_nbi * cst.valeur_point_mensuel);
+  // Indemnité de résidence : TRONCATURE au centime (Math.floor), contrairement à
+  // arrondir() utilisé partout ailleurs. Comportement constaté sur bulletins réels,
+  // verrouillé par T3 (68.22) et T29 (64.53) — l'arrondi classique donnerait
+  // 68.23 / 64.54. Ne pas "harmoniser" sans justification réglementaire.
   const indemniteResidence = Math.floor((traitementBrut + montantNbi) * baseDonnees.zones_residence[p.zone] * 100) / 100;
 
   // ── Indemnité de nuit (S1 = nuit, S2 = soirée) ──────────────────────────────
@@ -1231,17 +1235,17 @@ const ROUTAGE_MODAL = {
 };
 
 /**
- * Reconstruit et affiche la fiche de paie complète dans le tableau DOM.
- * Met également à jour les totaux dans le pied de page.
- *
- * @param {ProfilAgent}      p - Profil de l'agent
- * @param {MontantsCalcules} m - Résultat de `calculerMontants(p)`
- */
-/**
- * Dessine la fiche de paie complète.
+ * Dessine la fiche de paie complète (tableau desktop) et met à jour les totaux
+ * du pied de page.
  * En mode comparaison (pB/mB fournis), affiche les lignes présentes dans A OU B :
  * — lignes A normales avec badge Δ si la valeur diffère
  * — lignes présentes dans B uniquement (ghost) en fond vert pâle
+ *
+ * ⚠ DIVERGENCES VOLONTAIRES avec dessinerFicheMobile() (rendu DIV condensé) :
+ * — ALAN : 5 lignes détaillées ici (720376-720380), 1 ligne agrégée sur mobile
+ * — Rappels : ancrés sous leur ligne parente ici, groupés en fin de bloc gains mobile
+ * — Codes de ligne ICNA : affichés ici, masqués sur mobile
+ * Toute NOUVELLE ligne de paie doit être ajoutée dans LES DEUX fonctions.
  *
  * @param {ProfilAgent}           p  - Profil A (affiché)
  * @param {MontantsCalcules}      m  - Résultat calculerMontants(p)
@@ -3550,6 +3554,12 @@ window.supprimerRappelDeFiche = function (id) {
  * Liste de lignes : libellé à gauche, montant coloré à droite.
  * Sections séparées par des titres. Lignes cliquables → même modales que desktop.
  * Appelée depuis calculerPaie() uniquement quand is-mobile.
+ *
+ * ⚠ DIVERGENCES VOLONTAIRES avec dessinerFiche() (tableau desktop) :
+ * — ALAN : 1 ligne agrégée ici, 5 lignes détaillées (720376-720380) sur desktop
+ * — Rappels : groupés en fin de bloc gains ici, ancrés sous leur ligne parente desktop
+ * — Codes de ligne ICNA : masqués ici, affichés sur desktop
+ * Toute NOUVELLE ligne de paie doit être ajoutée dans LES DEUX fonctions.
  *
  * @param {ProfilAgent}      p - Profil agent
  * @param {MontantsCalcules} m - Résultats calculerMontants(p)
