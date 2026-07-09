@@ -1465,7 +1465,10 @@ function dessinerFiche(p, m, pB = null, mB = null) {
 
   const rembt = paire(p.primes.rembt_domicile, pB?.primes.rembt_domicile);
   if (rembt.affiche > 0 || rembt.isGhost)
-    ajouterLigne("200033", "REMBT DOMICILE-TRAVAIL", rembt.affiche, null, null, ["input-rembt-domicile"], null, null,
+    // On réinitialise les champs SOURCES (base + direct) en plus du champ caché calculé :
+    // ne remettre à zéro que "input-rembt-domicile" laissait le panneau rempli (ex. 61,05) et
+    // désynchronisé de la fiche → ressaisir la même valeur ne déclenchait aucun changement.
+    ajouterLigne("200033", "REMBT DOMICILE-TRAVAIL", rembt.affiche, null, null, ["input-rembt-base", "input-rembt-direct", "input-rembt-domicile"], null, null,
       { delta: rembt.delta, deltaCol: 2, isGhost: rembt.isGhost });
 
   // ── Éléments variables ────────────────────────────────────────────────────────
