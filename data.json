@@ -1,9 +1,9 @@
 {
   "meta": {
-    "version": "2025-01",
+    "version": "2025-06",
     "valable_depuis": "2025-01-01",
     "valeur_point_source": "Décret n°2023-519 du 28 juin 2023",
-    "notes": "Taux RAFP, PC et cotisations au 01/01/2025. Grilles ICNA issues du protocole 2022-2025."
+    "notes": "Taux RAFP, PC et cotisations au 01/01/2025. Grilles ICNA issues du protocole 2022-2025. Versement mobilité à 2,01 % constaté sur bulletin de juin 2026."
   },
   "constantes": {
     "valeur_point_mensuel": 4.92278,
@@ -38,7 +38,7 @@
     "maladie": 0.097,
     "pensions_civiles": 0.8228,
     "ati": 0.0032,
-    "versement_mobilite": 0.02
+    "versement_mobilite": 0.0201
   },
   "grilles_icna": {
     "ING. EN CHEF CONT.NAV.AE": {
