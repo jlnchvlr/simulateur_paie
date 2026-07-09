@@ -208,7 +208,7 @@
           eq("csgNonDeductible", m.csgNonDeductible, 52.86);
           eq("crds", m.crds, 11.01);
           eq("montantSFT = 0 (0 enfant)", m.montantSFT, 0);
-          eq("totalPatronal", m.totalPatronal, 2282.28);
+          eq("totalPatronal", m.totalPatronal, 2282.5);
         });
 
         // ── T2 : NBI activée ───────────────────────────────────────────────────
@@ -221,7 +221,7 @@
           eq("csgDeductible augmente", m.csgDeductible, 167.87);
           eq("csgNonDeductible", m.csgNonDeductible, 59.25);
           eq("crds", m.crds, 12.34);
-          eq("totalPatronal", m.totalPatronal, 2553.97);
+          eq("totalPatronal", m.totalPatronal, 2554.23);
         });
 
         // ── T3 : Zone 1 (3%) ───────────────────────────────────────────────────
@@ -231,7 +231,7 @@
           eq("totalPrimesSoumises = résidence seule", m.totalPrimesSoumises, 68.22);
           eq("RAFP = min(68.22, baseSoumisePC × 20%) × 5%", m.cotisationRafp, 3.41);
           eq("csgDeductible", m.csgDeductible, 154.34);
-          eq("totalPatronal", m.totalPatronal, 2285.69);
+          eq("totalPatronal", m.totalPatronal, 2285.91);
         });
 
         // ── T4 : SFT 2 enfants ─────────────────────────────────────────────────
@@ -241,7 +241,7 @@
           eq("csgDeductible augmente (SFT inclus)", m.csgDeductible, 155.05);
           eq("csgNonDeductible", m.csgNonDeductible, 54.72);
           eq("crds", m.crds, 11.4);
-          eq("totalPatronal inchangé (SFT exonéré PC)", m.totalPatronal, 2282.28);
+          eq("totalPatronal inchangé (SFT exonéré PC)", m.totalPatronal, 2282.5);
         });
 
         // ── T5 : 5 jours de grève ─────────────────────────────────────────────
@@ -267,7 +267,7 @@
           eq("retenuePC recalculée sur base réelle", m.retenuePC, 210.37);
           eq("transfertPrimes réduit par absence", m.transfertPrimes, 27.02);
           eq("csgDeductible réduite", m.csgDeductible, 124.82);
-          eq("totalPatronal réduit", m.totalPatronal, 1901.91);
+          eq("totalPatronal réduit", m.totalPatronal, 1902.09);
         });
 
         // ── T6 : Maladie 90% ──────────────────────────────────────────────────
@@ -400,7 +400,7 @@
           eq("totalPrimesSoumises = nuit", m.totalPrimesSoumises, 73.72);
           eq("cotisationRafp = 73.72×5%", m.cotisationRafp, 3.69);
           eq("csgDeductible", m.csgDeductible, 154.71);
-          eq("totalPatronal", m.totalPatronal, 2285.97);
+          eq("totalPatronal", m.totalPatronal, 2286.19);
         });
 
         // ── T11 : Totaux et nets ──────────────────────────────────────────────────────
@@ -662,6 +662,275 @@
           eq("mA.montantSFT = 0 (0 enfant)", mA.montantSFT, 0);
           eq("mB.montantSFT = 78.90 (2 enfants, réf. T4)", mB.montantSFT, 78.9);
           eq("mA.totalPatronal ≠ mB.totalPatronal (profils bien distincts)", mA.totalPatronal !== mB.totalPatronal ? 1 : 0, 1);
+        });
+
+        // ── T23 : Comparateur — héritage du panneau B à l'activation ───────────
+        suite("T23 — Comparateur : héritage ALAN/geo-majo à l'activation + enfants=0 en B", () => {
+          // Fixture DOM minimale : les éléments écrits SANS garde par activerComparaison()
+          // (cmp-input-*, cmp-attractivite, cmp-fidelisation, cmp-pv-*) + ceux nécessaires
+          // aux assertions. Pas de cmp-grade (évite mettreAJourEchelonsB) ni de
+          // panneau-comparaison / mobile-bottom-bar (accès gardés dans engine.js).
+          const fx = document.createElement("div");
+          fx.hidden = true;
+          fx.innerHTML = `
+            <input id="input-grade"   value="ING.DIV. CONT.NAV.AE" />
+            <input id="input-echelon" value="03" />
+            <input id="input-enfants" value="2" />
+            <input type="radio" name="geo-majo-radio" value="163.29" data-code="201987" checked />
+            <input id="alan-forfait" value="30.5" /><input id="alan-solidaire" value="2" />
+            <input id="alan-action-sociale" value="" /><input id="alan-aide-retraites" value="" />
+            <input id="alan-employeur" value="" />
+            <select id="cmp-input-fonction"></select><select id="cmp-input-experience"></select>
+            <select id="cmp-input-isq-licence"></select><select id="cmp-input-isq-complement"></select>
+            <select id="cmp-input-isq-majoration"></select>
+            <input id="cmp-attractivite" value="" /><input id="cmp-fidelisation" value="" />
+            <input id="cmp-pv-globale" value="" /><input id="cmp-pv-opt32" value="" />
+            <input id="cmp-enfants" value="" />
+            <input id="cmp-alan-forfait" value="0" /><input id="cmp-alan-solidaire" value="0" />
+            <input id="cmp-alan-action-sociale" value="0" /><input id="cmp-alan-aide-retraites" value="0" />
+            <input id="cmp-alan-employeur" value="0" />
+            <select id="cmp-geo-majo">
+              <option value="0" data-code="">Aucune</option>
+              <option value="163.29" data-code="201987">Nord / Nord-Est</option>
+              <option value="0" data-code="201986">CDG / CRNA Ouest</option>
+            </select>
+          `;
+          document.body.appendChild(fx);
+          const calculerPaieOrig = window.calculerPaie;
+          window.calculerPaie = () => {}; // neutralise le rendu (pas de fiche dans tests.html)
+          try {
+            window.activerComparaison();
+            const pA = getProfilDepuisInterface();
+            const pB = getProfilComparaisonDepuisPanneau();
+
+            eq("cmp-alan-forfait pré-rempli depuis A (30.50)", parseFloat(document.getElementById("cmp-alan-forfait").value), 30.5);
+            eq("profil B hérite alan.forfait (30.50)", pB.alan.forfait, 30.5);
+            eq("profil B hérite alan.solidaire (2.00)", pB.alan.solidaire, 2);
+            eq("cmp-geo-majo sélectionné par code (201987) et non par montant", document.getElementById("cmp-geo-majo").selectedOptions[0].dataset.code === "201987" ? 1 : 0, 1);
+            eq("profil B hérite geo_majo (163.29)", pB.primes.geo_majo, 163.29);
+            eq("cmp-enfants pré-rempli depuis A (2)", parseInt(document.getElementById("cmp-enfants").value, 10), 2);
+
+            // Invariant : à l'activation, B est strictement identique à A → aucun delta
+            const mA = calculerMontants(pA);
+            const mB = calculerMontants(pB);
+            eq("netFinal A > 0 (invariant non trivial)", mA.netFinal > 0 ? 1 : 0, 1);
+            eq("netFinal B = netFinal A (delta 0 à l'activation)", mB.netFinal, mA.netFinal);
+            eq("totalPatronal B = totalPatronal A", mB.totalPatronal, mA.totalPatronal);
+
+            // "0 enfant" en B ne doit plus retomber sur la valeur de A (0 est falsy)
+            document.getElementById("cmp-enfants").value = "0";
+            eq("cmp-enfants = 0 → profil B a 0 enfant (plus d'héritage forcé)", getProfilComparaisonDepuisPanneau().enfants, 0);
+            document.getElementById("cmp-enfants").value = "";
+            eq("cmp-enfants vide → hérite de A (2 enfants)", getProfilComparaisonDepuisPanneau().enfants, 2);
+          } finally {
+            // desactiverComparaison AVANT de restaurer calculerPaie : le vrai rendu
+            // planterait sans le DOM d'index.html
+            window.desactiverComparaison();
+            window.calculerPaie = calculerPaieOrig;
+            fx.remove();
+          }
+        });
+
+        // ── T24 : Rappels — impact calcul (4 flux) ──────────────────────────────
+        suite("T24 — Rappels : imposable ±, non imposable, PSC/prévoyance (assiette CSG sans abattement)", () => {
+          const cst = baseDonnees.constantes;
+          const m0 = calculerMontants(profil());
+          const avecRappels = (over) => calculerMontants(profil({ primes: { ...profil().primes, ...over } }));
+
+          // Rappel imposable positif → colonne À Payer + assiettes RAFP/CSG
+          const mPlus = avecRappels({ rappels_imposables: 100 });
+          eq("imposable +100 : totalAPayer = base + 100", mPlus.totalAPayer, m0.totalAPayer + 100);
+          eq("imposable +100 : soumis à RAFP (5.00)", mPlus.cotisationRafp, 5);
+          eq("imposable +100 : CSG déductible augmente", mPlus.csgDeductible > m0.csgDeductible ? 1 : 0, 1);
+
+          // Rappel imposable négatif (trop-perçu) → colonne À Déduire, pas À Payer
+          const mMoins = avecRappels({ rappels_imposables: -50 });
+          eq("imposable −50 : totalAPayer inchangé", mMoins.totalAPayer, m0.totalAPayer);
+          eq("imposable −50 : totalPrimesSoumises = −50 (algébrique)", mMoins.totalPrimesSoumises, -50);
+          eq("imposable −50 : net avant impôt diminue", mMoins.netAPayerAvantImpot < m0.netAPayerAvantImpot ? 1 : 0, 1);
+
+          // Rappel non imposable → payé mais exclu du net imposable et du net social
+          const mNonImp = avecRappels({ rappels_non_imposables: 100 });
+          eq("non imposable +100 : totalAPayer = base + 100", mNonImp.totalAPayer, m0.totalAPayer + 100);
+          eq("non imposable +100 : RAFP inchangée (hors assiette)", mNonImp.cotisationRafp, m0.cotisationRafp);
+          eq("non imposable +100 : netImposableFinal inchangé", mNonImp.netImposableFinal, m0.netImposableFinal);
+          eq("non imposable +100 : netSocial inchangé", mNonImp.netSocial, m0.netSocial);
+          eq("non imposable +100 : netFinal = base + 100", mNonImp.netFinal, m0.netFinal + 100);
+
+          // Rappel PSC/prévoyance : imposable, mais ajouté à l'assiette CSG SANS
+          // l'abattement 0.9825 (règle métier validée vs bulletins réels — ne pas "corriger",
+          // cf. engine.js, calcul de pscSansAbat / totalPrimesSoumisesHorsPSC)
+          const mPsc = avecRappels({ rappels_imposables: 20, rappels_psc_prevoyance: 20 });
+          const basePscAttendue = Math.max(0, arrondir(
+            (mPsc.baseSoumisePC + (mPsc.totalPrimesSoumises - 20) + mPsc.montantSFT - mPsc.transfertPrimes - mPsc.retenueIsq)
+              * cst.assiette_csg_crds + 20,
+          ));
+          eq("PSC +20 : CSG déductible = base(+20 hors abattement) × 6,8 %", mPsc.csgDeductible, arrondir(basePscAttendue * cst.taux_csg_deductible));
+          eq("PSC +20 : CRDS = base(+20 hors abattement) × 0,5 %", mPsc.crds, arrondir(basePscAttendue * cst.taux_crds));
+          eq("PSC +20 : netSocial réduit du rappel PSC", mPsc.netSocial, arrondir(mPsc.netAPayerAvantImpot - 20 + mPsc.retenueIsq));
+        });
+
+        // ── T25 : Primes manuelles ──────────────────────────────────────────────
+        suite("T25 — Primes manuelles : imposable, non imposable, mix", () => {
+          const m0 = calculerMontants(profil());
+          const avecPrimes = (over) => calculerMontants(profil({ primes: { ...profil().primes, ...over } }));
+
+          const mImp = avecPrimes({ manuelles_imposables: 100 });
+          eq("imposable 100 : totalAPayer = base + 100", mImp.totalAPayer, m0.totalAPayer + 100);
+          eq("imposable 100 : soumise à RAFP (5.00)", mImp.cotisationRafp, 5);
+          eq("imposable 100 : net imposable augmente", mImp.netImposableFinal > m0.netImposableFinal ? 1 : 0, 1);
+
+          const mNon = avecPrimes({ manuelles_non_imposables: 100 });
+          eq("non imposable 100 : totalAPayer = base + 100", mNon.totalAPayer, m0.totalAPayer + 100);
+          eq("non imposable 100 : RAFP inchangée (hors assiette)", mNon.cotisationRafp, m0.cotisationRafp);
+          eq("non imposable 100 : netImposableFinal inchangé", mNon.netImposableFinal, m0.netImposableFinal);
+          eq("non imposable 100 : netSocial inchangé (même traitement que FMD)", mNon.netSocial, m0.netSocial);
+          eq("non imposable 100 : netFinal = base + 100", mNon.netFinal, m0.netFinal + 100);
+
+          const mMix = avecPrimes({ manuelles_imposables: 100, manuelles_non_imposables: 50 });
+          eq("mix 100 + 50 : totalAPayer = base + 150", mMix.totalAPayer, m0.totalAPayer + 150);
+          eq("mix : seule la part imposable passe en RAFP (5.00)", mMix.cotisationRafp, 5);
+        });
+
+        // ── T26 : SFT aux bornes d'indice (plancher 449 / plafond 717) ──────────
+        suite("T26 — SFT : bornes plancher/plafond du traitement de référence", () => {
+          const vp = baseDonnees.constantes.valeur_point_mensuel;
+
+          // Traitement très bas → référence bloquée au plancher (449 × vp = 2210.33)
+          eq("2 enfants, traitement 100 € → SFT sur plancher (76.98)", calculerSFT(2, 100, vp), 76.98);
+          // Traitement très haut → référence bloquée au plafond (717 × vp = 3529.63)
+          eq("2 enfants, traitement 999999 € → SFT sur plafond (116.56)", calculerSFT(2, 999999, vp), 116.56);
+
+          // Intégration grades réels : ING.DIV éch.01 (2047.88 < plancher)
+          const mBas = calculerMontants(profil({ echelon: "01", enfants: 2 }));
+          eq("ING.DIV éch.01, 2 enfants : SFT plancher (76.98)", mBas.montantSFT, 76.98);
+
+          // ING. EN CHEF HEA2/HEA3 (4578.19 / 4809.56 > plafond) → même SFT
+          const mHea2 = calculerMontants(profil({ grade: "ING. EN CHEF CONT.NAV.AE", echelon: "HEA2", enfants: 2 }));
+          const mHea3 = calculerMontants(profil({ grade: "ING. EN CHEF CONT.NAV.AE", echelon: "HEA3", enfants: 2 }));
+          eq("ING. EN CHEF HEA3, 2 enfants : SFT plafond (116.56)", mHea3.montantSFT, 116.56);
+          eq("HEA2 = HEA3 (tous deux au-dessus du plafond)", mHea2.montantSFT, mHea3.montantSFT);
+
+          // Barème 3 et 4+ enfants (référence entre les bornes : éch.03 = 2274.32)
+          eq("3 enfants : 15.24 + réf × 8 % (197.19)", calculerMontants(profil({ enfants: 3 })).montantSFT, 197.19);
+          eq("4 enfants : + (4.57 + réf × 6 %) par enfant sup. (338.21)", calculerMontants(profil({ enfants: 4 })).montantSFT, 338.21);
+        });
+
+        // ── T27 : SFT — 0 vs 1 enfant ───────────────────────────────────────────
+        suite("T27 — SFT : 0 enfant (aucun) vs 1 enfant (part fixe)", () => {
+          eq("0 enfant : SFT = 0", calculerMontants(profil()).montantSFT, 0);
+          eq("1 enfant : SFT = 2.29 (fixe, indépendant du traitement)", calculerMontants(profil({ enfants: 1 })).montantSFT, 2.29);
+          const vp = baseDonnees.constantes.valeur_point_mensuel;
+          eq("1 enfant : identique quel que soit le traitement", calculerSFT(1, 999999, vp), 2.29);
+        });
+
+        // ── T28 : RAFP sous le plafond (complète T9/T14 qui testent le plafonnement) ─
+        suite("T28 — RAFP : primes sous 20 % du traitement → assiette = primes", () => {
+          const m = calculerMontants(profil({ primes: { ...profil().primes, rist_fonctions: 100 } }));
+          // 100 € < 20 % × 2274.32 = 454.86 → assiette non plafonnée
+          eq("RAFP = 100 × 5 % = 5.00 (non plafonnée)", m.cotisationRafp, 5);
+          eq("RAFP patronale = RAFP salariale", m.charges.patRafp, m.cotisationRafp);
+        });
+
+        // ── T29 : Indemnité de résidence — troncature volontaire ────────────────
+        suite("T29 — Indemnité de résidence : troncature au centime (Math.floor), pas arrondi", () => {
+          // ING.DIV éch.02 Zone 1 : 2151.25 × 3 % = 64.5375 → tronqué à 64.53
+          // (arrondir() donnerait 64.54). Comportement constaté sur bulletins réels —
+          // ne pas "corriger" ce test en harmonisant avec arrondir(), il verrouille
+          // une troncature voulue (cf. commentaire engine.js, calcul indemniteResidence).
+          const m = calculerMontants(profil({ echelon: "02", zone: "Zone 1" }));
+          eq("éch.02 Zone 1 : 64.53 (tronqué, et non 64.54 arrondi)", m.indemniteResidence, 64.53);
+        });
+
+        // ── T30 : donneesCompatibles() — garde-fou de schéma data.json ──────────
+        suite("T30 — donneesCompatibles() : garde-fou de schéma data.json", () => {
+          eq("baseDonnees réel chargé → compatible", donneesCompatibles(baseDonnees) ? 1 : 0, 1);
+          eq("objet vide → incompatible", donneesCompatibles({}) ? 1 : 0, 0);
+          eq("null → incompatible", donneesCompatibles(null) ? 1 : 0, 0);
+          const { grilles_icna, ...sansGrilles } = baseDonnees;
+          eq("sans grilles_icna → incompatible", donneesCompatibles(sansGrilles) ? 1 : 0, 0);
+          const { constantes, ...sansConstantes } = baseDonnees;
+          eq("sans constantes → incompatible", donneesCompatibles(sansConstantes) ? 1 : 0, 0);
+          const { rist, ...sansRist } = baseDonnees;
+          eq("sans rist → incompatible", donneesCompatibles(sansRist) ? 1 : 0, 0);
+        });
+
+        // ── T31 : Majo géo + rembt domicile-travail dans les totaux ─────────────
+        suite("T31 — Majo géo (163,29 €) + rembt domicile-travail (62,42 €) dans les totaux", () => {
+          // Bug corrigé (bulletin juin 2026) : les deux lignes étaient affichées
+          // mais absentes de totalAPayer → net à payer sous-évalué de 225,71 €.
+          const m0 = calculerMontants(profil());
+          const m = calculerMontants(profil({ primes: { ...profil().primes, geo_majo: 163.29, geo_majo_code: "201987", rembt_domicile: 62.42 } }));
+          eq("totalAPayer inclut majo géo + rembt", m.totalAPayer, m0.totalAPayer + 163.29 + 62.42);
+          eq("totalPrimesSoumises = majo géo seule (rembt exonéré de cotisations)", m.totalPrimesSoumises, 163.29);
+          eq("RAFP sur la majo géo = 163.29 × 5 %", m.cotisationRafp, 8.16);
+          eq("netSocial exclut le rembt (exonéré)", m.netSocial, m.netAPayerAvantImpot - 62.42);
+          eq("netImposableFinal exclut le rembt (non imposable)", m.netImposableFinal, m.netAPayerAvantImpot + m.csgNonDeductible + m.crds - 62.42);
+        });
+
+        // ── T32 : Non-régression — bulletin réel de juin 2026 ────────────────────
+        suite("T32 — Bulletin réel juin 2026 (ING.DIV éch.03 Zone 1, net 6 074,69 €)", () => {
+          // Reproduction ligne à ligne du bulletin de juin 2026 — verrouille les
+          // corrections majo géo / rembt / VST 2,01 % contre toute régression.
+          const m = calculerMontants({
+            grade: "ING.DIV. CONT.NAV.AE",
+            echelon: "03",
+            zone: "Zone 1",
+            taux_pas: 0.208,
+            points_nbi: 0,
+            enfants: 0,
+            evenements: {
+              nuits: 0,
+              soirees: 0,
+              jours_greve: 0,
+              jours_carence: 0,
+              jours_maladie_90: 0,
+              jours_maladie_50: 0,
+              prime_performance: 0,
+              ott_pf: 429.10,
+              ott_pv_globale: 0,
+              ott_pv_opt32: 0,
+            },
+            primes: {
+              forfait_mobilites: 0,
+              rist_fonctions: 1518.16,
+              rist_exper_prof: 454.72,
+              rist_lic_isq: 1976.11,
+              rist_cplt_lic_isq: 2281.78,
+              rist_maj_isq: 0,
+              geo_majo: 163.29,
+              geo_majo_code: "201987",
+              attractivite: 105.05,
+              rembt_domicile: 62.42,
+              fidelisation: 0,
+              inflation: 0,
+              ind_compensatrice_csg: 71.39,
+              psc: 0,
+            },
+            alan: {
+              forfait: 13.69,
+              solidaire: 22.82,
+              action_sociale: 0.18,
+              aide_retraites: 0.73,
+              employeur: 34.23,
+            },
+          });
+          eq("traitementBrut (101000)", m.traitementBrut, 2274.32);
+          eq("retenuePC (101050)", m.retenuePC, 252.45);
+          eq("indemnité résidence (102000)", m.indemniteResidence, 68.22);
+          eq("CSG non déductible (401201)", m.csgNonDeductible, 208.88);
+          eq("CSG déductible (401301)", m.csgDeductible, 591.83);
+          eq("CRDS (401501)", m.crds, 43.52);
+          eq("RAFP salariale (501080)", m.cotisationRafp, 22.74);
+          eq("VST mobilité 2,01 % (554500)", m.charges.patMobilite, 45.71);
+          eq("retenue ISQ 24,6 % (751095)", m.retenueIsq, 486.12);
+          eq("total à payer", m.totalAPayer, 9404.56);
+          eq("net avant impôt (011100)", m.netAPayerAvantImpot, 7729.18);
+          eq("montant net social (011300)", m.netSocial, 8152.88);
+          eq("montant imposable du mois", m.netImposableFinal, 7954.30);
+          eq("impôt à la source 20,80 % (558000)", m.impotSource, 1654.49);
+          eq("NET À PAYER", m.netFinal, 6074.69);
+          eq("coût total employeur", m.coutTotalEmployeur, 11711.61);
         });
 
         // ── Rendu ─────────────────────────────────────────────────────────────

@@ -65,6 +65,13 @@ const CLE_CONFIGURES = "icna_configures_v1";
 const CLE_PRIMES_MANUELLES = "icna_primes_manuelles_v1";
 const CLE_RAPPELS = "icna_rappels_v1";
 
+// Version du schéma des données localStorage (profil, configurés, primes, rappels).
+// À incrémenter si la FORME d'une des clés change : les versions futures pourront
+// détecter un stockage ancien et migrer, au lieu d'une restauration silencieusement
+// partielle. Informatif uniquement — aucune purge n'est faite.
+const SCHEMA_LS_VERSION = 1;
+const CLE_SCHEMA_LS = "icna_schema_v";
+
 // Derniers résultats de calcul — utilisés par l'auto-calc des rappels
 let _dernierProfil    = null;
 let _derniersMontants = null;
@@ -965,6 +972,10 @@ function calculerMontants(p) {
   const indice = baseDonnees.grilles_icna[p.grade]?.[p.echelon]?.indice || 0;
   const traitementBrut = arrondir(indice * cst.valeur_point_mensuel);
   const montantNbi = arrondir(p.points_nbi * cst.valeur_point_mensuel);
+  // Indemnité de résidence : TRONCATURE au centime (Math.floor), contrairement à
+  // arrondir() utilisé partout ailleurs. Comportement constaté sur bulletins réels,
+  // verrouillé par T3 (68.22) et T29 (64.53) — l'arrondi classique donnerait
+  // 68.23 / 64.54. Ne pas "harmoniser" sans justification réglementaire.
   const indemniteResidence = Math.floor((traitementBrut + montantNbi) * baseDonnees.zones_residence[p.zone] * 100) / 100;
 
   // ── Indemnité de nuit (S1 = nuit, S2 = soirée) ──────────────────────────────
@@ -1092,6 +1103,8 @@ function calculerMontants(p) {
       (p.evenements.ott_pv_opt32 > 0 ? p.evenements.ott_pv_opt32 : 0) +
       (p.primes.fidelisation > 0 ? p.primes.fidelisation : 0) +
       (p.primes.attractivite > 0 ? p.primes.attractivite : 0) +
+      ((p.primes.geo_majo ?? 0) > 0 ? p.primes.geo_majo - absGeoMajo : 0) +
+      ((p.primes.rembt_domicile ?? 0) > 0 ? p.primes.rembt_domicile : 0) +
       // Primes manuelles : les deux types apparaissent dans le brut à payer
       (p.primes.manuelles_imposables     > 0 ? p.primes.manuelles_imposables     : 0) +
       (p.primes.manuelles_non_imposables > 0 ? p.primes.manuelles_non_imposables : 0) +
@@ -1122,8 +1135,8 @@ function calculerMontants(p) {
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
-  const netSocial = arrondir(netAPayerAvantImpot - (p.primes.forfait_mobilites ?? 0) - (p.primes.psc ?? 0) - (p.primes.psc_options ?? 0) - (p.primes.prevoyance_mgas ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
-  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - (p.primes.forfait_mobilites ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0));
+  const netSocial = arrondir(netAPayerAvantImpot - (p.primes.forfait_mobilites ?? 0) - (p.primes.rembt_domicile ?? 0) - (p.primes.psc ?? 0) - (p.primes.psc_options ?? 0) - (p.primes.prevoyance_mgas ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - (p.primes.forfait_mobilites ?? 0) - (p.primes.rembt_domicile ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0));
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal + (p.alan?.employeur || 0) - transfertPrimes);
@@ -1231,17 +1244,17 @@ const ROUTAGE_MODAL = {
 };
 
 /**
- * Reconstruit et affiche la fiche de paie complète dans le tableau DOM.
- * Met également à jour les totaux dans le pied de page.
- *
- * @param {ProfilAgent}      p - Profil de l'agent
- * @param {MontantsCalcules} m - Résultat de `calculerMontants(p)`
- */
-/**
- * Dessine la fiche de paie complète.
+ * Dessine la fiche de paie complète (tableau desktop) et met à jour les totaux
+ * du pied de page.
  * En mode comparaison (pB/mB fournis), affiche les lignes présentes dans A OU B :
  * — lignes A normales avec badge Δ si la valeur diffère
  * — lignes présentes dans B uniquement (ghost) en fond vert pâle
+ *
+ * ⚠ DIVERGENCES VOLONTAIRES avec dessinerFicheMobile() (rendu DIV condensé) :
+ * — ALAN : 5 lignes détaillées ici (720376-720380), 1 ligne agrégée sur mobile
+ * — Rappels : ancrés sous leur ligne parente ici, groupés en fin de bloc gains mobile
+ * — Codes de ligne ICNA : affichés ici, masqués sur mobile
+ * Toute NOUVELLE ligne de paie doit être ajoutée dans LES DEUX fonctions.
  *
  * @param {ProfilAgent}           p  - Profil A (affiché)
  * @param {MontantsCalcules}      m  - Résultat calculerMontants(p)
@@ -1509,12 +1522,12 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   // ── OTT ───────────────────────────────────────────────────────────────────────
   const ottPv = paire(p.evenements.ott_pv_globale, pB?.evenements.ott_pv_globale);
   if (ottPv.affiche > 0 || ottPv.isGhost)
-    ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PV)", ottPv.affiche, null, null, ["pv-globale"], null, null,
+    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PV)", ottPv.affiche, null, null, ["pv-globale"], null, null,
       { delta: ottPv.delta, deltaCol: 2, isGhost: ottPv.isGhost });
 
   const ottPf = paire(p.evenements.ott_pf, pB?.evenements.ott_pf);
   if (ottPf.affiche > 0 || ottPf.isGhost)
-    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", ottPf.affiche, null, null,
+    ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PF)", ottPf.affiche, null, null,
       ["pf-manuel","pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1","pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4","pf-opt1-enac","pf-opt1-plus-enac"], null, null,
       { delta: ottPf.delta, deltaCol: 2, isGhost: ottPf.isGhost });
 
@@ -1719,15 +1732,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
         const montantAbs = Math.abs(r.montant);
         const estDeduire = r.montant < 0;
 
-        const typeLabel  = r.type === "courante" ? "AN. COUR." : "AN. ANT.";
-        let libelleFiche;
-        if (r.codeParent === "" && r.libelleParent) {
-          libelleFiche = r.libelleParent.toUpperCase();
-        } else {
-          libelleFiche = r.periode
-            ? `RAPPEL ${typeLabel} - ${r.periode.toUpperCase()}`
-            : `RAPPEL ${typeLabel}`;
-        }
+        const libelleFiche = _libelleRappel(r);
 
         const tr = document.createElement("tr");
         tr.id = `row-rappel-${r.id}`;
@@ -1995,6 +2000,48 @@ function majRembt() {
 }
 
 /**
+ * Contrôle minimal de compatibilité du barème chargé : uniquement les racines
+ * que le code lit SANS garde (constantes, taux_patronaux, grilles_icna,
+ * zones_residence, rist). Évite un crash silencieux si un data.json d'un
+ * autre schéma est servi (cache offline périmé, déploiement partiel).
+ * Volontairement non exhaustif : une liste trop stricte casserait le nominal.
+ * @param {object} base - contenu de data.json
+ * @returns {boolean}
+ */
+function donneesCompatibles(base) {
+  return !!(base && base.meta && base.constantes && base.taux_patronaux && base.grilles_icna && base.zones_residence && base.rist);
+}
+
+/**
+ * Affiche un bandeau d'erreur bloquante quand l'initialisation échoue.
+ * Sans lui, l'app restait figée sans aucun message : tout le corps
+ * d'initialiserApplication() est dans le try, donc aucun listener n'est
+ * attaché en cas d'échec (data.json inaccessible, erreur JS).
+ * @param {Error} erreur
+ */
+function _afficherErreurInit(erreur) {
+  if (document.querySelector(".erreur-init")) return;
+  const message = erreur?.message || "";
+  const estBareme = /data\.json|barème/i.test(message);
+  const bandeau = document.createElement("div");
+  bandeau.className = "erreur-init";
+  bandeau.setAttribute("role", "alert");
+  const texte = document.createElement("span");
+  texte.textContent = /incompatible/i.test(message)
+    ? message // message spécifique du contrôle de compatibilité du barème
+    : estBareme
+      ? "Impossible de charger le barème (data.json). Vérifiez votre connexion puis réessayez."
+      : "Erreur au démarrage de l'application. Rechargez la page ; si le problème persiste, videz le cache du navigateur.";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "erreur-init-btn";
+  btn.textContent = "Recharger";
+  btn.addEventListener("click", () => location.reload());
+  bandeau.append(texte, btn);
+  document.body.prepend(bandeau);
+}
+
+/**
  * Point d'entrée unique de l'application, déclenché au chargement de la page.
  *
  * Séquence d'initialisation :
@@ -2008,6 +2055,9 @@ async function initialiserApplication() {
     const reponse = await fetch("data.json");
     if (!reponse.ok) throw new Error("Impossible de charger data.json.");
     baseDonnees = await reponse.json();
+    if (!donneesCompatibles(baseDonnees)) {
+      throw new Error("Barème (data.json) incompatible avec cette version de l'application. Rechargez la page en ligne pour mettre à jour.");
+    }
 
     // Affichage de la version du barème en console (debug uniquement, pas dans le DOM)
     const meta = baseDonnees.meta;
@@ -2036,6 +2086,16 @@ async function initialiserApplication() {
 
     // Initialisation du panneau comparateur de scénarios
     initialiserComparateur();
+
+    // Versionnage du schéma localStorage — détecte un stockage écrit par une
+    // autre version de l'app (restauration tolérante conservée, pas de purge)
+    try {
+      const vStockee = parseInt(localStorage.getItem(CLE_SCHEMA_LS), 10);
+      if (!Number.isNaN(vStockee) && vStockee !== SCHEMA_LS_VERSION) {
+        console.warn(`Schéma localStorage v${vStockee} ≠ v${SCHEMA_LS_VERSION} attendu — restauration tolérante, pas de migration définie.`);
+      }
+      localStorage.setItem(CLE_SCHEMA_LS, String(SCHEMA_LS_VERSION));
+    } catch (_) {}
 
     // Restauration du profil sauvegardé (après peuplement des listes)
     // FIX #4 — restaurerProfil() retourne l'objet profil : pas besoin de relire localStorage
@@ -2122,6 +2182,10 @@ async function initialiserApplication() {
       const rappelCalcul = champ.id.startsWith("proj-")
         ? () => window.calculerEtAfficherProjection?.()
         : calculerPaie;
+      // PERF — la validation/clamp reste immédiate, seul le recalcul est debouncé :
+      // chaque frappe reconstruisait la fiche complète (~35 lignes + vue mobile).
+      // Les selects/radios/checkboxes restent non debouncés (1 événement par interaction).
+      const rappelCalculDebounce = debounce(rappelCalcul, 100);
       champ.addEventListener("input", function () {
         if (this.value === "") return;
         let val = parseFloat(this.value);
@@ -2130,7 +2194,7 @@ async function initialiserApplication() {
         if (val < borne.min) val = borne.min;
         if (borne.max !== null && val > borne.max) val = borne.max;
         this.value = val;
-        rappelCalcul();
+        rappelCalculDebounce();
       });
       champ.addEventListener("blur", function () {
         if (this.value === "") {
@@ -2297,6 +2361,7 @@ async function initialiserApplication() {
     _creerOverlaysMobile();
   } catch (erreur) {
     console.error("Erreur d'initialisation :", erreur);
+    _afficherErreurInit(erreur);
   }
 }
 
@@ -3146,8 +3211,8 @@ const LIGNES_RAPPELLABLES = [
   // ── Éléments variables ───────────────────────────────────────────────────────
   { code: "201000", libelle: "INDEM. POUVOIR D'ACHAT",         imposable: true  },
   { code: "202485", libelle: "PRIME PARTAGE PERFORMANCE",      imposable: true  },
-  { code: "202559", libelle: "OTT PART FIXE",                  imposable: true  },
-  { code: "202558", libelle: "OTT PART VARIABLE GLOBAL",       imposable: true  },
+  { code: "202558", libelle: "OTT PART FIXE",                  imposable: true  },
+  { code: "202559", libelle: "OTT PART VARIABLE GLOBAL",       imposable: true  },
   { code: "202560", libelle: "OTT PART VARIABLE OPT 3",        imposable: true  },
   { code: "203001", libelle: "PRIME DE FIDELISATION",          imposable: true  },
   // ── Mutuelle / Prévoyance ──────────────────────────────────────────────────
@@ -3184,8 +3249,8 @@ const MONTANT_MENSUEL_MAP = {
   "202354": (p, m) => m.psc,
   "202483": (p, m) => m.pscOptions,
   "202510": (p, m) => m.prevoyanceMgas,
-  "202558": (p, m) => p.evenements.ott_pv_globale,
-  "202559": (p, m) => p.evenements.ott_pf,
+  "202558": (p, m) => p.evenements.ott_pf,
+  "202559": (p, m) => p.evenements.ott_pv_globale,
   "202560": (p, m) => p.evenements.ott_pv_opt32,
   "203001": (p, m) => p.primes.fidelisation,
   "720376": (p, m) => p.alan?.forfait        || 0,
@@ -3194,6 +3259,18 @@ const MONTANT_MENSUEL_MAP = {
   "720379": (p, m) => p.alan?.aide_retraites || 0,
   "720380": (p, m) => p.alan?.employeur      || 0,
 };
+
+/**
+ * Libellé d'une ligne de rappel sur la fiche — partagé desktop/mobile
+ * pour éviter toute divergence de formatage entre les deux rendus.
+ * @param {{codeParent: string, libelleParent: string, periode: string, type: string}} r
+ * @returns {string}
+ */
+function _libelleRappel(r) {
+  if (r.codeParent === "" && r.libelleParent) return r.libelleParent.toUpperCase();
+  const typeLabel = r.type === "courante" ? "AN. COUR." : "AN. ANT.";
+  return r.periode ? `RAPPEL ${typeLabel} - ${r.periode.toUpperCase()}` : `RAPPEL ${typeLabel}`;
+}
 
 /**
  * Lit les lignes de rappel depuis le DOM et retourne un tableau d'objets.
@@ -3519,6 +3596,12 @@ window.supprimerRappelDeFiche = function (id) {
  * Liste de lignes : libellé à gauche, montant coloré à droite.
  * Sections séparées par des titres. Lignes cliquables → même modales que desktop.
  * Appelée depuis calculerPaie() uniquement quand is-mobile.
+ *
+ * ⚠ DIVERGENCES VOLONTAIRES avec dessinerFiche() (tableau desktop) :
+ * — ALAN : 1 ligne agrégée ici, 5 lignes détaillées (720376-720380) sur desktop
+ * — Rappels : groupés en fin de bloc gains ici, ancrés sous leur ligne parente desktop
+ * — Codes de ligne ICNA : masqués ici, affichés sur desktop
+ * Toute NOUVELLE ligne de paie doit être ajoutée dans LES DEUX fonctions.
  *
  * @param {ProfilAgent}      p - Profil agent
  * @param {MontantsCalcules} m - Résultats calculerMontants(p)
@@ -3944,6 +4027,21 @@ function dessinerFicheMobile(p, m, pB = null, mB = null) {
       titre: "Primes manuelles",
       sub: imposable ? null : "Non imposable",
       onDelete: () => window.supprimerPrimeManuelle(i),
+    });
+  });
+
+  // Rappels — inclus dans les totaux par calculerMontants(), ils doivent donc
+  // apparaître dans le détail. Divergence volontaire avec le desktop : là-bas
+  // chaque rappel est ancré sous sa ligne parente ; ici ils sont groupés en fin
+  // de bloc gains (pas d'ancrage — complexité > bénéfice sur une liste à plat).
+  _getRappels().forEach((r) => {
+    if (!r.montant) return;
+    const montantAbs = Math.abs(r.montant);
+    ligne(_libelleRappel(r), r.montant > 0 ? montantAbs : null, r.montant < 0 ? montantAbs : null, {
+      panel: "panel-rappels",
+      titre: "📋 Rappels",
+      sub: r.imposable ? null : "Non imposable",
+      onDelete: () => window.supprimerRappelDeFiche(r.id),
     });
   });
 
@@ -4397,6 +4495,11 @@ function getProfilComparaisonDepuisPanneau() {
     if (cb.checked) pscTotal += parseFloat(cb.value);
   });
 
+  // "0 enfant" est une valeur valide en B : n'hériter de A que si le champ est absent ou vide
+  // (parseInt(...) || profilA.enfants retombait sur A pour la valeur 0, qui est falsy)
+  const enfantsRaw = document.getElementById("cmp-enfants")?.value;
+  const enfantsB = enfantsRaw === "" || enfantsRaw == null ? profilA.enfants : parseInt(enfantsRaw, 10) || 0;
+
   const ristKey = document.getElementById("cmp-input-fonction")?.value;
   const expKey  = document.getElementById("cmp-input-experience")?.value;
   const licKey  = document.getElementById("cmp-input-isq-licence")?.value;
@@ -4409,7 +4512,7 @@ function getProfilComparaisonDepuisPanneau() {
     zone:       document.querySelector('input[name="cmp-zone"]:checked')?.value || profilA.zone,
     taux_pas:   profilA.taux_pas,
     points_nbi: document.getElementById("cmp-nbi-checkbox")?.checked ? baseDonnees.constantes.points_nbi : 0,
-    enfants:    parseInt(document.getElementById("cmp-enfants")?.value) || profilA.enfants,
+    enfants:    enfantsB,
 
     evenements: {
       ...profilA.evenements,
@@ -4562,6 +4665,23 @@ window.activerComparaison = function () {
     const dst = document.getElementById("cmp-" + src.id);
     if (dst) dst.checked = src.checked;
   });
+
+  // ALAN — miroir des champs principaux (sans quoi B partirait à 0 et fausserait le delta)
+  ["alan-forfait", "alan-solidaire", "alan-action-sociale", "alan-aide-retraites", "alan-employeur"].forEach((id) => {
+    const src = document.getElementById(id);
+    const dst = document.getElementById("cmp-" + id);
+    if (src && dst) dst.value = src.value || "0";
+  });
+
+  // Majoration géographique — miroir par code d'abord (plusieurs options partagent
+  // le montant 0), puis par montant, sinon première option ("Aucune")
+  const cmpGeo = document.getElementById("cmp-geo-majo");
+  if (cmpGeo && cmpGeo.options.length) {
+    const options = Array.from(cmpGeo.options);
+    const parCode = options.find((o) => (o.dataset.code ?? "") === profilA.primes.geo_majo_code);
+    const parMontant = options.find((o) => (parseFloat(o.value) || 0) === profilA.primes.geo_majo);
+    cmpGeo.selectedIndex = (parCode ?? parMontant ?? options[0]).index;
+  }
 
   calculerPaie(); // redessine la fiche + déclenche les deltas
 };

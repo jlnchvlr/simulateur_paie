@@ -3674,3 +3674,45 @@ select.champ-non-configure {
     scroll-behavior: auto !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ERREUR D'INITIALISATION
+   Bandeau bloquant affiché par _afficherErreurInit() quand
+   data.json ne charge pas ou que l'init échoue (engine.js).
+   ═══════════════════════════════════════════════════════════════ */
+.erreur-init {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  background: var(--color-danger);
+  color: var(--color-white);
+  font-family: var(--font-main);
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.erreur-init-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--color-white);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-white);
+  font-family: var(--font-main);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.erreur-init-btn:hover,
+.erreur-init-btn:focus-visible {
+  background: var(--color-white);
+  color: var(--color-danger);
+}
