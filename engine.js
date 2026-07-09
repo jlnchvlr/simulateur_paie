@@ -1356,6 +1356,7 @@ function dessinerFiche(p, m, pB = null, mB = null) {
       <td class="col-amount">${fmtCell(pourInfo, 4)}</td>
     `;
     tbodyFrag.appendChild(tr);
+    return tr;
   }
 
   /**
@@ -1540,8 +1541,10 @@ function dessinerFiche(p, m, pB = null, mB = null) {
     if (montant <= 0) return;
     const rowId   = `row-pm-${i}`;
     const tooltip = imposable ? null : "Non imposable (exclu du net imposable et du PAS)";
-    ajouterLigne("", libelle.toUpperCase(), montant, null, null, null, tooltip, rowId);
-    const tr = document.getElementById(rowId);
+    // On récupère la <tr> directement (ajouterLigne la retourne) : document.getElementById
+    // échouait ici car la ligne est encore dans le DocumentFragment détaché (flush plus bas),
+    // ce qui désactivait silencieusement la croix ✖ sur la fiche desktop.
+    const tr = ajouterLigne("", libelle.toUpperCase(), montant, null, null, null, tooltip, rowId);
     if (tr) {
       // ── Croix ✖ — injectée directement dans la cellule libellé (FIX Bug 3)
       // effacerValeurs() ne fonctionne pas ici (pas d'input ID fixe) →
