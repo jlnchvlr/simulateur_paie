@@ -1103,6 +1103,8 @@ function calculerMontants(p) {
       (p.evenements.ott_pv_opt32 > 0 ? p.evenements.ott_pv_opt32 : 0) +
       (p.primes.fidelisation > 0 ? p.primes.fidelisation : 0) +
       (p.primes.attractivite > 0 ? p.primes.attractivite : 0) +
+      ((p.primes.geo_majo ?? 0) > 0 ? p.primes.geo_majo - absGeoMajo : 0) +
+      ((p.primes.rembt_domicile ?? 0) > 0 ? p.primes.rembt_domicile : 0) +
       // Primes manuelles : les deux types apparaissent dans le brut à payer
       (p.primes.manuelles_imposables     > 0 ? p.primes.manuelles_imposables     : 0) +
       (p.primes.manuelles_non_imposables > 0 ? p.primes.manuelles_non_imposables : 0) +
@@ -1133,8 +1135,8 @@ function calculerMontants(p) {
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
-  const netSocial = arrondir(netAPayerAvantImpot - (p.primes.forfait_mobilites ?? 0) - (p.primes.psc ?? 0) - (p.primes.psc_options ?? 0) - (p.primes.prevoyance_mgas ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
-  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - (p.primes.forfait_mobilites ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0));
+  const netSocial = arrondir(netAPayerAvantImpot - (p.primes.forfait_mobilites ?? 0) - (p.primes.rembt_domicile ?? 0) - (p.primes.psc ?? 0) - (p.primes.psc_options ?? 0) - (p.primes.prevoyance_mgas ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - (p.primes.forfait_mobilites ?? 0) - (p.primes.rembt_domicile ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0));
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal + (p.alan?.employeur || 0) - transfertPrimes);
@@ -1520,12 +1522,12 @@ function dessinerFiche(p, m, pB = null, mB = null) {
   // ── OTT ───────────────────────────────────────────────────────────────────────
   const ottPv = paire(p.evenements.ott_pv_globale, pB?.evenements.ott_pv_globale);
   if (ottPv.affiche > 0 || ottPv.isGhost)
-    ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PV)", ottPv.affiche, null, null, ["pv-globale"], null, null,
+    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PV)", ottPv.affiche, null, null, ["pv-globale"], null, null,
       { delta: ottPv.delta, deltaCol: 2, isGhost: ottPv.isGhost });
 
   const ottPf = paire(p.evenements.ott_pf, pB?.evenements.ott_pf);
   if (ottPf.affiche > 0 || ottPf.isGhost)
-    ajouterLigne("202559", "RIST ORGA TEMPS TRAVAIL (PF)", ottPf.affiche, null, null,
+    ajouterLigne("202558", "RIST ORGA TEMPS TRAVAIL (PF)", ottPf.affiche, null, null,
       ["pf-manuel","pf-opt1-l16","pf-opt1-cdg","pf-opt1-l711","pf-opt1-l911","pf-opt1-plus-n1","pf-opt1-plus-n2","pf-opt2-1","pf-opt2-2","pf-opt2-bis","pf-opt4","pf-opt1-enac","pf-opt1-plus-enac"], null, null,
       { delta: ottPf.delta, deltaCol: 2, isGhost: ottPf.isGhost });
 
@@ -3209,8 +3211,8 @@ const LIGNES_RAPPELLABLES = [
   // ── Éléments variables ───────────────────────────────────────────────────────
   { code: "201000", libelle: "INDEM. POUVOIR D'ACHAT",         imposable: true  },
   { code: "202485", libelle: "PRIME PARTAGE PERFORMANCE",      imposable: true  },
-  { code: "202559", libelle: "OTT PART FIXE",                  imposable: true  },
-  { code: "202558", libelle: "OTT PART VARIABLE GLOBAL",       imposable: true  },
+  { code: "202558", libelle: "OTT PART FIXE",                  imposable: true  },
+  { code: "202559", libelle: "OTT PART VARIABLE GLOBAL",       imposable: true  },
   { code: "202560", libelle: "OTT PART VARIABLE OPT 3",        imposable: true  },
   { code: "203001", libelle: "PRIME DE FIDELISATION",          imposable: true  },
   // ── Mutuelle / Prévoyance ──────────────────────────────────────────────────
@@ -3247,8 +3249,8 @@ const MONTANT_MENSUEL_MAP = {
   "202354": (p, m) => m.psc,
   "202483": (p, m) => m.pscOptions,
   "202510": (p, m) => m.prevoyanceMgas,
-  "202558": (p, m) => p.evenements.ott_pv_globale,
-  "202559": (p, m) => p.evenements.ott_pf,
+  "202558": (p, m) => p.evenements.ott_pf,
+  "202559": (p, m) => p.evenements.ott_pv_globale,
   "202560": (p, m) => p.evenements.ott_pv_opt32,
   "203001": (p, m) => p.primes.fidelisation,
   "720376": (p, m) => p.alan?.forfait        || 0,
