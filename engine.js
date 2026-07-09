@@ -2122,24 +2122,32 @@ async function initialiserApplication() {
       const rappelCalcul = champ.id.startsWith("proj-")
         ? () => window.calculerEtAfficherProjection?.()
         : calculerPaie;
-      champ.addEventListener("input", function () {
-        if (this.value === "") return;
-        let val = parseFloat(this.value);
-        if (isNaN(val)) { this.value = "0"; return; }
-        if (borne.entier) val = Math.floor(val);
-        if (val < borne.min) val = borne.min;
-        if (borne.max !== null && val > borne.max) val = borne.max;
-        this.value = val;
-        rappelCalcul();
-      });
+      // Pendant la frappe : on recalcule sans réécrire ni plafonner le champ, pour
+      // laisser l'utilisateur saisir librement (décimale en cours de saisie, virgule,
+      // valeur transitoire hors bornes). La validation est déportée sur "blur" — sans
+      // ça, la réécriture à chaque touche cassait la saisie de "122,10" et donnait
+      // l'impression d'une limite de chiffres sur les champs à petit max.
+      champ.addEventListener("input", rappelCalcul);
+      // À la sortie du champ : normalisation virgule→point, arrondi entier si besoin,
+      // clamp min/max puis reformatage. Les bornes métier restent donc appliquées.
       champ.addEventListener("blur", function () {
         if (this.value === "") {
           this.value = borne.entier ? "0" : "0.00";
           rappelCalcul();
+          return;
         }
+        let val = parseFloat(String(this.value).replace(/,/g, "."));
+        if (isNaN(val)) val = borne.min;
+        if (borne.entier) val = Math.floor(val);
+        if (val < borne.min) val = borne.min;
+        if (borne.max !== null && val > borne.max) val = borne.max;
+        this.value = String(val);
+        rappelCalcul();
       });
       champ.addEventListener("keydown", function (e) {
-        const ok = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End","."];
+        // "," ajouté : séparateur décimal français. En locale FR le navigateur
+        // l'accepte sur les champs number ; on cesse simplement de le bloquer au clavier.
+        const ok = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End",".",","];
         if (ok.includes(e.key)) return;
         if (e.ctrlKey || e.metaKey) return;
         if (!/^\d$/.test(e.key)) e.preventDefault();
