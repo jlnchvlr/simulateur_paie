@@ -1076,6 +1076,9 @@ function calculerMontants(p) {
       montantSFT +
       (nuit > 0 ? nuit : 0) +
       (p.primes.forfait_mobilites > 0 ? p.primes.forfait_mobilites : 0) +
+      // Remboursement domicile-travail : versé à l'agent (brut à payer), non imposable → exclu
+      // du net imposable/social plus bas, exactement comme le forfait mobilités durables.
+      (p.primes.rembt_domicile > 0 ? p.primes.rembt_domicile : 0) +
       (p.primes.inflation > 0 ? p.primes.inflation : 0) +
       (p.primes.rist_fonctions > 0 ? p.primes.rist_fonctions - absRistFct : 0) +
       (p.primes.rist_exper_prof > 0 ? p.primes.rist_exper_prof - absRistExp : 0) +
@@ -1092,6 +1095,9 @@ function calculerMontants(p) {
       (p.evenements.ott_pv_opt32 > 0 ? p.evenements.ott_pv_opt32 : 0) +
       (p.primes.fidelisation > 0 ? p.primes.fidelisation : 0) +
       (p.primes.attractivite > 0 ? p.primes.attractivite : 0) +
+      // Majoration géographique (RIST) : prime imposable et cotisée (déjà dans totalPrimesSoumises),
+      // mais elle manquait ici → elle s'affichait sur la fiche sans jamais entrer dans le net.
+      (p.primes.geo_majo > 0 ? p.primes.geo_majo : 0) +
       // Primes manuelles : les deux types apparaissent dans le brut à payer
       (p.primes.manuelles_imposables     > 0 ? p.primes.manuelles_imposables     : 0) +
       (p.primes.manuelles_non_imposables > 0 ? p.primes.manuelles_non_imposables : 0) +
@@ -1122,8 +1128,8 @@ function calculerMontants(p) {
 
   const netAPayerAvantImpot = arrondir(totalAPayer - totalADeduire);
   // Primes manuelles non imposables : exclues du net social et du net imposable (même traitement que FMD)
-  const netSocial = arrondir(netAPayerAvantImpot - (p.primes.forfait_mobilites ?? 0) - (p.primes.psc ?? 0) - (p.primes.psc_options ?? 0) - (p.primes.prevoyance_mgas ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
-  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - (p.primes.forfait_mobilites ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0));
+  const netSocial = arrondir(netAPayerAvantImpot - (p.primes.forfait_mobilites ?? 0) - (p.primes.rembt_domicile ?? 0) - (p.primes.psc ?? 0) - (p.primes.psc_options ?? 0) - (p.primes.prevoyance_mgas ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0) - (p.primes.rappels_psc_prevoyance || 0) + retenueIsq);
+  const netImposableFinal = Math.max(0, netAPayerAvantImpot + csgNonDeductible + crds + (p.alan?.action_sociale || 0) + (p.alan?.aide_retraites || 0) + (p.alan?.employeur || 0) - (p.primes.forfait_mobilites ?? 0) - (p.primes.rembt_domicile ?? 0) - (p.primes.manuelles_non_imposables ?? 0) - (p.primes.rappels_non_imposables || 0));
   const impotSource = arrondir(netImposableFinal * p.taux_pas);
   const netFinal = Math.max(0, arrondir(netAPayerAvantImpot - impotSource));
   const coutTotalEmployeur = arrondir(totalAPayer + totalPatronal + (p.alan?.employeur || 0) - transfertPrimes);
